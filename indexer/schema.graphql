@@ -1,0 +1,151 @@
+type FeeUpdated @entity(immutable: true) {
+  id: Bytes!
+  newFeeBps: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FeesWithdrawn @entity(immutable: true) {
+  id: Bytes!
+  to: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OwnerUpdated @entity(immutable: true) {
+  id: Bytes!
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PlanCreated @entity(immutable: true) {
+  id: Bytes!
+  planId: Bytes! # bytes32
+  seller: Bytes! # address
+  price: BigInt! # uint256
+  duration: BigInt! # uint32
+  ipfsHash: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PlanStatusUpdated @entity(immutable: true) {
+  id: Bytes!
+  planId: Bytes! # bytes32
+  active: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PlanUpdated @entity(immutable: true) {
+  id: Bytes!
+  planId: Bytes! # bytes32
+  price: BigInt! # uint256
+  duration: BigInt! # uint32
+  ipfsHash: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Subscribed @entity(immutable: true) {
+  id: Bytes!
+  subscriber: Bytes! # address
+  seller: Bytes! # address
+  planId: Bytes! # bytes32
+  totalAmount: BigInt! # uint256
+  feeAmount: BigInt! # uint256
+  buyerData: String! # string
+  startTime: BigInt! # uint32
+  endTime: BigInt! # uint32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type GlobalConfig @entity(immutable: false) {
+  id: String!
+  owner: Bytes
+  feeBps: BigInt!
+  updatedAt: BigInt!
+  updatedBlock: BigInt!
+}
+
+type Seller @entity(immutable: false) {
+  id: Bytes!
+  planCount: Int!
+  activePlanCount: Int!
+  subscriptionCount: Int!
+  totalGrossRevenue: BigInt!
+  totalNetRevenue: BigInt!
+  totalFeeContributed: BigInt!
+  totalFeeWithdrawn: BigInt!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type Subscriber @entity(immutable: false) {
+  id: Bytes!
+  subscriptionCount: Int!
+  activeSubscriptionCount: Int!
+  totalSpent: BigInt!
+  totalFeesPaid: BigInt!
+  firstSeenAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type Plan @entity(immutable: false) {
+  id: Bytes!
+  seller: Seller!
+  price: BigInt!
+  duration: BigInt!
+  ipfsHash: String!
+  active: Boolean!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  subscriptionCount: Int!
+  totalGrossVolume: BigInt!
+  totalFeesCollected: BigInt!
+  lastSubscriptionAt: BigInt
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+}
+
+type SubscriptionState @entity(immutable: false) {
+  id: String!
+  subscriber: Subscriber!
+  seller: Seller!
+  plan: Plan!
+  status: SubscriptionStatus!
+  subscriptionCount: Int!
+  totalSpent: BigInt!
+  totalFeesPaid: BigInt!
+  firstStartTime: BigInt!
+  lastStartTime: BigInt!
+  lastEndTime: BigInt!
+  lastBuyerData: String!
+  firstSeenAt: BigInt!
+  updatedAt: BigInt!
+  lastTxHash: Bytes!
+}
+
+type DailyStats @entity(immutable: false) {
+  id: String!
+  dayStartTimestamp: BigInt!
+  plansCreated: Int!
+  subscriptionsCreated: Int!
+  totalGrossVolume: BigInt!
+  totalFeesCollected: BigInt!
+  totalFeeWithdrawals: BigInt!
+  updatedAt: BigInt!
+}

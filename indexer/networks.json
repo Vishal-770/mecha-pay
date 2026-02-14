@@ -1,0 +1,8 @@
+{
+  "arc-testnet": {
+    "SubscriptionGateway": {
+      "address": "0x2BC2f391fca4144f708eEa918d94348684Bdb544",
+      "startBlock": 33756576
+    }
+  }
+}

@@ -1,0 +1,37 @@
+# Dependency Directories
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build Directories
+dist/
+build/
+.next/
+out/
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE Specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# Hardhat specific
+*.pwn
+*.pwn.json
+ignition/deployments/
