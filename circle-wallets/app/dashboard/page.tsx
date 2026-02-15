@@ -125,12 +125,27 @@ export default function DashboardOverviewPage() {
   }, [wallet?.address]);
 
   const usdcBalance = useMemo(() => {
-    const token = wallet?.tokenBalances.find(
-      (entry) => entry.symbol.toUpperCase() === "USDC",
-    );
+    if (!wallet?.tokenBalances) return "0.00";
+    
+    // 1. Try exact match
+    let token = wallet.tokenBalances.find((t) => t.symbol.toUpperCase() === "USDC");
+    
+    // 2. Try fuzzy match (USDC.e, USD Coin, etc)
+    if (!token) {
+      token = wallet.tokenBalances.find((t) => 
+        t.symbol.toUpperCase().includes("USDC") || 
+        t.name.toUpperCase().includes("USD COIN")
+      );
+    }
+
+    // 3. If on Arc, the native token IS USDC
+    if (!token && wallet.blockchain === "ARC-TESTNET") {
+      token = wallet.tokenBalances.find(t => t.isNative);
+    }
+
     if (!token) return "0.00";
     return Number(token.amount).toFixed(2);
-  }, [wallet?.tokenBalances]);
+  }, [wallet?.tokenBalances, wallet?.blockchain]);
 
   const seller = analytics?.sellerMetrics;
   const buyer = analytics?.buyerMetrics;

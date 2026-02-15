@@ -51,8 +51,10 @@ type WalletInfo = {
 type DashboardContextValue = {
   sessionUserToken: string;
   wallet: WalletInfo | null;
+  allWallets: WalletInfo[];
   userCircleId: string | null;
   refreshWallets: () => Promise<void>;
+  selectWallet: (walletId: string) => void;
 };
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);
@@ -96,6 +98,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const { session, isReady, clearSession } = useCircleSDK();
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [userCircleId, setUserCircleId] = useState<string | null>(null);
+  const [allWallets, setAllWallets] = useState<WalletInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -124,17 +127,30 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         id?: string;
       };
 
-      const allWallets = walletJson.wallets ?? [];
-      const arcWallet =
-        allWallets.find((entry) => entry.blockchain === "ARC-TESTNET") ??
-        allWallets[0] ??
-        null;
-      setWallet(arcWallet);
+      const walletsList = walletJson.wallets ?? [];
+      setAllWallets(walletsList);
+
+      // Default selection logic: Prefer existing selection, then Arc, then first available
+      setWallet(prev => {
+        if (prev) {
+          const stillExists = walletsList.find(w => w.id === prev.id);
+          if (stillExists) return stillExists;
+        }
+        return walletsList.find((entry) => entry.blockchain === "ARC-TESTNET") ??
+               walletsList[0] ??
+               null;
+      });
+
       setUserCircleId(userJson.id ?? null);
     } finally {
       setLoading(false);
     }
   }, [session?.userToken]);
+
+  const selectWallet = useCallback((walletId: string) => {
+    const selected = allWallets.find(w => w.id === walletId);
+    if (selected) setWallet(selected);
+  }, [allWallets]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -155,10 +171,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     return {
       sessionUserToken: session.userToken,
       wallet,
+      allWallets,
       userCircleId,
       refreshWallets,
+      selectWallet,
     };
-  }, [session?.userToken, wallet, userCircleId, refreshWallets]);
+  }, [session?.userToken, wallet, allWallets, userCircleId, refreshWallets, selectWallet]);
 
   if (!isReady || !session || loading || !value) {
     return (
@@ -222,17 +240,31 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </nav>
 
             <div className="mt-auto space-y-4 pt-6 border-t border-border">
-              {wallet && (
-                <div className="p-4 bg-muted/50 rounded-2xl border border-border/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">ARC Testnet</span>
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              {allWallets.length > 0 && (
+                <div className="space-y-2">
+                  <p className="px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Blockchain Link</p>
+                  <div className="flex flex-col gap-1">
+                    {allWallets.map((w) => (
+                      <button
+                        key={w.id}
+                        onClick={() => selectWallet(w.id)}
+                        className={cn(
+                          "w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left",
+                          wallet?.id === w.id 
+                            ? "bg-primary/5 border-primary/20 text-primary ring-1 ring-primary/10" 
+                            : "bg-transparent border-transparent text-muted-foreground hover:bg-muted/50"
+                        )}
+                      >
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[10px] font-black uppercase tracking-widest truncate">{w.blockchain.replace("-", " ")}</span>
+                          <span className="text-[9px] font-mono opacity-60 truncate">{w.address}</span>
+                        </div>
+                        {wallet?.id === w.id && <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse ml-2 shrink-0" />}
+                      </button>
+                    ))}
                   </div>
-                  <p className="text-xs font-mono font-bold truncate text-sky-600">{wallet.address}</p>
                 </div>
               )}
-              
-             
             </div>
           </div>
         </aside>

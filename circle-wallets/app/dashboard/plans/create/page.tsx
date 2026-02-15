@@ -306,7 +306,7 @@ export default function CreatePlanPage() {
             <Button
               onClick={() => void handleSubmit()}
               disabled={loading || !planName || !planPrice}
-              className="group w-full h-14 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-[0.15em] text-[10px] transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-30 shadow-xl shadow-primary/10"
+              className="group w-full h-14 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-[0.15em] text-[10px] transition-all disabled:opacity-30 shadow-xl shadow-primary/10"
             >
               {loading ? "Initializing Deployment..." : "Launch Subscription Plan"}
               {!loading && <ArrowRight size={14} className="ml-2 group-hover:translate-x-1 transition-transform stroke-[3px]" />}

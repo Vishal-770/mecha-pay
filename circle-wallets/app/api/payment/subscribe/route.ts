@@ -1,0 +1,59 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getCircleClient } from "@/lib/circleClient";
+import { HIGH_FEE, SUBSCRIPTION_GATEWAY_ADDRESS } from "@/lib/subscription";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = (await req.json()) as {
+      userToken?: string;
+      walletId?: string;
+      planId?: string;
+      userId?: string;
+    };
+
+    const { userToken, walletId, planId, userId } = body;
+
+    if (!userToken || !walletId || !planId || !userId) {
+      return NextResponse.json(
+        { error: "userToken, walletId, planId, userId are required" },
+        { status: 400 },
+      );
+    }
+
+    if (!/^0x[a-fA-F0-9]{64}$/.test(planId)) {
+      return NextResponse.json(
+        { error: "planId must be bytes32 hex" },
+        { status: 400 },
+      );
+    }
+
+    // Construct buyerData as JSON containing userId
+    const buyerData = JSON.stringify({ userId });
+
+    const client = getCircleClient();
+    const response =
+      await client.createUserTransactionContractExecutionChallenge({
+        userToken,
+        walletId,
+        contractAddress: SUBSCRIPTION_GATEWAY_ADDRESS,
+        abiFunctionSignature: "subscribe(bytes32,string)",
+        abiParameters: [planId, buyerData],
+        fee: HIGH_FEE,
+      });
+
+    const challengeId = response.data?.challengeId;
+
+    if (!challengeId) {
+      return NextResponse.json(
+        { error: "No challengeId returned by Circle" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ challengeId });
+  } catch (err) {
+    console.error("[/api/payment/subscribe]", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

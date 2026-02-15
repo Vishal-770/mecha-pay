@@ -424,7 +424,7 @@ export default function AdminDashboardPage() {
             <button 
               onClick={() => void handleUpdateFee()}
               disabled={processing || !newFee}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-sm font-black text-primary-foreground shadow-xl shadow-primary/20 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 uppercase italic tracking-widest"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-sm font-black text-primary-foreground shadow-xl shadow-primary/20 hover:opacity-90 transition-all disabled:opacity-50 uppercase italic tracking-widest"
             >
               {processing ? "Broadcasting..." : "Update Global Fee"}
               {!processing && <ChevronRight size={18} />}
@@ -472,7 +472,7 @@ export default function AdminDashboardPage() {
             <button 
               onClick={() => void handleWithdraw()}
               disabled={processing || !withdrawAddress || !withdrawAmount}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-black text-white shadow-xl shadow-emerald-900/20 hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-50 uppercase italic tracking-widest"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-black text-white shadow-xl shadow-emerald-900/20 hover:bg-emerald-700 transition-all disabled:opacity-50 uppercase italic tracking-widest"
             >
               {processing ? "Confirming..." : "Initiate Withdrawal"}
               {!processing && <ChevronRight size={18} />}

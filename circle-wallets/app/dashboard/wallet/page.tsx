@@ -73,15 +73,33 @@ export default function WalletPage() {
   const [txError, setTxError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const usdcToken = useMemo(
-    () => wallet?.tokenBalances.find((t) => t.symbol.toUpperCase() === "USDC"),
-    [wallet?.tokenBalances],
-  );
+  const usdcToken = useMemo(() => {
+    if (!wallet?.tokenBalances) return undefined;
+    
+    // 1. Try exact match
+    let token = wallet.tokenBalances.find((t) => t.symbol.toUpperCase() === "USDC");
+    if (token) return token;
+
+    // 2. Try fuzzy match (USDC.e, USD Coin, etc)
+    token = wallet.tokenBalances.find((t) => 
+      t.symbol.toUpperCase().includes("USDC") || 
+      t.name.toUpperCase().includes("USD COIN")
+    );
+    if (token) return token;
+
+    // 3. If on Arc, the native token IS USDC
+    if (wallet.blockchain === "ARC-TESTNET") {
+      token = wallet.tokenBalances.find(t => t.isNative);
+      if (token) return token;
+    }
+
+    return undefined;
+  }, [wallet?.tokenBalances, wallet?.blockchain]);
 
   const nativeToken = useMemo(
     () =>
       wallet?.tokenBalances.find(
-        (t) => t.isNative || t.symbol.toUpperCase() === "ARC",
+        (t) => t.isNative || t.symbol.toUpperCase() === "ARC" || t.symbol.toUpperCase() === "ETH" || t.symbol.toUpperCase() === "MATIC"
       ),
     [wallet?.tokenBalances],
   );

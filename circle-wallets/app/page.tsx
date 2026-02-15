@@ -92,7 +92,7 @@ export default function LandingPage() {
           <button className="h-10 w-10 flex items-center justify-center rounded-xl border border-[#ffffff]/10 bg-[#ffffff]/5 text-[#a1a1aa] hover:text-[#ffffff] transition-all cursor-pointer">
             <Search className="h-4 w-4" />
           </button>
-          <Link href="/login" className="h-10 px-6 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-[11px] uppercase shadow-lg shadow-[#b6f09c]/20 transition-all hover:opacity-90 active:scale-95">
+          <Link href="/login" className="h-10 px-6 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-[11px] uppercase shadow-lg shadow-[#b6f09c]/20 transition-all hover:opacity-90">
             Connect Wallet <ArrowUpRight className="ml-2 h-4 w-4 stroke-[3px]" />
           </Link>
         </div>
@@ -137,7 +137,7 @@ export default function LandingPage() {
             animationStagger={0.1}
             easeType="elastic.out(1, 0.5)"
             transformStyles={transformStyles}
-            enableHover={true}
+            enableHover={false}
           />
         </div>
       </div>

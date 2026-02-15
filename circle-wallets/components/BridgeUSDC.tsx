@@ -382,7 +382,13 @@ const CCTP_CONFIG: Record<BridgeChain, { messenger: string; domain: number }> =
     },
   };
 
-export default function BridgeUSDC() {
+export default function BridgeUSDC({ 
+  isCompact = false, 
+  defaultDestChain = "Arc_Testnet" 
+}: { 
+  isCompact?: boolean; 
+  defaultDestChain?: BridgeChain;
+}) {
   const { user, authenticated, login, logout } = usePrivy();
   const { wallets } = useWallets();
   const [amount, setAmount] = useState("1.00");
@@ -398,8 +404,8 @@ export default function BridgeUSDC() {
   const isBridging = useRef(false);
 
   // Chain state
-  const [sourceKey, setSourceKey] = useState<BridgeChain>("Arc_Testnet");
-  const [destKey, setDestKey] = useState<BridgeChain>("Base_Sepolia");
+  const [sourceKey, setSourceKey] = useState<BridgeChain>("Ethereum_Sepolia");
+  const [destKey, setDestKey] = useState<BridgeChain>(defaultDestChain);
 
   const sourceChain = useMemo(
     () => SUPPORTED_CHAINS.find((c) => c.identifier === sourceKey)!,
@@ -864,16 +870,21 @@ export default function BridgeUSDC() {
   }, [amount, sourceBalance]);
 
   return (
-    <div className="relative w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className={cn(
+      "relative w-full",
+      !isCompact && "px-4 sm:px-6 lg:px-8 py-8 sm:py-12"
+    )}>
       <div
         className={cn(
-          "flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center transition-all duration-500",
+          "flex flex-col gap-8 transition-all duration-500",
+          !isCompact && "lg:flex-row lg:gap-12 items-start justify-center",
           !authenticated && "opacity-80 blur-[0.5px]",
         )}
       >
-        {/* Left Side: Setup & Warning */}
-        <div className="w-full lg:max-w-sm space-y-6 order-2 lg:order-1">
-          <div className="space-y-4">
+        {/* Left Side: Setup & Warning (Hidden in Compact mode) */}
+        {!isCompact && (
+          <div className="w-full lg:max-w-sm space-y-6 order-2 lg:order-1">
+            <div className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="h-6 w-6 rounded-md  flex items-center justify-center text-primary">
                 <CheckCircle2 className="h-3.5 w-3.5" />
@@ -976,11 +987,18 @@ export default function BridgeUSDC() {
               </Button>
             </div>
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Right Side: Bridge Card */}
-        <div className="w-full max-w-md order-1 lg:order-2">
-          <Card className="border-border bg-background">
+        <div className={cn(
+          "w-full order-1 lg:order-2",
+          !isCompact && "max-w-md"
+        )}>
+          <Card className={cn(
+            "border-border bg-background",
+            isCompact && "border-none shadow-none"
+          )}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="space-y-1">
                 <CardTitle className="text-2xl font-bold text-foreground">

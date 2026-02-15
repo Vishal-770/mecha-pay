@@ -7,6 +7,37 @@ import { formatUnits } from "ethers";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { useCircleSDK } from "@/context/CircleSDKContext";
 
+import { 
+  ArrowLeft, 
+  ExternalLink, 
+  Globe, 
+  Settings, 
+  Users, 
+  TrendingUp, 
+  DollarSign, 
+  ShieldCheck,
+  ChevronRight,
+  Activity,
+  Calendar,
+  CheckCircle2,
+  Lock,
+  Wallet,
+  BadgeCheck
+} from "lucide-react";
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+
 type Feature = { title: string; description: string };
 
 type PlanMetadata = {
@@ -91,6 +122,11 @@ function formatCountdown(totalSeconds: number) {
   const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   return `${days}d ${hours}h ${minutes}m`;
+}
+
+function truncateAddress(address: string) {
+  if (!address) return "";
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
 function daysSince(timestamp: string | null) {
@@ -310,311 +346,340 @@ export default function MarketplaceDetailPage() {
   const lastSubscriptionDays = daysSince(plan.lastSubscriptionAt);
 
   return (
-    <section className="space-y-6">
-      <Link
-        href="/dashboard/marketplace"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
-      >
-        ← Back to Marketplace
-      </Link>
+    <section className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-400 pb-20">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-2">
+          <Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 h-8 text-muted-foreground hover:text-foreground">
+            <Link href="/dashboard/marketplace" className="flex items-center gap-2">
+              <ArrowLeft size={16} />
+              Back to Marketplace
+            </Link>
+          </Button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+            <Badge variant={plan.active ? "secondary" : "outline"} className={plan.active ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10" : ""}>
+              {plan.active ? "Active" : "Inactive"}
+            </Badge>
+          </div>
+        </div>
+      </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-linear-to-br from-white via-sky-50 to-cyan-50 p-6 shadow-sm overflow-hidden relative">
-        <div className="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-cyan-400 via-sky-500 to-indigo-500" />
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Main Content: Analytics & Registry */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Quick Stats Grid */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="border-border shadow-none bg-muted/30">
+              <CardContent className="p-4">
+                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total Subs</p>
+                 <p className="text-xl font-bold tracking-tight mt-1">{metrics.totalBuyers}</p>
+                 <p className="text-[9px] font-medium text-emerald-600 uppercase mt-0.5">{metrics.activeBuyerCount} Active</p>
+              </CardContent>
+            </Card>
+            <Card className="border-border shadow-none bg-muted/30">
+              <CardContent className="p-4">
+                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Gross (USDC)</p>
+                 <p className="text-xl font-bold tracking-tight mt-1">{Number(formatUnits(plan.totalGrossVolume, 6)).toFixed(1)}</p>
+                 <p className="text-[9px] font-medium text-muted-foreground uppercase mt-0.5">Plan Lifetime</p>
+              </CardContent>
+            </Card>
+            <Card className="border-border shadow-none bg-muted/30">
+              <CardContent className="p-4">
+                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Net (USDC)</p>
+                 <p className="text-xl font-bold tracking-tight mt-1">{Number(formatUnits(analytics?.netEarnings ?? "0", 6)).toFixed(1)}</p>
+                 <p className="text-[9px] font-medium text-primary uppercase mt-0.5">Post-Fee</p>
+              </CardContent>
+            </Card>
+            <Card className="border-border shadow-none bg-muted/30">
+              <CardContent className="p-4">
+                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Retention</p>
+                 <p className="text-xl font-bold tracking-tight mt-1">{analytics?.repeatBuyerRate.toFixed(1)}%</p>
+                 <p className="text-[9px] font-medium text-muted-foreground uppercase mt-0.5">Renewal Rate</p>
+              </CardContent>
+            </Card>
+          </div>
 
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-medium border ${
-                  plan.active
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                    : "bg-slate-100 text-slate-500 border-slate-200"
-                }`}
-              >
-                {plan.active ? "Active" : "Inactive"}
-              </span>
-            </div>
+          {/* Deep Analytics Stack */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {analytics && (
+              <Card className="border-border shadow-none">
+                <CardHeader className="p-6 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                      <TrendingUp size={16} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold">Retention Engine</CardTitle>
+                      <CardDescription className="text-[10px] uppercase font-bold tracking-widest">Subscriber Lifecycle</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 pt-0 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border bg-muted/10 p-3">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase">ARPU</p>
+                      <p className="text-sm font-bold mt-1">{Number(formatUnits(analytics.avgRevenuePerSubscriber, 6)).toFixed(1)} USDC</p>
+                    </div>
+                    <div className="rounded-lg border bg-muted/10 p-3">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase">Fees Paid</p>
+                      <p className="text-sm font-bold mt-1">{Number(formatUnits(analytics.feeCollected, 6)).toFixed(2)} USDC</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                     <Users size={14} className="text-primary" />
+                     <span className="text-xs font-bold">{analytics.repeatBuyerCount} members have settled multiple times.</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-            {brand && (
-              <div className="mt-1.5 flex items-center gap-2 text-sm text-slate-500">
-                <span className="font-medium text-slate-700">{brand.name}</span>
-                {brand.website && (
-                  <>
-                    <span>·</span>
-                    <a
-                      href={brand.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sky-600 hover:underline"
+            {analytics && (
+              <Card className="border-border shadow-none">
+                <CardHeader className="p-6 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-amber-500/10 p-2 text-amber-600">
+                      <Activity size={16} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold">Momemtum Log</CardTitle>
+                      <CardDescription className="text-[10px] uppercase font-bold tracking-widest">Velocity Checks</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 pt-0 space-y-3">
+                   <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/10">
+                      <span className="text-xs font-semibold">Past 7 Days</span>
+                      <div className="text-right">
+                         <p className="text-xs font-bold">{analytics.windows.sevenDays.subscriptionCount} Subs</p>
+                         <p className="text-[10px] text-muted-foreground uppercase">{Number(formatUnits(analytics.windows.sevenDays.grossVolume, 6)).toFixed(1)} USDC</p>
+                      </div>
+                   </div>
+                   <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/10">
+                      <span className="text-xs font-semibold">Past 30 Days</span>
+                      <div className="text-right">
+                         <p className="text-xs font-bold">{analytics.windows.thirtyDays.subscriptionCount} Subs</p>
+                         <p className="text-[10px] text-muted-foreground uppercase">{Number(formatUnits(analytics.windows.thirtyDays.grossVolume, 6)).toFixed(1)} USDC</p>
+                      </div>
+                   </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Subscriber Registry */}
+          <Card className="border-border shadow-none">
+            <CardHeader className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                     <Users size={18} />
+                   </div>
+                   <div>
+                     <CardTitle className="text-base font-bold">Protocol Registry</CardTitle>
+                     <CardDescription className="text-[11px] font-medium uppercase tracking-widest mt-1">
+                       {isOwnerView ? "Privileged Creator View" : "Public Registry"}
+                     </CardDescription>
+                   </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {buyers.length === 0 ? (
+                <div className="p-12 text-center text-xs text-muted-foreground italic">No on-chain history for this protocol.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border">
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-6 h-10">Subscriber</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-6 h-10">Status</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-6 h-10 text-right">Volume</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {buyers.map((buyer) => (
+                      <TableRow key={buyer.id} className="hover:bg-muted/30 border-b border-border transition-colors">
+                        <TableCell className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                             <div className="h-6 w-6 rounded-full bg-primary/5 border border-primary/10 flex items-center justify-center text-primary text-[10px] font-bold">
+                               {buyer.subscriber.slice(2, 4).toUpperCase()}
+                             </div>
+                             <div className="flex flex-col">
+                               <span className="font-mono text-xs font-medium">{buyer.subscriber}</span>
+                               <span className="text-[9px] text-muted-foreground">{buyer.status === "ACTIVE" ? `${formatCountdown(buyer.remainingSeconds)} left` : "Registration Expired"}</span>
+                             </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <Badge variant={buyer.status === "ACTIVE" ? "secondary" : "outline"} className={buyer.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-600 border-none" : "opacity-40"}>
+                            {buyer.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="px-6 py-4 text-right">
+                           <p className="text-xs font-bold leading-none">{formatUnits(buyer.totalSpent, 6)} <span className="text-[10px] text-muted-foreground font-normal">USDC</span></p>
+                           <p className="text-[10px] text-muted-foreground mt-1 font-medium italic">{buyer.subscriptionCount} cycles</p>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar: Action Hub & Metadata */}
+        <div className="space-y-6">
+          {/* Action Card */}
+          <Card className="border-border bg-card shadow-sm overflow-hidden border-t-4 border-t-primary">
+            <CardContent className="p-6 space-y-6">
+               <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Settlement Rate</p>
+                  <div className="flex items-baseline gap-2">
+                     <span className="text-3xl font-bold tracking-tight">{formatUnits(plan.price, 6)}</span>
+                     <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">USDC</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Billed every {humanDuration(plan.duration)}</p>
+               </div>
+
+               <Separator />
+
+               <div className="space-y-3">
+                  {!isOwnerView && (
+                    <>
+                      <Button 
+                        onClick={() => void handleBuy()}
+                        disabled={submitting || blocked || !plan.active || !wallet}
+                        className="w-full font-bold h-11"
+                      >
+                        {submitting ? (
+                          "Processing..."
+                        ) : blocked ? (
+                          `Active Subscription`
+                        ) : !wallet ? (
+                          "Connect Wallet"
+                        ) : (
+                          "Subscribe Now"
+                        )}
+                      </Button>
+                      {blocked && (
+                        <div className="flex flex-col items-center gap-1">
+                           <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Expiry Reached In</p>
+                           <p className="text-xs font-bold text-primary">{formatCountdown(eligibility!.remainingSeconds)}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {isOwnerView && (
+                    <div className="space-y-4">
+                       <Badge variant="outline" className="w-full justify-center h-10 py-0 font-bold uppercase tracking-widest border-dashed border-primary/40 text-primary">
+                         Protocol Owner
+                       </Badge>
+                       <p className="text-[10px] text-center text-muted-foreground leading-relaxed italic">
+                         Registry analytics are visible to you. Users see a masked version of the subscriber list.
+                       </p>
+                    </div>
+                  )}
+                  {error && (
+                    <div className="bg-destructive/10 p-3 rounded-lg border border-destructive/20">
+                      <p className="text-[11px] text-center font-bold text-destructive uppercase tracking-widest">{error}</p>
+                    </div>
+                  )}
+                  {successMsg && (
+                     <div className="bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+                       <p className="text-[11px] text-center font-bold text-emerald-600 uppercase tracking-widest">{successMsg}</p>
+                     </div>
+                  )}
+               </div>
+            </CardContent>
+          </Card>
+
+          {/* Provider Card */}
+          <Card className="border-border shadow-none">
+            <CardHeader className="p-6 pb-4">
+               <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-sky-500/10 p-2 text-sky-600">
+                    <Globe size={18} />
+                  </div>
+                  <CardTitle className="text-base font-bold">Brand Hub</CardTitle>
+               </div>
+            </CardHeader>
+            <CardContent className="p-6 pt-0 space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Provider</label>
+                  <p className="text-sm font-semibold mt-0.5">{brand?.name || "Verified Merchant"}</p>
+                </div>
+                {brand?.website && (
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Origin</label>
+                    <a 
+                      href={brand.website} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="flex items-center gap-2 text-primary hover:underline text-sm font-medium mt-0.5"
                     >
                       {brand.website.replace(/^https?:\/\//, "")}
+                      <ExternalLink size={12} />
                     </a>
-                  </>
+                  </div>
                 )}
-              </div>
-            )}
-
-            <p className="mt-2 text-xs text-slate-400 font-mono">
-              Seller: {plan.seller.id}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Last subscription:{" "}
-              {lastSubscriptionDays == null
-                ? "No activity"
-                : `${lastSubscriptionDays} day(s) ago`}
-            </p>
-          </div>
-
-          <div className="shrink-0 flex flex-col items-end gap-2">
-            <div className="text-right">
-              <p className="text-2xl font-bold text-slate-900">
-                {formatUnits(plan.price, 6)}{" "}
-                <span className="text-base font-normal text-slate-500">
-                  USDC
-                </span>
-              </p>
-              <p className="text-xs text-slate-400">
-                per {humanDuration(plan.duration)}
-              </p>
-            </div>
-
-            {!isOwnerView &&
-              (successMsg ? (
-                <p className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2 text-sm text-emerald-700">
-                  {successMsg}
-                </p>
-              ) : (
-                <button
-                  onClick={() => void handleBuy()}
-                  disabled={submitting || blocked || !plan.active || !wallet}
-                  className="rounded-xl bg-sky-900 px-6 py-2.5 text-sm font-semibold text-white shadow
-                    transition-colors hover:bg-sky-800 active:bg-sky-950
-                    disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                >
-                  {submitting
-                    ? "Processing..."
-                    : blocked
-                      ? `Already Subscribed (${formatCountdown(eligibility!.remainingSeconds)} left)`
-                      : !wallet
-                        ? "Connect Wallet"
-                        : "Buy Plan"}
-                </button>
-              ))}
-            {isOwnerView && (
-              <span className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                Creator View
-              </span>
-            )}
-          </div>
-        </div>
-
-        {error && (
-          <p className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
-            {error}
-          </p>
-        )}
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs text-slate-500">Total Subscribers</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">
-            {metrics.totalBuyers}
-          </p>
-        </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs text-slate-500">Active Subscribers</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-700">
-            {metrics.activeBuyerCount}
-          </p>
-        </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs text-slate-500">Gross Revenue</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">
-            {Number(formatUnits(plan.totalGrossVolume, 6)).toFixed(2)} USDC
-          </p>
-        </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs text-slate-500">Net Earnings</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">
-            {Number(formatUnits(analytics?.netEarnings ?? "0", 6)).toFixed(2)}{" "}
-            USDC
-          </p>
-        </article>
-      </div>
-
-      {analytics && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900">
-              Plan Analysis
-            </h3>
-            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">Repeat Buyers</p>
-                <p className="font-semibold text-slate-900">
-                  {analytics.repeatBuyerCount} (
-                  {analytics.repeatBuyerRate.toFixed(1)}%)
-                </p>
-              </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">Active Rate</p>
-                <p className="font-semibold text-slate-900">
-                  {analytics.activeRate.toFixed(1)}%
-                </p>
-              </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">
-                  Avg Revenue / Subscriber
-                </p>
-                <p className="font-semibold text-slate-900">
-                  {Number(
-                    formatUnits(analytics.avgRevenuePerSubscriber, 6),
-                  ).toFixed(2)}{" "}
-                  USDC
-                </p>
-              </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">Total Fees</p>
-                <p className="font-semibold text-slate-900">
-                  {Number(formatUnits(analytics.feeCollected, 6)).toFixed(2)}{" "}
-                  USDC
-                </p>
-              </div>
-            </div>
-          </article>
-
-          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900">Momentum</h3>
-            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl border border-slate-200 p-3">
-                <p className="text-xs text-slate-500">Last 7 Days Subs</p>
-                <p className="font-semibold text-slate-900">
-                  {analytics.windows.sevenDays.subscriptionCount}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {Number(
-                    formatUnits(analytics.windows.sevenDays.grossVolume, 6),
-                  ).toFixed(2)}{" "}
-                  USDC
-                </p>
-              </div>
-              <div className="rounded-xl border border-slate-200 p-3">
-                <p className="text-xs text-slate-500">Last 30 Days Subs</p>
-                <p className="font-semibold text-slate-900">
-                  {analytics.windows.thirtyDays.subscriptionCount}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {Number(
-                    formatUnits(analytics.windows.thirtyDays.grossVolume, 6),
-                  ).toFixed(2)}{" "}
-                  USDC
-                </p>
-              </div>
-              <div className="rounded-xl border border-slate-200 p-3 col-span-2">
-                <p className="text-xs text-slate-500">30 Day Average Ticket</p>
-                <p className="font-semibold text-slate-900">
-                  {Number(
-                    formatUnits(analytics.windows.thirtyDays.averageTicket, 6),
-                  ).toFixed(2)}{" "}
-                  USDC
-                </p>
-              </div>
-            </div>
-          </article>
-        </div>
-      )}
-
-      {features.length > 0 && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-base font-semibold text-slate-900 mb-4">
-            Metadata
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {features.map((feature, i) => (
-              <div
-                key={i}
-                className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3.5"
-              >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700 text-xs font-bold">
-                  ✓
-                </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {feature.title}
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">
-                    {feature.description}
-                  </p>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Last Activity</label>
+                  <p className="text-sm font-semibold mt-0.5">{lastSubscriptionDays == null ? "No history" : `${lastSubscriptionDays} day(s) ago`}</p>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+              <Separator />
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border border-border">
+                <ShieldCheck size={14} className="text-emerald-500" />
+                <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground italic truncate">
+                   Syncing: {truncateAddress(plan.seller.id)}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-slate-900">
-            Subscribers
-          </h3>
-          <span className="text-xs text-slate-400">
-            {isOwnerView
-              ? "Creator view: full addresses"
-              : "Public view: masked addresses"}
-          </span>
-        </div>
+          {/* Features Card */}
+          {features.length > 0 && (
+            <Card className="border-border shadow-none">
+              <CardHeader className="p-6 pb-4">
+                 <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-600">
+                      <BadgeCheck size={18} />
+                    </div>
+                    <CardTitle className="text-base font-bold">Plan Perks</CardTitle>
+                 </div>
+              </CardHeader>
+              <CardContent className="p-6 pt-0">
+                <div className="space-y-3">
+                  {features.map((feature, i) => (
+                    <div key={i} className="flex gap-3 p-3 rounded-lg bg-muted/10 border border-border">
+                      <CheckCircle2 size={12} className="text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold leading-none">{feature.title}</p>
+                        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{feature.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {buyers.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-400">No subscribers yet.</p>
-        ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wide">
-                  <th className="px-2 py-2">Subscriber</th>
-                  <th className="px-2 py-2">Status</th>
-                  <th className="px-2 py-2">Remaining</th>
-                  <th className="px-2 py-2">Purchases</th>
-                  <th className="px-2 py-2">Spent</th>
-                </tr>
-              </thead>
-              <tbody>
-                {buyers.map((buyer) => (
-                  <tr
-                    key={buyer.id}
-                    className="border-b border-slate-100 text-slate-700 hover:bg-slate-50"
-                  >
-                    <td className="px-2 py-3 font-mono text-xs">
-                      {buyer.subscriber}
-                    </td>
-                    <td className="px-2 py-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          buyer.status === "ACTIVE"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-slate-100 text-slate-500"
-                        }`}
-                      >
-                        {buyer.status}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3 text-xs">
-                      {buyer.status === "ACTIVE"
-                        ? formatCountdown(buyer.remainingSeconds)
-                        : "—"}
-                    </td>
-                    <td className="px-2 py-3">{buyer.subscriptionCount}</td>
-                    <td className="px-2 py-3 text-xs">
-                      {formatUnits(buyer.totalSpent, 6)} USDC
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          {/* Support Actions */}
+          <Card className="border-border bg-muted/10">
+            <CardContent className="p-6 space-y-3">
+              <Button variant="outline" className="w-full justify-between h-9 text-xs font-bold" size="sm">
+                Provider Support
+                <ChevronRight size={14} className="opacity-40" />
+              </Button>
+              <Button variant="outline" className="w-full justify-between h-9 text-xs font-bold" size="sm">
+                On-chain Explorer
+                <ExternalLink size={14} className="opacity-40" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </section>
   );

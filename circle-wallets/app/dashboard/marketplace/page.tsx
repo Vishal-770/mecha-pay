@@ -4,7 +4,8 @@ import Link from "next/link";
 import { formatUnits } from "ethers";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Search, ArrowRight, Activity, Users, DollarSign } from "lucide-react";
+import { Search, ArrowRight, Activity, Users, DollarSign, CheckCircle2 } from "lucide-react";
+import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +66,7 @@ const CompactHeader = ({ title, subtitle }: { title: string; subtitle: string })
   </div>
 );
 
-function ProtocolCard({ plan }: { plan: PlanRecord }) {
+function ProtocolCard({ plan, isSubscribed }: { plan: PlanRecord; isSubscribed?: boolean }) {
   const title = plan.metadata?.name ?? `Plan ${plan.planId.slice(0, 10)}`;
   const brand = plan.metadata?.brand;
 
@@ -120,12 +121,19 @@ function ProtocolCard({ plan }: { plan: PlanRecord }) {
             </p>
           </div>
 
-          <Button asChild className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center transition-all hover:scale-[1.02] active:scale-95 group/btn border-none">
-            <Link href={`/dashboard/marketplace/${plan.planId}`}>
-              Inspect Gateway
-              <ArrowRight size={14} className="ml-2 group-hover/btn:translate-x-1 transition-transform stroke-[3px]" />
-            </Link>
-          </Button>
+          {isSubscribed ? (
+            <Button disabled className="w-full h-12 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center opacity-100 cursor-default">
+              <CheckCircle2 size={14} className="mr-2" />
+              Already Subscribed
+            </Button>
+          ) : (
+            <Button asChild className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center transition-all group/btn border-none">
+              <Link href={`/dashboard/marketplace/${plan.planId}`}>
+                Inspect Gateway
+                <ArrowRight size={14} className="ml-2 group-hover/btn:translate-x-1 transition-transform stroke-[3px]" />
+              </Link>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -133,11 +141,29 @@ function ProtocolCard({ plan }: { plan: PlanRecord }) {
 }
 
 export default function MarketplacePage() {
+  const { wallet } = useDashboardContext();
   const [plans, setPlans] = useState<PlanRecord[]>([]);
+  const [userSubs, setUserSubs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("latest");
+
+  // Fetch subscriptions
+  useEffect(() => {
+    const fetchUserSubs = async () => {
+      if (!wallet?.address) return;
+      try {
+        const res = await fetch(`/api/subscription/list?subscriber=${wallet.address}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setUserSubs(data.subscriptions?.filter((s:any) => s.active).map((s:any) => s.planId) || []);
+      } catch (err) {
+        console.error("Failed to load user subscriptions", err);
+      }
+    };
+    fetchUserSubs();
+  }, [wallet?.address]);
 
   useEffect(() => {
     let mounted = true;
@@ -260,7 +286,11 @@ export default function MarketplacePage() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {visiblePlans.map((plan) => (
-            <ProtocolCard key={plan.planId} plan={plan} />
+            <ProtocolCard 
+              key={plan.planId} 
+              plan={plan} 
+              isSubscribed={userSubs.includes(plan.planId)}
+            />
           ))}
         </div>
       )}

@@ -17,8 +17,15 @@ import {
   Settings,
   AlertTriangle,
   Activity,
-  ChevronRight
+  ChevronRight,
+  RefreshCcw
 } from "lucide-react";
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 
 type NotificationEvent = {
   id: string;
@@ -147,222 +154,227 @@ export default function SubscriptionDetailPage() {
   const isActive = data.status === "ACTIVE";
 
   return (
-    <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+    <section className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-400 pb-20">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-1">
-          <Link
-            href="/dashboard/subscriptions"
-            className="group inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-sky-600 transition-colors"
-          >
-            <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-            My Subscriptions
-          </Link>
+        <div className="space-y-2">
+          <Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 h-8 text-muted-foreground hover:text-foreground">
+            <Link href="/dashboard/subscriptions" className="flex items-center gap-2">
+              <ArrowLeft size={16} />
+              Back to Subscriptions
+            </Link>
+          </Button>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">{title}</h1>
-            <span className={`rounded-full px-3 py-1 text-xs font-black tracking-widest border ${
-              isActive ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-slate-100 text-slate-400 border-slate-200"
-            }`}>
+            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+            <Badge variant={isActive ? "secondary" : "outline"} className={isActive ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10" : ""}>
               {data.status}
-            </span>
+            </Badge>
           </div>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Seller: {truncateAddress(data.seller.id)}
-          </p>
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-widest">
+            <span>Provider:</span>
+            <span className="font-mono">{truncateAddress(data.seller.id)}</span>
+          </div>
         </div>
 
         <div className="flex gap-2">
-           <Link
-            href={`/dashboard/marketplace/${data.plan.id}`}
-            className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
-          >
-            Marketplace Listing
-          </Link>
+           <Button variant="outline" size="sm" asChild>
+             <Link href={`/dashboard/marketplace/${data.plan.id}`} className="flex items-center gap-2">
+               Marketplace Listing
+               <ExternalLink size={14} />
+             </Link>
+           </Button>
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Info */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-6">
           {/* Hero Card */}
-          <article className="relative overflow-hidden rounded-[2.5rem] bg-indigo-900 p-8 text-white shadow-2xl shadow-indigo-900/20">
-            {/* Background Gradient */}
-            <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl" />
-            
-            <div className="relative z-10 grid gap-8 md:grid-cols-2">
-              <div className="space-y-6">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-200/60">Subscription Status</p>
-                  <div className="mt-4 flex items-center gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/10 backdrop-blur-md border border-white/10">
-                      <Clock size={32} className={isActive ? "text-sky-300" : "text-slate-400"} />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-black">
-                        {isActive ? formatCountdown(data.remainingSeconds) : "EXPIRED"}
-                      </p>
-                      <p className="text-xs font-bold text-indigo-200/80">Remaining access time</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest">
-                    <span className="text-indigo-200/60">Usage Period</span>
-                    <span>{Math.round((data.remainingSeconds / Number(data.plan.duration)) * 100)}%</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                    <div 
-                      className="h-full bg-linear-to-r from-sky-400 to-indigo-400 transition-all duration-1000"
-                      style={{ width: `${Math.min((data.remainingSeconds / Number(data.plan.duration)) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-3xl bg-white/5 p-5 border border-white/5">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200/60">Total Spent</p>
-                  <p className="mt-2 text-xl font-black">{formatUnits(data.totalSpent, 6)}</p>
-                  <p className="text-[10px] font-bold text-sky-300">USDC Total</p>
-                </div>
-                <div className="rounded-3xl bg-white/5 p-5 border border-white/5">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200/60">Renewals</p>
-                  <p className="mt-2 text-xl font-black">{data.subscriptionCount}</p>
-                  <p className="text-[10px] font-bold text-indigo-200/60">Cycles active</p>
-                </div>
-                <div className="col-span-2 rounded-3xl bg-linear-to-br from-sky-500/20 to-indigo-500/20 p-5 border border-white/10">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200/60">Last Subscription Data</p>
-                  <div className="mt-2 truncate font-mono text-[11px] font-bold text-sky-200 bg-indigo-950/50 px-3 py-2 rounded-xl">
-                    {data.lastBuyerData || "No data provided"}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          {/* Plan Metadata Content */}
-          <div className="grid gap-6 md:grid-cols-2">
-            <article className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="rounded-2xl bg-sky-50 p-2.5 text-sky-600">
-                  <Globe size={20} />
-                </div>
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">Brand Identity</h3>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Provider Name</label>
-                  <p className="text-base font-bold text-slate-900 mt-1">{data.metadata?.brand?.name || "Premium Provider"}</p>
-                </div>
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Official Website</label>
-                  <a 
-                    href={data.metadata?.brand?.website} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="flex items-center gap-2 text-sky-600 hover:text-sky-700 transition-colors font-bold mt-1"
-                  >
-                    {data.metadata?.brand?.website || "N/A"}
-                    <ExternalLink size={14} />
-                  </a>
-                </div>
-                <div className="pt-4 border-t border-slate-50">
-                  <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                    <ShieldCheck size={16} className="text-emerald-500" />
-                    <p className="text-xs font-bold text-slate-600">Secure USDC-Native Billing</p>
-                  </div>
-                </div>
-              </div>
-            </article>
-
-            <article className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="rounded-2xl bg-amber-50 p-2.5 text-amber-600">
-                  <Settings size={20} />
-                </div>
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">Service Features</h3>
-              </div>
-
-              <div className="space-y-4">
-                {data.metadata?.features?.map((f, i) => (
-                  <div key={i} className="flex gap-4 p-4 rounded-2xl bg-slate-50/50 border border-slate-100 hover:bg-slate-50 transition-colors">
-                    <div className="mt-0.5 rounded-full bg-white p-1 shadow-xs ring-1 ring-slate-200">
-                      <CheckCircle2 size={12} className="text-sky-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-black text-slate-900">{f.title}</p>
-                      <p className="text-[11px] font-medium text-slate-500 mt-0.5 leading-relaxed">{f.description}</p>
-                    </div>
-                  </div>
-                ))}
-                {(!data.metadata?.features || data.metadata.features.length === 0) && (
-                  <p className="text-xs text-slate-400 italic py-8 text-center opacity-60">No features specified by seller.</p>
-                )}
-              </div>
-            </article>
-          </div>
-        </div>
-
-        {/* Sidebar: Activity & Support */}
-        <aside className="space-y-8">
-          <div className="rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-sm h-fit">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="rounded-2xl bg-indigo-50 p-2.5 text-indigo-600 font-bold">
-                <Bell size={20} />
-              </div>
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">Plan Activity</h2>
-            </div>
-
-            <div className="space-y-6">
-              {notifications.length === 0 ? (
-                <div className="py-12 text-center">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest italic opacity-40">No recent updates</p>
-                </div>
-              ) : (
-                notifications.map((notif) => (
-                  <div key={notif.id} className="relative pl-6 pb-6 border-l-2 border-slate-100 last:pb-0 last:border-l-transparent">
-                    <div className={`absolute -left-1.5 top-0 h-3 w-3 rounded-full ${notif.type === "STATUS_CHANGE" ? "bg-amber-400" : "bg-sky-400"}`} />
-                    <div className="space-y-2">
-                       <p className="text-[11px] font-bold text-slate-400 leading-none">
-                        {timeAgo(notif.blockTimestamp)}
-                      </p>
-                      <p className="text-xs font-black text-slate-800 leading-relaxed">
-                        {notif.type === "STATUS_CHANGE" 
-                          ? `Seller toggled plan to ${notif.active ? "ACTIVE" : "INACTIVE"}`
-                          : "Seller updated plan pricing or visual details"}
-                      </p>
-                      <div className="flex gap-2">
-                         <span className={`rounded-lg px-2 py-1 text-[10px] font-black ${
-                           notif.type === "STATUS_CHANGE" ? "bg-amber-50 text-amber-600" : "bg-sky-50 text-sky-600"
-                         }`}>
-                           {notif.type === "STATUS_CHANGE" ? "Network State" : "Data Update"}
-                         </span>
+          <Card className="border-border bg-card shadow-sm overflow-hidden">
+            <CardContent className="p-6">
+              <div className="grid gap-8 md:grid-cols-2">
+                <div className="space-y-6">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Access State</span>
+                    <div className="mt-4 flex items-center gap-4">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-muted border border-border">
+                        <Clock size={28} className={isActive ? "text-primary" : "text-muted-foreground"} />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-bold tracking-tight">
+                          {isActive ? formatCountdown(data.remainingSeconds) : "EXPIRED"}
+                        </p>
+                        <p className="text-xs font-medium text-muted-foreground">Remaining access time</p>
                       </div>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
 
-          <article className="rounded-[2rem] bg-linear-to-br from-indigo-50 to-white p-8 border border-slate-200">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Subscriber Support</h3>
-            <p className="mt-4 text-sm font-bold text-slate-700 leading-relaxed">
-              If you notice unannounced changes to the plan, please contact the provider directly.
-            </p>
-            <div className="mt-6 space-y-3">
-              <button className="flex w-full items-center justify-between rounded-2xl bg-white p-4 text-xs font-black text-slate-900 shadow-sm border border-slate-100 hover:bg-slate-50 transition-all group">
-                Provider Site
-                <ChevronRight size={14} className="text-slate-300 group-hover:text-sky-600 group-hover:translate-x-0.5 transition-all" />
-              </button>
-              <button className="flex w-full items-center justify-between rounded-2xl bg-white p-4 text-xs font-black text-slate-900 shadow-sm border border-slate-100 hover:bg-slate-50 transition-all group">
-                On-chain Receipt
-                <ChevronRight size={14} className="text-slate-300 group-hover:text-sky-600 group-hover:translate-x-0.5 transition-all" />
-              </button>
-            </div>
-          </article>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest">
+                      <span className="text-muted-foreground">Usage Period</span>
+                      <span>{Math.round((data.remainingSeconds / Number(data.plan.duration)) * 100)}%</span>
+                    </div>
+                    <Progress 
+                      value={Math.min((data.remainingSeconds / Number(data.plan.duration)) * 100, 100)} 
+                      className="h-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-muted/50 p-4 border border-border/50">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Settled</span>
+                    <p className="mt-1 text-xl font-bold tracking-tight">{formatUnits(data.totalSpent, 6)}</p>
+                    <p className="text-[10px] font-medium text-primary uppercase">USDC</p>
+                  </div>
+                  <div className="rounded-xl bg-muted/50 p-4 border border-border/50">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Renewals</span>
+                    <p className="mt-1 text-xl font-bold tracking-tight">{data.subscriptionCount}</p>
+                    <p className="text-[10px] font-medium text-muted-foreground">Total Cycles</p>
+                  </div>
+                  <div className="col-span-2 rounded-xl bg-muted p-4 border border-border">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Vault Manifest Payload</span>
+                    <div className="mt-2 truncate font-mono text-[11px] font-medium text-foreground bg-background border px-3 py-2 rounded-lg">
+                      {data.lastBuyerData || "No data provided"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Plan Metadata Content */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="border-border shadow-none">
+              <CardHeader className="p-6">
+                 <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                      <Globe size={18} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold">Brand Hub</CardTitle>
+                      <CardDescription className="text-[10px] uppercase font-bold tracking-widest">Seller Identity</CardDescription>
+                    </div>
+                 </div>
+              </CardHeader>
+              <CardContent className="p-6 pt-0 space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Provider</label>
+                    <p className="text-sm font-semibold mt-0.5">{data.metadata?.brand?.name || "Verified Merchant"}</p>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Checkout Origin</label>
+                    <a 
+                      href={data.metadata?.brand?.website} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="flex items-center gap-2 text-primary hover:underline text-sm font-medium mt-0.5"
+                    >
+                      {data.metadata?.brand?.website || "N/A"}
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border border-border">
+                  <ShieldCheck size={14} className="text-emerald-500" />
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground italic">Settling on Arc Testnet</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border shadow-none">
+              <CardHeader className="p-6">
+                 <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                      <Settings size={18} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold">Service Perks</CardTitle>
+                      <CardDescription className="text-[10px] uppercase font-bold tracking-widest">Included Benefits</CardDescription>
+                    </div>
+                 </div>
+              </CardHeader>
+              <CardContent className="p-6 pt-0">
+                <div className="space-y-3">
+                  {data.metadata?.features?.map((f, i) => (
+                    <div key={i} className="flex gap-3 p-3 rounded-lg bg-muted/30 border border-border hover:bg-muted/50 transition-colors">
+                      <CheckCircle2 size={12} className="text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-foreground leading-tight">{f.title}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{f.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {(!data.metadata?.features || data.metadata.features.length === 0) && (
+                    <p className="text-xs text-muted-foreground italic py-8 text-center">No features declared by seller.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Sidebar: Activity & Logs */}
+        <aside className="space-y-6">
+          <Card className="border-border shadow-none">
+            <CardHeader className="p-6">
+               <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                    <Bell size={18} />
+                  </div>
+                  <CardTitle className="text-base font-bold">Registry Audit</CardTitle>
+               </div>
+            </CardHeader>
+            <CardContent className="p-6 pt-0">
+              <div className="space-y-6">
+                {notifications.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-muted-foreground">No recent registry updates.</div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div key={notif.id} className="relative pl-5 border-l-2 border-border last:border-l-transparent">
+                      <div className={`absolute -left-1.5 top-0 h-2.5 w-2.5 rounded-full ${notif.type === "STATUS_CHANGE" ? "bg-amber-500" : "bg-primary"}`} />
+                      <div className="space-y-1">
+                         <span className="text-[10px] font-medium text-muted-foreground leading-none">
+                          {timeAgo(notif.blockTimestamp)}
+                        </span>
+                        <p className="text-xs font-semibold leading-relaxed">
+                          {notif.type === "STATUS_CHANGE" 
+                            ? `Status flipped to ${notif.active ? "ACTIVE" : "INACTIVE"}`
+                            : "Registry metadata synchronized"}
+                        </p>
+                        <Badge variant="outline" className="text-[9px] h-4 py-0 font-normal px-1.5 opacity-60">
+                          {notif.type === "STATUS_CHANGE" ? "Protocol State" : "Metadata Sync"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-muted/10">
+            <CardContent className="p-6 space-y-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Protocol Support</span>
+                <p className="text-xs font-medium leading-relaxed">
+                  Verify transaction logs on-chain for precise settlement records.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Button variant="outline" className="w-full justify-between h-9 text-xs font-bold" size="sm">
+                  Provider Support
+                  <ChevronRight size={14} className="opacity-40" />
+                </Button>
+                <Button variant="outline" className="w-full justify-between h-9 text-xs font-bold" size="sm">
+                  On-chain Explorer
+                  <ExternalLink size={14} className="opacity-40" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </aside>
       </div>
     </section>
