@@ -28,7 +28,8 @@ import {
   X,
   LogOut,
   ChevronRight,
-  Settings
+  Settings,
+  Terminal
 } from "lucide-react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { cn } from "@/lib/utils";
@@ -67,6 +68,7 @@ const navItems = [
   { href: "/dashboard/my-plans", label: "My Plans", icon: FileText },
   { href: "/dashboard/plans/create", label: "Create Plan", icon: PlusSquare },
   { href: "/dashboard/subscriptions", label: "My Subscriptions", icon: Activity },
+  { href: "/dashboard/developer", label: "Developer", icon: Terminal },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
