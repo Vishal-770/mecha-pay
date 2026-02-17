@@ -3,23 +3,27 @@ import { validateApiKey } from "@/lib/api-auth";
 import { querySubgraph, toLowerHex } from "@/lib/subgraph";
 
 const sellerPlansQuery = `
-  query SellerPlans($seller: Bytes!, $first: Int!, $skip: Int!) {
+  query SellerPlans($seller: Bytes!, $first: Int!, $skip: Int!, $subscribedOnly: Boolean!) {
     plans(
-      where: { seller_: { id: $seller } }
+      where: { 
+        seller: $seller,
+        subscriptionCount_gt: 0 
+      }
       first: $first
       skip: $skip
       orderBy: createdAt
       orderDirection: desc
-    ) {
+    ) @include(if: $subscribedOnly) {
       id
-      price
-      duration
-      ipfsHash
-      active
-      subscriptionCount
-      totalGrossVolume
-      totalFeesCollected
-      lastSubscriptionAt
+    }
+    allPlans: plans(
+      where: { seller: $seller }
+      first: $first
+      skip: $skip
+      orderBy: createdAt
+      orderDirection: desc
+    ) @skip(if: $subscribedOnly) {
+      id
     }
   }
 `;
@@ -27,6 +31,9 @@ const sellerPlansQuery = `
 export async function GET(req: NextRequest) {
   try {
     const apiKey = req.headers.get("x-api-key");
+    const { searchParams } = new URL(req.url);
+    const subscribedOnly = searchParams.get("subscribedOnly") === "true";
+
     if (!apiKey) {
       return NextResponse.json({ error: "x-api-key header is required" }, { status: 400 });
     }
@@ -45,14 +52,17 @@ export async function GET(req: NextRequest) {
       const first = Math.min(Number(req.nextUrl.searchParams.get("first") ?? "100"), 200);
       const skip = Math.max(Number(req.nextUrl.searchParams.get("skip") ?? "0"), 0);
 
-      const data = await querySubgraph<{ plans: any[] }>(sellerPlansQuery, {
+      const data = await querySubgraph<{ plans?: any[], allPlans?: any[] }>(sellerPlansQuery, {
         seller: sellerId,
         first,
-        skip
+        skip,
+        subscribedOnly
       });
 
+      const finalPlans = subscribedOnly ? (data.plans ?? []) : (data.allPlans ?? []);
+
       return NextResponse.json({
-        planIds: (data.plans ?? []).map(p => p.id)
+        planIds: finalPlans.map(p => p.id)
       });
     } catch (authError) {
       return NextResponse.json({ error: "Invalid or revoked API key" }, { status: 401 });

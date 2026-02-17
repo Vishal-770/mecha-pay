@@ -67,7 +67,14 @@ curl -X GET "https://pay.mechapay.com/v1/plans/0xefdc..." \
     "features": [
       { "title": "Analytics", "description": "Full dashboard access" }
     ]
-  }
+  },
+  "activeSubscribers": [
+    {
+      "address": "0xb292...",
+      "expiresAt": "1777186671",
+      "active": true
+    }
+  ]
 }
 ```
 
@@ -104,11 +111,121 @@ curl -X GET "https://pay.mechapay.com/v1/plans/0xefdc.../subscribers" \
   ],
   "count": 1
 }
+
+---
+
+## Identity
+
+### Get Merchant Identity
+`GET /api/v1/me`
+
+Returns the merchant's wallet address associated with the provided API key.
+
+#### Request Example
+```bash
+curl -X GET "https://pay.mechapay.com/v1/me" \
+  -H "x-api-key: mp_live_..."
+```
+
+#### Response Example (200 OK)
+```json
+{
+  "walletAddress": "0xb292..."
+}
+```
+
+### Get Merchant Balance
+`GET /api/v1/balance`
+
+Returns the real-time USDC balance of the merchant wallet on the Arc Testnet.
+
+#### Request Example
+```bash
+curl -X GET "https://pay.mechapay.com/v1/balance" \
+  -H "x-api-key: mp_live_..."
+```
+
+#### Response Example (200 OK)
+```json
+{
+  "walletAddress": "0xb292...",
+  "balance": "83.100025",
+  "symbol": "USDC",
+  "chainId": 5042002
+}
+```
+
+---
+
+## Subscription Plans
+
+### Get All User Subscriptions
+`GET /api/v1/subscriptions`
+
+Returns a list of all active and historical subscriptions for a specific wallet address.
+
+#### Parameters
+- `subscriber` (Required): The wallet address of the user.
+- `first` (Optional): Maximum number of records to return (default: 100, max: 500).
+- `skip` (Optional): Number of records to skip for pagination (default: 0).
+
+#### Request Example
+```bash
+curl -X GET "https://pay.mechapay.com/v1/subscriptions?subscriber=0xb292..." \
+  -H "x-api-key: mp_live_..."
+```
+
+#### Response Example (200 OK)
+```json
+{
+  "subscriber": "0xb292...",
+  "subscriptions": [
+    {
+      "planId": "0x2d5f...",
+      "seller": "0x...",
+      "status": "ACTIVE",
+      "startTime": "1774633851",
+      "endTime": "1777225851",
+      "remainingSeconds": 2585477,
+      "totalSpent": "5000000",
+      "subscriptionCount": 1,
+      "updatedAt": "1774633851"
+    }
+  ],
+  "count": 1
+}
+```
+
+### Get Specific Subscription Detail
+`GET /api/v1/subscriptions/[planId]`
+
+Returns the detailed subscription state for a specific user and plan.
+
+#### Parameters
+- `subscriber` (Required): The wallet address of the user.
+
+#### Request Example
+```bash
+curl -X GET "https://pay.mechapay.com/v1/subscriptions/0x2d5f...?subscriber=0xb292..." \
+  -H "x-api-key: mp_live_..."
+```
+
+#### Response Example (200 OK)
+```json
+{
+  "subscriber": "0xb292...",
+  "planId": "0x2d5f...",
+  "active": true,
+  "status": "ACTIVE",
+  "remainingSeconds": 2585477,
+  "totalSpent": "5000000"
+}
 ```
 
 #### Error Responses
-- `400 Bad Request`: Missing header or invalid parameters.
+- `400 Bad Request`: Missing header or parameters.
 - `401 Unauthorized`: Invalid or revoked API key.
+- `404 Not Found`: Plan or Subscriber not found.
 - `500 Internal Error`: Protocol synchronization failure.
 
 ---

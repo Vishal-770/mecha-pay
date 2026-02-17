@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-auth";
-import { querySubgraph, toLowerHex } from "@/lib/subgraph";
+import { querySubgraph, toLowerHex, toSecondsNow, toNumber } from "@/lib/subgraph";
 import { ipfsHashToHttpUrl } from "@/lib/subscription";
 
 const planDetailQuery = `
@@ -11,6 +11,16 @@ const planDetailQuery = `
       duration
       ipfsHash
       active
+    }
+    subscriptionStates(
+      where: { plan: $planId, status: ACTIVE }
+      orderBy: lastEndTime
+      orderDirection: desc
+    ) {
+      subscriber {
+        id
+      }
+      lastEndTime
     }
   }
 `;
@@ -36,7 +46,7 @@ export async function GET(
       }
 
       // 2. Query Subgraph
-      const data = await querySubgraph<{ plan: any | null }>(planDetailQuery, {
+      const data = await querySubgraph<{ plan: any | null, subscriptionStates: any[] }>(planDetailQuery, {
         planId: toLowerHex(planId)
       });
 
@@ -55,12 +65,19 @@ export async function GET(
         console.error("Failed to hydrate metadata", e);
       }
 
-      // 4. Return minimal payload as requested
+      const now = toSecondsNow();
+
+      // 4. Format Output with "timing when it expires"
       return NextResponse.json({
         planId: data.plan.id,
         price: data.plan.price,
         duration: data.plan.duration,
-        metadata: metadata
+        metadata: metadata,
+        activeSubscribers: (data.subscriptionStates ?? []).map(sub => ({
+          address: sub.subscriber.id,
+          expiresAt: sub.lastEndTime,
+          active: toNumber(sub.lastEndTime) > now
+        }))
       });
 
     } catch (authError) {
