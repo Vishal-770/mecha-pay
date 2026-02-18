@@ -59,8 +59,8 @@ https://your-domain.com/pay/[planId]?userId=[sellerId]&successUrl=[returnUrl]
 ## For Sellers
 
 ### How userId Works:
-- The `userId` you pass is stored in the smart contract's `buyerData` field as JSON
-- Your backend can listen to `Subscribed` events and extract the userId
+- The `userId` you pass is stored in the smart contract's `buyerData` field as a raw string (Metadata ID)
+- Your backend can listen to `Subscribed` events and use this string to identify the user
 - Match the userId to your database to activate the user's subscription
 
 ### Event Structure:
@@ -69,15 +69,14 @@ event Subscribed(
     bytes32 indexed planId,
     address indexed buyer,
     uint256 indexed subscriptionId,
-    string buyerData  // Contains: {"userId": "your_user_id"}
+    string buyerData  // Example: "user_mongo_507f1f77" (Metadata ID)
 );
 ```
 
 ### Example Backend Listener:
 ```javascript
 contract.on("Subscribed", (planId, buyer, subscriptionId, buyerData) => {
-  const data = JSON.parse(buyerData);
-  const userId = data.userId;
+  const userId = buyerData;
   
   // Activate subscription in your database
   await db.users.update({ id: userId }, { subscribed: true });

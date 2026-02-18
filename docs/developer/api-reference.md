@@ -199,7 +199,7 @@ curl -X GET "https://pay.mechapay.com/v1/subscriptions?subscriber=0xb292..." \
 ### Get Specific Subscription Detail
 `GET /api/v1/subscriptions/[planId]`
 
-Returns the detailed subscription state for a specific user and plan.
+Returns the detailed subscription state for a specific user and plan using their wallet address.
 
 #### Parameters
 - `subscriber` (Required): The wallet address of the user.
@@ -219,6 +219,43 @@ curl -X GET "https://pay.mechapay.com/v1/subscriptions/0x2d5f...?subscriber=0xb2
   "status": "ACTIVE",
   "remainingSeconds": 2585477,
   "totalSpent": "5000000"
+}
+```
+
+### Check Subscription Status by Metadata
+`GET /api/v1/status`
+
+Returns the subscription state for a specific plan and buyer metadata string (`buyerData`). This is the recommended way to verify access if you track users via custom IDs rather than wallet addresses.
+
+#### Parameters
+- `planId` (Required): The bytes32 ID of the subscription plan.
+- `buyer` (Required): The metadata string used during the subscription process.
+
+#### Request Example
+```bash
+curl -X GET "https://pay.mechapay.com/v1/status?planId=0x2d5f...&buyer=user_id_001" \
+  -H "x-api-key: mp_live_..."
+```
+
+#### Response Example (200 OK - Active)
+```json
+{
+  "active": true,
+  "status": "ACTIVE",
+  "buyer": "user_id_001",
+  "planId": "0x2d5f...",
+  "subscriber": "0xb292...",
+  "remainingTime": 2585477
+}
+```
+
+#### Response Example (200 OK - Not Purchased)
+```json
+{
+  "active": false,
+  "status": "not purchased",
+  "buyer": "user_id_999",
+  "planId": "0x2d5f..."
 }
 ```
 

@@ -23,7 +23,7 @@ The initial implementation had Privy wallet as an alternative payment method. Af
 - ✅ **Plan details visible before login** (better UX)
 - ✅ **Payment always via Circle wallet** (never Privy)
 
-## 📁 Files Created/Modified (16 files)
+## 📁 Files Created/Modified (17 files)
 
 ### Created:
 1. `/app/pay/layout.tsx` - Payment page layout with PaymentProvider
@@ -40,8 +40,9 @@ The initial implementation had Privy wallet as an alternative payment method. Af
 12. `/api/payment/approve-usdc/route.ts` - USDC approval API
 13. `/api/payment/allowance/route.ts` - Allowance checking API
 14. `/api/payment/subscribe/route.ts` - Subscription processing API
-15. `/lib/payment-validation.ts` - Security validation utilities
-16. `/docs/payment-page-usage.md` - Complete usage documentation
+15. `/api/v1/status/route.ts` - Public status verification API (Metadata-based)
+16. `/lib/payment-validation.ts` - Security validation utilities
+17. `/docs/payment-page-usage.md` - Complete usage documentation
 
 ## 🎯 Key Features
 
@@ -60,7 +61,7 @@ The initial implementation had Privy wallet as an alternative payment method. Af
 - Fetches plan from smart contract + IPFS metadata
 - Checks USDC balance in Circle wallet
 - Automatic USDC approval if needed
-- Passes userId to smart contract in buyerData JSON
+- Passes userId to smart contract as a raw string in buyerData (Metadata ID)
 - Success screen with transaction hash and auto-redirect
 
 ### Security:
