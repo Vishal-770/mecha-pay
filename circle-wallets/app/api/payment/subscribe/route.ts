@@ -27,9 +27,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use raw userId string for buyerData as requested by the user
-    // This simplifies the metadata to just the string instead of JSON-wrapped
-    const buyerData = userId;
+    // Construct buyerData as JSON containing userId
+    const buyerData = JSON.stringify({ userId });
 
     const client = getCircleClient();
     const response =

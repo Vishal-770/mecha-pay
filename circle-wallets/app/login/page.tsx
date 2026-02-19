@@ -35,6 +35,45 @@ function GoogleIcon() {
   );
 }
 
+/**
+ * Animated background pattern with favicon
+ */
+function BackgroundPattern() {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {/* Gradient orbs */}
+      <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-primary/10 rounded-full blur-3xl animate-pulse opacity-20" />
+      <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-chart-2/10 rounded-full blur-3xl animate-pulse opacity-20" style={{ animationDelay: "1s" }} />
+      
+      {/* Large favicon watermark */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-[0.03]">
+        <img 
+          src="/favicon.ico" 
+          alt="" 
+          className="w-full h-full object-contain"
+        />
+      </div>
+      
+      {/* Additional smaller favicon elements */}
+      <div className="absolute top-[10%] right-[10%] w-32 h-32 opacity-[0.05] animate-pulse" style={{ animationDelay: "0.5s" }}>
+        <img 
+          src="/favicon.ico" 
+          alt="" 
+          className="w-full h-full object-contain"
+        />
+      </div>
+      
+      <div className="absolute bottom-[15%] left-[15%] w-24 h-24 opacity-[0.05] animate-pulse" style={{ animationDelay: "1.5s" }}>
+        <img 
+          src="/favicon.ico" 
+          alt="" 
+          className="w-full h-full object-contain"
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   // useSearchParams requires a Suspense boundary in the Next.js App Router.
   return (
@@ -125,80 +164,170 @@ function LoginContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 p-8 shadow-lg ring-1 ring-zinc-200 dark:ring-zinc-800">
-        {/* Logo / heading */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="h-6 w-6 text-white"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.86 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z" />
-            </svg>
+    <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-12 overflow-hidden">
+      <BackgroundPattern />
+      
+      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
+        {/* Left side - Branding */}
+        <div className="hidden lg:block space-y-6 px-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary shadow-lg shadow-primary/20 p-3">
+            <img 
+              src="/favicon.ico" 
+              alt="Mecha Pay Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-            Mecha Pay
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Payment Protocol
-          </p>
+          
+          <div className="space-y-3">
+            <h1 className="text-5xl font-bold text-foreground tracking-tight">
+              Mecha Pay
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-md">
+              Secure, fast, and seamless payment protocol powered by blockchain technology
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Secure Transactions</h3>
+                <p className="text-sm text-muted-foreground">Bank-grade encryption for all payments</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-chart-2/10 flex items-center justify-center">
+                <svg className="w-5 h-5 text-chart-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Lightning Fast</h3>
+                <p className="text-sm text-muted-foreground">Instant payment confirmations</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-chart-4/10 flex items-center justify-center">
+                <svg className="w-5 h-5 text-chart-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Multi-Chain Support</h3>
+                <p className="text-sm text-muted-foreground">Works across multiple blockchains</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Error banner */}
-        {errorMsg && (
-          <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-400 ring-1 ring-red-200 dark:ring-red-800">
-            {errorMsg}
+        {/* Right side - Login form */}
+        <div className="w-full max-w-md mx-auto">
+          <div className="bg-card rounded-3xl shadow-2xl shadow-primary/5 border border-border p-8 md:p-10 backdrop-blur-sm">
+            {/* Mobile logo */}
+            <div className="lg:hidden mb-8 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary shadow-lg shadow-primary/20 mb-4 p-3">
+                <img 
+                  src="/favicon.ico" 
+                  alt="Mecha Pay Logo" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-card-foreground">Mecha Pay</h2>
+            </div>
+
+            <div className="space-y-6">
+              <div className="text-center lg:text-left space-y-2">
+                <h2 className="text-2xl font-bold text-card-foreground">Welcome back</h2>
+                <p className="text-muted-foreground">
+                  Sign in to access your payment dashboard
+                </p>
+              </div>
+
+              {/* Error banner */}
+              {errorMsg && (
+                <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3.5 text-sm text-destructive flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              {/* Google login button */}
+              <button
+                onClick={handleGoogleLogin}
+                disabled={!isReady || isLoading}
+                className="group relative w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-secondary px-6 py-4 text-base font-medium text-secondary-foreground shadow-sm transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-sm"
+              >
+                <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 to-chart-2/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                {isLoading ? (
+                  <svg
+                    className="h-5 w-5 animate-spin text-muted-foreground"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    />
+                  </svg>
+                ) : (
+                  <GoogleIcon />
+                )}
+                <span className="relative">
+                  {isLoading ? "Redirecting to Googleâ€¦" : "Continue with Google"}
+                </span>
+              </button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-card px-4 text-muted-foreground">
+                    Secure authentication powered by Circle
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-center text-xs text-muted-foreground leading-relaxed">
+                By signing in you agree to Circle&apos;s{" "}
+                <a
+                  href="https://www.circle.com/en/legal/user-terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary hover:underline transition-colors"
+                >
+                  Terms of Service
+                </a>
+                {" "}and{" "}
+                <a
+                  href="https://www.circle.com/en/legal/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary hover:underline transition-colors"
+                >
+                  Privacy Policy
+                </a>
+              </p>
+            </div>
           </div>
-        )}
-
-        {/* Google login button */}
-        <button
-          onClick={handleGoogleLogin}
-          disabled={!isReady || isLoading}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-200 shadow-sm transition hover:bg-zinc-50 dark:hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isLoading ? (
-            <svg
-              className="h-5 w-5 animate-spin text-zinc-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v8H4z"
-              />
-            </svg>
-          ) : (
-            <GoogleIcon />
-          )}
-          {isLoading ? "Redirecting to Googleâ€¦" : "Continue with Google"}
-        </button>
-
-        <p className="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
-          By signing in you agree to Circle&apos;s{" "}
-          <a
-            href="https://www.circle.com/en/legal/user-terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-zinc-600 dark:hover:text-zinc-400"
-          >
-            Terms of Service
-          </a>
-        </p>
+        </div>
       </div>
     </div>
   );
