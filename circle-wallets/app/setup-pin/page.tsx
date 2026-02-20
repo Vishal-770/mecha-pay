@@ -16,6 +16,28 @@ import { useCircleSDK } from "@/context/CircleSDKContext";
 
 type Status = "loading" | "setting-up" | "done" | "error";
 
+/**
+ * Animated background pattern
+ */
+function BackgroundPattern() {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {/* Gradient orbs */}
+      <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-primary/10 rounded-full blur-3xl animate-pulse opacity-20" />
+      <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-chart-2/10 rounded-full blur-3xl animate-pulse opacity-20" style={{ animationDelay: "1s" }} />
+      
+      {/* Large favicon watermark */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-[0.03]">
+        <img 
+          src="/favicon.ico" 
+          alt="" 
+          className="w-full h-full object-contain"
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function SetupPinPage() {
   const router = useRouter();
   const { session, isReady, clearSession, executeChallenge } = useCircleSDK();
@@ -99,120 +121,147 @@ export default function SetupPinPage() {
   // ── UI ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 p-8 shadow-lg ring-1 ring-zinc-200 dark:ring-zinc-800 text-center">
-        {/* Icon */}
-        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30">
-          {status === "error" ? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="h-7 w-7 text-red-500"
-              fill="currentColor"
-            >
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-            </svg>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="h-7 w-7 text-indigo-600"
-              fill="currentColor"
-            >
-              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM15.1 8H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z" />
-            </svg>
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12 overflow-hidden">
+      <BackgroundPattern />
+      
+      <div className="relative z-10 w-full max-w-lg">
+        <div className="rounded-3xl bg-card p-8 md:p-10 shadow-2xl shadow-primary/5 border border-border backdrop-blur-sm">
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary shadow-lg shadow-primary/20 p-3">
+              <img 
+                src="/favicon.ico" 
+                alt="Mecha Pay Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+
+          {/* Icon */}
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            {status === "error" ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="h-7 w-7 text-destructive"
+                fill="currentColor"
+              >
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="h-7 w-7 text-primary"
+                fill="currentColor"
+              >
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM15.1 8H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z" />
+              </svg>
+            )}
+          </div>
+
+          {/* Heading */}
+          <h1 className="text-2xl font-bold text-card-foreground mb-2 text-center">
+            {status === "error" ? "Setup Failed" : "Account Setup"}
+          </h1>
+
+          {/* Status message */}
+          <p className="text-sm text-muted-foreground mb-8 text-center">
+            {message}
+          </p>
+
+          {/* Spinner (while loading / setting-up) */}
+          {(status === "loading" || status === "setting-up") && (
+            <div className="flex justify-center mb-8">
+              <svg
+                className="h-10 w-10 animate-spin text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                />
+              </svg>
+            </div>
+          )}
+
+          {/* Error details + retry */}
+          {status === "error" && (
+            <div className="space-y-4 mb-8">
+              {errorDetail && (
+                <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3.5 text-sm text-destructive flex items-start gap-3">
+                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{errorDetail}</span>
+                </div>
+              )}
+
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => {
+                    initiated.current = false;
+                    setStatus("loading");
+                    setErrorDetail(null);
+                    runSetup();
+                  }}
+                  className="rounded-xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  Retry
+                </button>
+
+                <button
+                  onClick={() => {
+                    clearSession();
+                    router.replace("/login");
+                  }}
+                  className="rounded-xl border border-border bg-secondary px-6 py-3 text-sm font-medium text-secondary-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Progress steps */}
+          {status !== "error" && (
+            <div className="space-y-4 bg-muted/30 rounded-xl p-6 border border-border/50">
+              <StepIndicator
+                label="Verify account"
+                done={status !== "loading"}
+                active={status === "loading"}
+              />
+              <StepIndicator
+                label="Set PIN & security questions"
+                done={status === "done"}
+                active={status === "setting-up"}
+              />
+              <StepIndicator
+                label="Create wallet"
+                done={status === "done"}
+                active={false}
+              />
+            </div>
           )}
         </div>
 
-        {/* Heading */}
-        <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
-          {status === "error" ? "Setup Failed" : "Account Setup"}
-        </h1>
-
-        {/* Status message */}
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-          {message}
-        </p>
-
-        {/* Spinner (while loading / setting-up) */}
-        {(status === "loading" || status === "setting-up") && (
-          <svg
-            className="mx-auto h-8 w-8 animate-spin text-indigo-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v8H4z"
-            />
-          </svg>
-        )}
-
-        {/* Error details + retry */}
-        {status === "error" && (
-          <div className="space-y-4">
-            {errorDetail && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-400 ring-1 ring-red-200 dark:ring-red-800 text-left">
-                {errorDetail}
-              </div>
-            )}
-
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => {
-                  initiated.current = false;
-                  setStatus("loading");
-                  setErrorDetail(null);
-                  runSetup();
-                }}
-                className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition"
-              >
-                Retry
-              </button>
-
-              <button
-                onClick={() => {
-                  clearSession();
-                  router.replace("/login");
-                }}
-                className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Progress steps */}
-        {status !== "error" && (
-          <div className="mt-8 space-y-3 text-left">
-            <StepIndicator
-              label="Verify account"
-              done={status !== "loading"}
-              active={status === "loading"}
-            />
-            <StepIndicator
-              label="Set PIN & security questions"
-              done={status === "done"}
-              active={status === "setting-up"}
-            />
-            <StepIndicator
-              label="Create wallet"
-              done={status === "done"}
-              active={false}
-            />
-          </div>
-        )}
+        {/* Footer info */}
+        <div className="mt-6 text-center">
+          <p className="text-xs text-muted-foreground">
+            Secured by Circle's User-Controlled Wallets
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -230,46 +279,50 @@ function StepIndicator({
   active: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-4">
       {done ? (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          className="h-5 w-5 shrink-0 text-emerald-500"
-          fill="currentColor"
-        >
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-        </svg>
-      ) : active ? (
-        <svg
-          className="h-5 w-5 shrink-0 animate-spin text-indigo-600"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
-          <path
-            className="opacity-75"
+        <div className="flex items-center justify-center h-8 w-8 shrink-0 rounded-full bg-primary/20">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            className="h-5 w-5 text-primary"
             fill="currentColor"
-            d="M4 12a8 8 0 018-8v8H4z"
-          />
-        </svg>
+          >
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          </svg>
+        </div>
+      ) : active ? (
+        <div className="flex items-center justify-center h-8 w-8 shrink-0">
+          <svg
+            className="h-6 w-6 animate-spin text-primary"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8H4z"
+            />
+          </svg>
+        </div>
       ) : (
-        <div className="h-5 w-5 shrink-0 rounded-full border-2 border-zinc-300 dark:border-zinc-600" />
+        <div className="h-8 w-8 shrink-0 rounded-full border-2 border-border bg-muted/50" />
       )}
       <span
-        className={`text-sm ${
+        className={`text-sm font-medium ${
           done
-            ? "text-zinc-900 dark:text-zinc-100"
+            ? "text-foreground"
             : active
-              ? "text-indigo-600 font-medium"
-              : "text-zinc-400 dark:text-zinc-600"
+              ? "text-primary"
+              : "text-muted-foreground"
         }`}
       >
         {label}
