@@ -390,51 +390,6 @@ export default function PaymentPage() {
                       </div>
                     </div>
 
-                    {/* Bridge Tool In-built */}
-                    {isInsufficient && (
-                      <Card className="p-4 border-destructive/20 bg-destructive/5 space-y-4">
-                        <div className="flex items-start gap-3">
-                          <AlertCircle size={16} className="text-destructive mt-0.5" />
-                          <div className="space-y-1">
-                            <p className="text-xs font-bold text-destructive">Insufficient Balance</p>
-                            <p className="text-[10px] text-muted-foreground leading-relaxed">
-                              You need {plan ? formatUnits(plan.price, 6) : "0"} USDC. Bridge funds via the tool below.
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <Sheet>
-                          <SheetTrigger asChild>
-                            <Button variant="outline" className="w-full h-9 text-[10px] font-bold uppercase tracking-widest">
-                              Launch Bridge Controller
-                              <Zap size={14} className="ml-2 fill-primary stroke-none" />
-                            </Button>
-                          </SheetTrigger>
-                          <SheetContent side="right" className="w-full sm:max-w-md bg-background p-0">
-                            <SheetHeader className="p-6 border-b">
-                              <SheetTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
-                                <Zap className="size-4 fill-primary stroke-none" />
-                                Bridge Tool
-                              </SheetTitle>
-                              <SheetDescription className="text-[10px] font-bold uppercase tracking-widest">
-                                Cross-chain funding for non-native USDC
-                              </SheetDescription>
-                            </SheetHeader>
-                            <div className="flex-1 overflow-y-auto">
-                              <BridgeUSDC 
-                                isCompact 
-                                defaultDestChain="Arc_Testnet"
-                              />
-                            </div>
-                            <div className="p-6 border-t bg-muted/20">
-                               <Button onClick={refreshWalletData} variant="outline" className="w-full h-10 text-[10px] font-bold uppercase">
-                                 Check Updated Balance
-                               </Button>
-                            </div>
-                          </SheetContent>
-                        </Sheet>
-                      </Card>
-                    )}
 
                     {/* Final Action */}
                     {hasSubscribed ? (
@@ -490,7 +445,6 @@ export default function PaymentPage() {
                </div>
             </div>
           </div>
-
         </div>
       </div>
     </main>
