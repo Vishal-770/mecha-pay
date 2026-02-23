@@ -42,10 +42,10 @@ function TxBadge({ state }: { state: string }) {
   const upper = state.toUpperCase();
   const classes =
     upper === "COMPLETE" || upper === "CONFIRMED"
-      ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+      ? "bg-primary/10 text-primary border-primary/20"
       : upper === "FAILED" || upper === "CANCELLED"
-        ? "bg-rose-50 text-rose-700 border-rose-100"
-        : "bg-amber-50 text-amber-700 border-amber-100";
+        ? "bg-destructive/10 text-destructive border-destructive/20"
+        : "bg-chart-4/10 text-chart-4 border-chart-4/20";
   return (
     <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${classes}`}>
       {state}
@@ -207,19 +207,19 @@ export default function WalletPage() {
   return (
     <section className="space-y-6">
       {/* Header + Refresh */}
-      <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm">
+      <div className="rounded-3xl border border-border bg-gradient-to-br from-card to-muted p-6 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               Mecha Pay · ARC Testnet
             </p>
-            <h2 className="mt-1 text-2xl font-bold text-slate-900">My Wallet</h2>
+            <h2 className="mt-1 text-2xl font-bold text-foreground">My Wallet</h2>
           </div>
           <button
             onClick={() => void handleRefresh()}
             disabled={refreshing}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2
-              text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50
+            className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2
+              text-sm font-medium text-card-foreground shadow-sm transition hover:bg-accent
               disabled:cursor-not-allowed disabled:opacity-60"
           >
             <svg
@@ -240,23 +240,23 @@ export default function WalletPage() {
       </div>
 
       {/* Address card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Wallet Address
         </p>
         <div className="mt-3 flex items-center gap-3">
-          <code className="flex-1 break-all rounded-xl bg-slate-50 px-4 py-3 font-mono text-sm text-slate-800">
+          <code className="flex-1 break-all rounded-xl bg-muted px-4 py-3 font-mono text-sm text-foreground">
             {wallet?.address ?? "No wallet connected"}
           </code>
           <button
             onClick={() => void handleCopy()}
             disabled={!wallet?.address}
             title="Copy address"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200
-              bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border
+              bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-40"
           >
             {copied ? (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-emerald-500">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-primary">
                 <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
               </svg>
             ) : (
@@ -267,42 +267,42 @@ export default function WalletPage() {
             )}
           </button>
         </div>
-        {copied && <p className="mt-2 text-xs text-emerald-600">Address copied!</p>}
+        {copied && <p className="mt-2 text-xs text-primary">Address copied!</p>}
       </div>
 
       {/* Balances */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-900 to-indigo-900 p-6 text-white shadow-lg">
-          <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/5" />
-          <div className="absolute -bottom-8 -right-2 h-24 w-24 rounded-full bg-white/5" />
-          <p className="text-xs font-medium uppercase tracking-widest text-sky-200">USDC Balance</p>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-chart-2 p-6 text-primary-foreground shadow-lg">
+          <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-primary-foreground/5" />
+          <div className="absolute -bottom-8 -right-2 h-24 w-24 rounded-full bg-primary-foreground/5" />
+          <p className="text-xs font-medium uppercase tracking-widest opacity-90">USDC Balance</p>
           <p className="mt-3 text-4xl font-bold tracking-tight">{usdcBalance.toFixed(2)}</p>
-          <p className="mt-1 text-sm text-sky-300">USDC · ARC Testnet</p>
+          <p className="mt-1 text-sm opacity-80">USDC · ARC Testnet</p>
           {maxSendable > 0 && (
-            <p className="mt-3 text-xs text-sky-300/70">Max sendable: {maxSendable.toFixed(6)} USDC</p>
+            <p className="mt-3 text-xs opacity-70">Max sendable: {maxSendable.toFixed(6)} USDC</p>
           )}
         </div>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-6 text-white shadow-lg">
-          <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/5" />
-          <div className="absolute -bottom-8 -right-2 h-24 w-24 rounded-full bg-white/5" />
-          <p className="text-xs font-medium uppercase tracking-widest text-slate-300">Native Balance</p>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-secondary to-muted p-6 text-secondary-foreground shadow-lg">
+          <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-foreground/5" />
+          <div className="absolute -bottom-8 -right-2 h-24 w-24 rounded-full bg-foreground/5" />
+          <p className="text-xs font-medium uppercase tracking-widest opacity-90">Native Balance</p>
           <p className="mt-3 text-4xl font-bold tracking-tight">
             {nativeToken ? parseFloat(nativeToken.amount).toFixed(4) : "0.0000"}
           </p>
-          <p className="mt-1 text-sm text-slate-400">{nativeToken?.symbol ?? "ARC"} · Gas Token</p>
-          <p className="mt-3 text-xs text-slate-500/70">Used for transaction fees</p>
+          <p className="mt-1 text-sm opacity-80">{nativeToken?.symbol ?? "ARC"} · Gas Token</p>
+          <p className="mt-3 text-xs opacity-70">Used for transaction fees</p>
         </div>
       </div>
 
       {/* Send USDC */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-base font-semibold text-slate-900">Send USDC</h3>
-        <p className="mt-0.5 text-xs text-slate-400">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <h3 className="text-base font-semibold text-card-foreground">Send USDC</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Transfer USDC to any address on ARC Testnet. 1 USDC is reserved for gas.
         </p>
         <div className="mt-5 space-y-4">
           <div>
-            <label htmlFor="recipient" className="block text-xs font-medium text-slate-500">
+            <label htmlFor="recipient" className="block text-xs font-medium text-muted-foreground">
               Recipient Address
             </label>
             <input
@@ -311,13 +311,13 @@ export default function WalletPage() {
               placeholder="0x..."
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3
-                font-mono text-sm text-slate-800 placeholder:text-slate-400
-                focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-100"
+              className="mt-1.5 w-full rounded-xl border border-border bg-muted px-4 py-3
+                font-mono text-sm text-foreground placeholder:text-muted-foreground
+                focus:border-ring focus:bg-card focus:outline-none focus:ring-2 focus:ring-ring/20"
             />
           </div>
           <div>
-            <label htmlFor="amount" className="block text-xs font-medium text-slate-500">
+            <label htmlFor="amount" className="block text-xs font-medium text-muted-foreground">
               Amount (USDC)
             </label>
             <div className="relative mt-1.5">
@@ -329,35 +329,35 @@ export default function WalletPage() {
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-20
-                  text-sm text-slate-800 placeholder:text-slate-400
-                  focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-100"
+                className="w-full rounded-xl border border-border bg-muted px-4 py-3 pr-20
+                  text-sm text-foreground placeholder:text-muted-foreground
+                  focus:border-ring focus:bg-card focus:outline-none focus:ring-2 focus:ring-ring/20"
               />
               <button
                 type="button"
                 onClick={() => setAmount(maxSendable.toFixed(6))}
                 disabled={maxSendable <= 0}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-sky-50 px-2.5 py-1
-                  text-xs font-semibold text-sky-700 transition hover:bg-sky-100
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-primary/10 px-2.5 py-1
+                  text-xs font-semibold text-primary transition hover:bg-primary/20
                   disabled:cursor-not-allowed disabled:opacity-40"
               >
                 MAX
               </button>
             </div>
             {maxSendable > 0 && (
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Available: {usdcBalance.toFixed(6)} USDC &nbsp;·&nbsp; Max: {maxSendable.toFixed(6)} USDC
               </p>
             )}
           </div>
 
           {sendError && (
-            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+            <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
               {sendError}
             </p>
           )}
           {sendSuccess && (
-            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700">
+            <p className="rounded-xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm text-primary">
               ✓ {sendSuccess}
             </p>
           )}
@@ -365,9 +365,9 @@ export default function WalletPage() {
           <button
             onClick={() => void handleSend()}
             disabled={sending || !wallet || !usdcToken || maxSendable <= 0}
-            className="w-full rounded-xl bg-sky-900 py-3 text-sm font-semibold text-white shadow
-              transition hover:bg-sky-800 active:bg-sky-950
-              disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+            className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow
+              transition hover:bg-primary/90 active:bg-primary/80
+              disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
           >
             {sending ? (
               <span className="flex items-center justify-center gap-2">
@@ -385,17 +385,17 @@ export default function WalletPage() {
       </div>
 
       {/* ── Transactions ── */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">Transactions</h3>
-            <p className="text-xs text-slate-400">Recent activity on this wallet</p>
+            <h3 className="text-base font-semibold text-card-foreground">Transactions</h3>
+            <p className="text-xs text-muted-foreground">Recent activity on this wallet</p>
           </div>
           <button
             onClick={() => void loadTransactions()}
             disabled={txLoading}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5
-              text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5
+              text-xs font-medium text-muted-foreground transition hover:bg-accent disabled:opacity-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -415,7 +415,7 @@ export default function WalletPage() {
 
         <div className="mt-4">
           {txError && (
-            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+            <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
               {txError}
             </p>
           )}
@@ -423,18 +423,18 @@ export default function WalletPage() {
           {txLoading && !transactions.length ? (
             <div className="space-y-2">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-14 rounded-xl bg-slate-50 animate-pulse" />
+                <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />
               ))}
             </div>
           ) : transactions.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400">
+            <p className="py-8 text-center text-sm text-muted-foreground">
               No transactions found for this wallet.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
+                  <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="pb-2 pr-4">Type</th>
                     <th className="pb-2 pr-4">Amount</th>
                     <th className="pb-2 pr-4 hidden sm:table-cell">To / From</th>
@@ -442,7 +442,7 @@ export default function WalletPage() {
                     <th className="pb-2 hidden md:table-cell">Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border">
                   {transactions.map((tx) => {
                     const isOut = tx.transactionType?.toUpperCase() === "OUTBOUND";
                     // amounts is string[] from Circle API
@@ -458,31 +458,31 @@ export default function WalletPage() {
                       : tx.sourceAddress;
 
                     return (
-                      <tr key={tx.id} className="hover:bg-slate-50">
+                      <tr key={tx.id} className="hover:bg-accent/50">
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
                             <span
                               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
                                 isOut
-                                  ? "bg-rose-50 text-rose-600"
-                                  : "bg-emerald-50 text-emerald-600"
+                                  ? "bg-destructive/10 text-destructive"
+                                  : "bg-primary/10 text-primary"
                               }`}
                             >
                               {isOut ? "↑" : "↓"}
                             </span>
-                            <span className="font-medium text-slate-700 capitalize">
+                            <span className="font-medium text-foreground capitalize">
                               {tx.transactionType?.toLowerCase() ?? "tx"}
                             </span>
                           </div>
                         </td>
-                        <td className="py-3 pr-4 font-semibold text-slate-900">{amountStr}</td>
-                        <td className="py-3 pr-4 hidden sm:table-cell font-mono text-xs text-slate-500">
+                        <td className="py-3 pr-4 font-semibold text-foreground">{amountStr}</td>
+                        <td className="py-3 pr-4 hidden sm:table-cell font-mono text-xs text-muted-foreground">
                           {counterpart ? truncateAddress(counterpart) : "—"}
                         </td>
                         <td className="py-3 pr-4">
                           <TxBadge state={tx.state} />
                         </td>
-                        <td className="py-3 hidden md:table-cell text-xs text-slate-400">
+                        <td className="py-3 hidden md:table-cell text-xs text-muted-foreground">
                           {formatDate(tx.firstConfirmDate ?? tx.createDate ?? "")}
                         </td>
                       </tr>
@@ -497,21 +497,21 @@ export default function WalletPage() {
 
       {/* All token balances */}
       {(wallet?.tokenBalances?.length ?? 0) > 0 && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-slate-900">All Tokens</h3>
-          <div className="mt-3 divide-y divide-slate-100">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-card-foreground">All Tokens</h3>
+          <div className="mt-3 divide-y divide-border">
             {wallet!.tokenBalances.map((token) => (
               <div key={token.symbol} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                     {token.symbol.slice(0, 2)}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-800">{token.symbol}</p>
-                    <p className="text-xs text-slate-400">{token.name}</p>
+                    <p className="text-sm font-medium text-foreground">{token.symbol}</p>
+                    <p className="text-xs text-muted-foreground">{token.name}</p>
                   </div>
                 </div>
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="text-sm font-semibold text-foreground">
                   {parseFloat(token.amount).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 6,
