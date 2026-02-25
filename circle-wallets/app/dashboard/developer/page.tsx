@@ -53,7 +53,7 @@ type ApiKeyInfo = {
 };
 
 export default function DeveloperPage() {
-  const { sessionUserToken } = useDashboardContext();
+  const { sessionUserToken, wallet } = useDashboardContext();
   const [keys, setKeys] = useState<ApiKeyInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [newKeyName, setNewKeyName] = useState("");
@@ -88,7 +88,7 @@ export default function DeveloperPage() {
         body: JSON.stringify({ 
           userToken: sessionUserToken, 
           name: newKeyName,
-          merchantAddress: (useDashboardContext as any).wallet?.address // Not ideal access but let's fix the call
+          merchantAddress: wallet?.address 
         }),
       });
       const data = await res.json();

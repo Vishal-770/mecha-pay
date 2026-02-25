@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { generateApiKey, hashApiKey } from "@/lib/api-keys";
 import { initiateUserControlledWalletsClient } from "@circle-fin/user-controlled-wallets";
+import { toLowerHex } from "@/lib/subgraph";
 
 let circleClient: ReturnType<typeof initiateUserControlledWalletsClient> | null = null;
 

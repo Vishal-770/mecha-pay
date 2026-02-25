@@ -20,17 +20,6 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## API & CORS Configuration
-
-All API endpoints under `/api/*` have CORS enabled to allow cross-origin requests. See [CORS.md](./CORS.md) for detailed configuration and security recommendations.
-
-### Quick API Access
-
-The API supports requests from any origin with the following headers:
-- `Content-Type`: `application/json`
-- `x-api-key`: Your API key (for authenticated endpoints)
-- `Authorization`: Bearer token (for user-specific endpoints)
-
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
