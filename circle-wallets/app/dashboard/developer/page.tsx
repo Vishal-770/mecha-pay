@@ -321,7 +321,7 @@ export default function DeveloperPage() {
             <Separator />
             <div className="space-y-2">
                <pre className="p-4 bg-muted rounded-xl text-[10px] font-mono overflow-auto border border-border">
-{`curl -X GET "https://api.mechapay.com/v1/stats" \\
+{`curl -X GET "${process.env.NEXT_PUBLIC_BASE_URL || 'https://api.mechapay.com'}/api/v1/stats" \\
   -H "x-api-key: mp_live_..." \\
   -H "Content-Type: application/json"`}
                </pre>
