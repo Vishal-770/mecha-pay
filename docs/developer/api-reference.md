@@ -4,10 +4,18 @@ Welcome to the Mecha Pay Developer API. Our API allows you to programmatically i
 
 ## Authentication
 
-All API requests require an `x-api-key` header. You can generate and manage your keys in the **Developer Settings** section of the Mecha Pay Dashboard.
+All API requests require an `x-api-key` header. You can configure and manage your keys securely inside the Mecha Pay dashboard.
+
+### Generating an API Key
+To create a new key and authenticate your backend services:
+1. Navigate directly to your [Developer Dashboard](/dashboard/developer).
+2. Locate the **API Keys** management section.
+3. Click the **Generate New Key** button.
+4. Provide a descriptive name to help you identify the key's environment (e.g., "Production Stripe Worker").
+5. Securely copy the resulting `mp_live_...` key string. For security purposes, the raw key will only be shown to you once.
 
 > [!IMPORTANT]
-> API keys are sensitive credentials. Your production keys will always start with the `mp_live_` prefix. Never share them or commit them to version control. The protocol uses SHA-256 hashing for all key storage.
+> API keys are highly sensitive credentials providing full read access to your merchant subgraph. Your production keys will always begin with the `mp_live_` prefix. Never commit them to version control or expose them in browser/client-side applications. Mecha Pay uses strict SHA-256 hashing for internal key storage.
 
 ### Header Example
 ```http
