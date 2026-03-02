@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useDashboardContext } from "../_components/DashboardShell";
 import { 
   Card, 
@@ -326,6 +327,23 @@ export default function DeveloperPage() {
   -H "Content-Type: application/json"`}
                </pre>
             </div>
+         </div>
+
+         <div className="p-6 rounded-2xl border border-border bg-card space-y-4 flex flex-col justify-between">
+            <div className="space-y-4">
+               <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                  <Terminal size={14} className="text-primary" />
+                  API Documentation
+               </h3>
+               <p className="text-xs text-muted-foreground leading-relaxed">
+                  Explore the complete and interactive public API reference, find integration guides, read the core concepts, and see code examples.
+               </p>
+            </div>
+            <Link href="/docs" className="block w-full">
+               <Button variant="outline" className="w-full font-bold gap-2">
+                  View API Reference
+               </Button>
+            </Link>
          </div>
       </div>
 
