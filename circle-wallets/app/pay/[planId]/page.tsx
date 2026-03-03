@@ -286,10 +286,10 @@ export default function PaymentPage() {
                   </span>
                 )}
               </div>
-              <h1 className="text-4xl lg:text-6xl font-bold tracking-tight">
+              <h1 className="text-4xl lg:text-6xl font-bold tracking-tight break-words">
                 {plan?.metadata?.name || "Protocol Gateway"}
               </h1>
-              <p className="text-sm lg:text-base text-muted-foreground leading-relaxed max-w-2xl">
+              <p className="text-sm lg:text-base text-muted-foreground leading-relaxed max-w-2xl break-words">
                 {plan?.metadata?.description || "A secure, automated subscription protocol settling on the Arc network via high-precision USDC transfers."}
               </p>
             </header>
@@ -303,32 +303,34 @@ export default function PaymentPage() {
                 <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Capabilities & Features</h3>
               </div>
               
-              <Card className="border-border shadow-none">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="w-1/3 text-xs font-bold uppercase tracking-widest py-4 px-6">Headline</TableHead>
-                      <TableHead className="text-xs font-bold uppercase tracking-widest py-4 px-6">Proposition</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(plan?.metadata?.features || []).map((f, i) => (
-                      <TableRow key={i} className="border-border">
-                        <TableCell className="font-bold text-xs px-6 py-5 text-primary">
-                          {f.title}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground px-6 py-5">
-                          {f.description}
-                        </TableCell>
+              <Card className="border-border shadow-none overflow-hidden">
+                <div className="overflow-x-auto w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-1/3 min-w-[120px] text-xs font-bold uppercase tracking-widest py-4 px-6">Headline</TableHead>
+                        <TableHead className="min-w-[200px] text-xs font-bold uppercase tracking-widest py-4 px-6">Proposition</TableHead>
                       </TableRow>
-                    ))}
-                    {(!plan?.metadata?.features?.length) && (
-                      <TableRow>
-                        <TableCell colSpan={2} className="h-24 text-center text-sm text-muted-foreground">No features declared in registry.</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {(plan?.metadata?.features || []).map((f, i) => (
+                        <TableRow key={i} className="border-border">
+                          <TableCell className="font-bold text-xs px-6 py-5 text-primary break-words whitespace-normal">
+                            {f.title}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground px-6 py-5 break-words whitespace-normal">
+                            {f.description}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {(!plan?.metadata?.features?.length) && (
+                        <TableRow>
+                          <TableCell colSpan={2} className="h-24 text-center text-sm text-muted-foreground">No features declared in registry.</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </Card>
             </section>
 
@@ -348,16 +350,16 @@ export default function PaymentPage() {
           <div className="lg:sticky lg:top-12 h-fit space-y-6">
             <Card className="border-border bg-card shadow-sm rounded-2xl overflow-hidden p-0">
               <CardHeader className="p-6 pb-0 space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Secure Settlement</span>
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground break-words line-clamp-2">Secure Settlement</span>
                   </div>
-                  <ShieldCheck size={18} className="text-primary" />
+                  <ShieldCheck size={18} className="text-primary shrink-0" />
                 </div>
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Subscription Cost</span>
-                  <p className="text-4xl font-bold tracking-tight text-foreground">
+                  <p className="text-4xl font-bold tracking-tight text-foreground break-words">
                     {plan ? formatUnits(plan.price, 6) : "0.00"} <span className="text-sm text-muted-foreground uppercase font-bold">USDC</span>
                   </p>
                 </div>
@@ -377,9 +379,9 @@ export default function PaymentPage() {
                          <Badge variant="outline" className="text-[8px] h-4">ARC-L2</Badge>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-xs font-mono text-foreground truncate">{wallet?.address || truncateAddress("0x0000000000000000000000000000000000000000")}</p>
-                        <div className="flex items-center justify-between pt-2">
-                          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Available</span>
+                        <p className="text-xs font-mono text-foreground truncate max-w-full block overflow-hidden text-ellipsis">{wallet?.address || truncateAddress("0x0000000000000000000000000000000000000000")}</p>
+                        <div className="flex items-center justify-between pt-2 gap-2">
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Available</span>
                           <span className={cn(
                             "text-sm font-bold",
                             isInsufficient ? "text-destructive" : "text-foreground"
