@@ -121,7 +121,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: null,
     decimals: 18,
     symbol: "Arc",
-    icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
+    icon: "/arc-logo.png",
   },
   {
     name: "Base Sepolia",
@@ -154,7 +154,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
     decimals: 6,
     symbol: "Arb",
-    icon: "https://cryptologos.cc/logos/arbitrum-arb-logo.png",
+    icon: "https://ethglobal.storage/static/faucet/arbitrum-sepolia.png",
   },
   {
     name: "Avalanche Fuji",
@@ -163,7 +163,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0x5425890298aed601595a70AB815c96711a31Bc65",
     decimals: 6,
     symbol: "Avax",
-    icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+    icon: "/avalanche-logo.png",
   },
   {
     name: "Ethereum Sepolia",
@@ -172,7 +172,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
     decimals: 6,
     symbol: "Eth",
-    icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+    icon: "/seoplia-logo.png",
   },
   {
     name: "OP Sepolia",
@@ -181,7 +181,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0x5fd84259d66Cd46123540766Be93DFE6D43130D7",
     decimals: 6,
     symbol: "OP",
-    icon: "https://cryptologos.cc/logos/optimism-ethereum-op-logo.png",
+    icon: "/op-logo.png",
   },
   {
     name: "Polygon Amoy",
@@ -205,7 +205,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
     decimals: 6,
     symbol: "Matic",
-    icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+    icon: "/polygon-logo.png",
   },
   {
     name: "Unichain Sepolia",
@@ -232,7 +232,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0x4fCF1784B31630811181f670Aea7A7bEF803eaED",
     decimals: 6,
     symbol: "Sei",
-    icon: "https://cryptologos.cc/logos/sei-sei-logo.png",
+    icon: "/sei-logo.png",
   },
   {
     name: "World Chain Sepolia",
@@ -277,7 +277,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0x6d7f141b6819C2c9CC2f818e6ad549E7Ca090F8f",
     decimals: 6,
     symbol: "ETH",
-    icon: "https://codex.xyz/logo.svg",
+    icon: "/codex-logo.png",
   },
 ];
 
