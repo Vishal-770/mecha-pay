@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-auth";
 import { querySubgraph, toLowerHex, toSecondsNow, toNumber } from "@/lib/subgraph";
+import { corsResponse, handleCorsPreFlight } from "@/lib/cors";
 
 const userSubscriptionsQuery = `
   query UserSubscriptions($subscriber: Bytes!, $first: Int!, $skip: Int!) {
@@ -31,6 +32,10 @@ const userSubscriptionsQuery = `
   }
 `;
 
+export async function OPTIONS(req: NextRequest) {
+  return handleCorsPreFlight();
+}
+
 export async function GET(req: NextRequest) {
   try {
     const apiKey = req.headers.get("x-api-key");
@@ -40,11 +45,11 @@ export async function GET(req: NextRequest) {
     const skip = Math.max(Number(searchParams.get("skip") ?? "0"), 0);
 
     if (!apiKey) {
-      return NextResponse.json({ error: "x-api-key header is required" }, { status: 400 });
+      return corsResponse({ error: "x-api-key header is required" }, { status: 400 });
     }
 
     if (!subscriber) {
-      return NextResponse.json({ error: "subscriber address is required" }, { status: 400 });
+      return corsResponse({ error: "subscriber address is required" }, { status: 400 });
     }
 
     try {
@@ -79,17 +84,17 @@ export async function GET(req: NextRequest) {
         };
       });
 
-      return NextResponse.json({
+      return corsResponse({
         subscriber: toLowerHex(subscriber),
         subscriptions,
         count: subscriptions.length
       });
 
     } catch (authError) {
-      return NextResponse.json({ error: "Invalid or revoked API key" }, { status: 401 });
+      return corsResponse({ error: "Invalid or revoked API key" }, { status: 401 });
     }
   } catch (err) {
     console.error("[GET /api/v1/subscriptions]", err);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return corsResponse({ error: "Internal Server Error" }, { status: 500 });
   }
 }

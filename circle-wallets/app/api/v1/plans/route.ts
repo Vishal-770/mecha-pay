@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-auth";
 import { querySubgraph, toLowerHex } from "@/lib/subgraph";
+import { corsResponse, handleCorsPreFlight } from "@/lib/cors";
 
 const sellerPlansQuery = `
   query SellerPlans($seller: Bytes!, $first: Int!, $skip: Int!, $subscribedOnly: Boolean!) {
@@ -28,6 +29,10 @@ const sellerPlansQuery = `
   }
 `;
 
+export async function OPTIONS(req: NextRequest) {
+  return handleCorsPreFlight();
+}
+
 export async function GET(req: NextRequest) {
   try {
     const apiKey = req.headers.get("x-api-key");
@@ -35,14 +40,14 @@ export async function GET(req: NextRequest) {
     const subscribedOnly = searchParams.get("subscribedOnly") === "true";
 
     if (!apiKey) {
-      return NextResponse.json({ error: "x-api-key header is required" }, { status: 400 });
+      return corsResponse({ error: "x-api-key header is required" }, { status: 400 });
     }
 
     try {
       const { userId, merchantAddress } = await validateApiKey(apiKey);
       
       if (!merchantAddress) {
-        return NextResponse.json({ 
+        return corsResponse({ 
           error: "Merchant address not found for this API key. please create a new key while having an active wallet in the dashboard." 
         }, { status: 400 });
       }
@@ -61,14 +66,14 @@ export async function GET(req: NextRequest) {
 
       const finalPlans = subscribedOnly ? (data.plans ?? []) : (data.allPlans ?? []);
 
-      return NextResponse.json({
+      return corsResponse({
         planIds: finalPlans.map(p => p.id)
       });
     } catch (authError) {
-      return NextResponse.json({ error: "Invalid or revoked API key" }, { status: 401 });
+      return corsResponse({ error: "Invalid or revoked API key" }, { status: 401 });
     }
   } catch (err) {
     console.error("[GET /api/v1/plans]", err);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return corsResponse({ error: "Internal Server Error" }, { status: 500 });
   }
 }

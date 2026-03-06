@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-auth";
 import { createPublicClient, http, formatUnits } from "viem";
 import { arcTestnet } from "@/lib/privy_config";
+import { corsResponse, handleCorsPreFlight } from "@/lib/cors";
 
 const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
 const ERC20_ABI = [
@@ -14,12 +15,16 @@ const ERC20_ABI = [
   },
 ] as const;
 
+export async function OPTIONS(req: NextRequest) {
+  return handleCorsPreFlight();
+}
+
 export async function GET(req: NextRequest) {
   try {
     const apiKey = req.headers.get("x-api-key");
 
     if (!apiKey) {
-      return NextResponse.json({ error: "x-api-key header is required" }, { status: 400 });
+      return corsResponse({ error: "x-api-key header is required" }, { status: 400 });
     }
 
     try {
@@ -27,7 +32,7 @@ export async function GET(req: NextRequest) {
       const { merchantAddress } = await validateApiKey(apiKey);
       
       if (!merchantAddress) {
-        return NextResponse.json({ 
+        return corsResponse({ 
           error: "Merchant address not found. Please ensure your active wallet is connected when generating keys." 
         }, { status: 400 });
       }
@@ -46,7 +51,7 @@ export async function GET(req: NextRequest) {
       });
 
       // 3. Format and return
-      return NextResponse.json({
+      return corsResponse({
         walletAddress: merchantAddress,
         balance: formatUnits(balance, 6),
         rawBalance: balance.toString(),
@@ -55,10 +60,10 @@ export async function GET(req: NextRequest) {
       });
 
     } catch (authError) {
-      return NextResponse.json({ error: "Invalid or revoked API key" }, { status: 401 });
+      return corsResponse({ error: "Invalid or revoked API key" }, { status: 401 });
     }
   } catch (err) {
     console.error("[GET /api/v1/balance]", err);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return corsResponse({ error: "Internal Server Error" }, { status: 500 });
   }
 }
