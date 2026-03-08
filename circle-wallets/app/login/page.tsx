@@ -108,12 +108,16 @@ function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // If already authenticated, go straight to dashboard.
+  // Extract redirect URL from query params
+  const redirectTo = searchParams.get("redirect");
+
+  // If already authenticated, go to redirect URL or default to setup-pin
   useEffect(() => {
     if (session) {
-      router.replace("/setup-pin");
+      const destination = redirectTo || "/setup-pin";
+      router.replace(destination);
     }
-  }, [session, router]);
+  }, [session, router, redirectTo]);
 
   // Surface errors coming back from the /auth/callback or /api/oauth redirect.
   useEffect(() => {
@@ -131,6 +135,11 @@ function LoginContent() {
     setIsLoading(true);
 
     try {
+      // Store redirect URL in sessionStorage before OAuth flow (survives navigation)
+      if (redirectTo) {
+        sessionStorage.setItem("circle_auth_redirect_url", redirectTo);
+      }
+
       // Step 1 â€“ Get the browser-unique device ID from the Circle SDK.
       const deviceId = await getDeviceId();
 

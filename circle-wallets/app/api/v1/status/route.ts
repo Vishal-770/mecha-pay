@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-auth";
 import { querySubgraph, toLowerHex, toSecondsNow, toNumber } from "@/lib/subgraph";
-import { corsResponse, handleCorsPreFlight } from "@/lib/cors";
 
 /**
  * GET /api/v1/status
@@ -31,10 +30,6 @@ const subscriptionStatusQuery = `
   }
 `;
 
-export async function OPTIONS(req: NextRequest) {
-  return handleCorsPreFlight();
-}
-
 export async function GET(req: NextRequest) {
   try {
     const apiKey = req.headers.get("x-api-key");
@@ -43,11 +38,11 @@ export async function GET(req: NextRequest) {
     const buyer = searchParams.get("buyer");
 
     if (!apiKey) {
-      return corsResponse({ error: "x-api-key header is required" }, { status: 400 });
+      return NextResponse.json({ error: "x-api-key header is required" }, { status: 400 });
     }
 
     if (!planId || !buyer) {
-      return corsResponse({ error: "planId and buyer (metadata) are required" }, { status: 400 });
+      return NextResponse.json({ error: "planId and buyer (metadata) are required" }, { status: 400 });
     }
 
     try {
@@ -65,7 +60,7 @@ export async function GET(req: NextRequest) {
 
       // 3. Handle case where no subscription exists for this metadata/plan combo
       if (!state) {
-        return corsResponse({
+        return NextResponse.json({
           active: false,
           status: "not purchased",
           buyer,
@@ -80,7 +75,7 @@ export async function GET(req: NextRequest) {
 
       // 5. If not active (expired or ended), return "not purchased" as requested
       if (!isActive) {
-        return corsResponse({
+        return NextResponse.json({
           active: false,
           status: "not purchased",
           buyer,
@@ -89,7 +84,7 @@ export async function GET(req: NextRequest) {
       }
 
       // 6. Return active status with remaining time
-      return corsResponse({
+      return NextResponse.json({
         active: true,
         status: "ACTIVE",
         buyer,
@@ -101,12 +96,12 @@ export async function GET(req: NextRequest) {
     } catch (error) {
        const message = error instanceof Error ? error.message : "Authentication failed";
        if (message === "Invalid or revoked API key") {
-         return corsResponse({ error: message }, { status: 401 });
+         return NextResponse.json({ error: message }, { status: 401 });
        }
        throw error; // Re-throw for 500 handler
     }
   } catch (err) {
     console.error("[GET /api/v1/status]", err);
-    return corsResponse({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
