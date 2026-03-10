@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-auth";
 import { querySubgraph, toLowerHex, toSecondsNow, toNumber } from "@/lib/subgraph";
 import { ipfsHashToHttpUrl } from "@/lib/subscription";
+import { corsResponse, handleCorsPreFlight } from "@/lib/cors";
 
 const planDetailQuery = `
   query PlanDetail($planId: ID!) {
@@ -25,6 +26,10 @@ const planDetailQuery = `
   }
 `;
 
+export async function OPTIONS(req: NextRequest) {
+  return handleCorsPreFlight();
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
@@ -34,7 +39,7 @@ export async function GET(
     const apiKey = req.headers.get("x-api-key");
 
     if (!apiKey) {
-      return NextResponse.json({ error: "x-api-key header is required" }, { status: 400 });
+      return corsResponse({ error: "x-api-key header is required" }, { status: 400 });
     }
 
     try {
@@ -42,7 +47,7 @@ export async function GET(
       const { merchantAddress } = await validateApiKey(apiKey);
       
       if (!merchantAddress) {
-        return NextResponse.json({ error: "Invalid merchant account mapping" }, { status: 400 });
+        return corsResponse({ error: "Invalid merchant account mapping" }, { status: 400 });
       }
 
       // 2. Query Subgraph
@@ -51,7 +56,7 @@ export async function GET(
       });
 
       if (!data.plan) {
-        return NextResponse.json({ error: "Plan not found" }, { status: 404 });
+        return corsResponse({ error: "Plan not found" }, { status: 404 });
       }
 
       // 3. Hydrate Metadata
@@ -68,7 +73,7 @@ export async function GET(
       const now = toSecondsNow();
 
       // 4. Format Output with "timing when it expires"
-      return NextResponse.json({
+      return corsResponse({
         planId: data.plan.id,
         price: data.plan.price,
         duration: data.plan.duration,
@@ -81,10 +86,10 @@ export async function GET(
       });
 
     } catch (authError) {
-      return NextResponse.json({ error: "Invalid or revoked API key" }, { status: 401 });
+      return corsResponse({ error: "Invalid or revoked API key" }, { status: 401 });
     }
   } catch (err) {
     console.error("[GET /api/v1/plans/[planId]]", err);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return corsResponse({ error: "Internal Server Error" }, { status: 500 });
   }
 }

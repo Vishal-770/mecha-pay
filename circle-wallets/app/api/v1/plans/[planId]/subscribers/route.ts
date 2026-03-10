@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/api-auth";
 import { querySubgraph, toLowerHex, toSecondsNow, toNumber } from "@/lib/subgraph";
+import { corsResponse, handleCorsPreFlight } from "@/lib/cors";
 
 const subscribersQuery = `
   query PlanSubscribers($planId: Bytes!, $first: Int!, $skip: Int!) {
@@ -26,6 +27,10 @@ const subscribersQuery = `
   }
 `;
 
+export async function OPTIONS(req: NextRequest) {
+  return handleCorsPreFlight();
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> }
@@ -38,7 +43,7 @@ export async function GET(
     const skip = Math.max(Number(searchParams.get("skip") ?? "0"), 0);
 
     if (!apiKey) {
-      return NextResponse.json({ error: "x-api-key header is required" }, { status: 400 });
+      return corsResponse({ error: "x-api-key header is required" }, { status: 400 });
     }
 
     try {
@@ -46,7 +51,7 @@ export async function GET(
       const { merchantAddress } = await validateApiKey(apiKey);
       
       if (!merchantAddress) {
-        return NextResponse.json({ error: "Invalid merchant account mapping" }, { status: 400 });
+        return corsResponse({ error: "Invalid merchant account mapping" }, { status: 400 });
       }
 
       // 2. Query Subgraph
@@ -76,17 +81,17 @@ export async function GET(
         };
       });
 
-      return NextResponse.json({
+      return corsResponse({
         planId: toLowerHex(planId),
         subscribers,
         count: subscribers.length
       });
 
     } catch (authError) {
-      return NextResponse.json({ error: "Invalid or revoked API key" }, { status: 401 });
+      return corsResponse({ error: "Invalid or revoked API key" }, { status: 401 });
     }
   } catch (err) {
     console.error("[GET /api/v1/plans/[planId]/subscribers]", err);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return corsResponse({ error: "Internal Server Error" }, { status: 500 });
   }
 }
