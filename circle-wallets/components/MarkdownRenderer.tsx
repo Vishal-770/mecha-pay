@@ -62,7 +62,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
               const path = rawCode.slice(method.length).trim();
               
               let methodColor = "bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200";
-              if (method === "GET") methodColor = "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50";
+              if (method === "GET") methodColor = "bg-zinc-100 text-zinc-600 dark:bg-zinc-800/60 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/50";
               if (method === "POST") methodColor = "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50";
               if (method === "PUT" || method === "PATCH") methodColor = "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50";
               if (method === "DELETE") methodColor = "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 border border-red-200 dark:border-red-800/50";
