@@ -31,15 +31,7 @@ export default function AuthCallbackPage() {
 
     if (session) {
       redirected.current = true;
-      
-      // Check for stored redirect URL from login flow
-      const redirectUrl = sessionStorage.getItem("circle_auth_redirect_url");
-      if (redirectUrl) {
-        sessionStorage.removeItem("circle_auth_redirect_url"); // Clean up
-        router.replace(redirectUrl);
-      } else {
-        router.replace("/setup-pin");
-      }
+      router.replace("/setup-pin");
       return;
     }
   }, [session, isReady, router]);

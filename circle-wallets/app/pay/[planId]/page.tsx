@@ -17,8 +17,7 @@ import {
   Table as TableIcon,
   Search,
   ChevronRight,
-  Loader2,
-  ArrowDownUp
+  Loader2
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -369,20 +368,7 @@ export default function PaymentPage() {
               <CardContent className="p-6 pt-8 space-y-6">
                 {!session ? (
                   <div className="space-y-4 text-center p-6 border border-dashed rounded-xl bg-muted/30">
-                     <p className="text-xs text-muted-foreground font-medium">Please sign in with Circle Wallets to proceed with this subscription.</p>
-                     <Button 
-                       onClick={() => {
-                         // Preserve the full URL with all query params for post-login redirect
-                         const currentPath = window.location.pathname;
-                         const currentSearch = window.location.search;
-                         const redirectUrl = encodeURIComponent(`${currentPath}${currentSearch}`);
-                         router.push(`/login?redirect=${redirectUrl}`);
-                       }}
-                       className="w-full h-11 text-xs font-bold uppercase tracking-widest"
-                     >
-                       Sign In to Continue
-                       <ArrowRight className="ml-2 size-4" />
-                     </Button>
+                     <p className="text-xs text-muted-foreground font-medium">Please sign in with Circle Wallets to proceed.</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -444,38 +430,6 @@ export default function PaymentPage() {
                   </div>
                 )}
               </CardContent>
-            </Card>
-
-            {/* Bridge USDC Section */}
-            <Card className="border-border bg-card shadow-sm rounded-2xl overflow-hidden p-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <ArrowDownUp className="h-5 w-5 text-primary" />
-                  <h3 className="text-sm font-bold uppercase tracking-widest">Bridge USDC</h3>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Transfer USDC from other networks to Arc Testnet using your Privy wallet.
-                </p>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="w-full h-11 text-xs font-bold uppercase tracking-widest">
-                      Open Bridge
-                      <ArrowDownUp className="ml-2 h-4 w-4" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-                    <SheetHeader>
-                      <SheetTitle>Bridge USDC</SheetTitle>
-                      <SheetDescription>
-                        Move USDC across networks to Arc Testnet
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="mt-6">
-                      <BridgeUSDC isCompact={true} defaultDestChain="Arc_Testnet" />
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
             </Card>
 
             {/* Support Footer */}

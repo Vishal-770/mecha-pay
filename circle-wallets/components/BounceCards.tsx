@@ -22,7 +22,7 @@ export default function BounceCards({
   containerHeight = 400,
   animationDelay = 0.5,
   animationStagger = 0.06,
-  easeType = 'power3.out',
+  easeType = 'elastic.out(1, 0.8)',
   transformStyles = [
     'rotate(10deg) translate(-170px)',
     'rotate(5deg) translate(-85px)',
@@ -39,14 +39,12 @@ export default function BounceCards({
     const ctx = gsap.context(() => {
       gsap.fromTo(
         '.card',
-        { scale: 0.9, opacity: 0 },
+        { scale: 0 },
         {
           scale: 1,
-          opacity: 1,
           stagger: animationStagger,
           ease: easeType,
-          delay: animationDelay,
-          duration: 0.8
+          delay: animationDelay
         }
       );
     }, containerRef);
@@ -90,21 +88,21 @@ export default function BounceCards({
         const noRotation = getNoRotationTransform(baseTransform);
         gsap.to(selector, {
           transform: noRotation,
-          duration: 0.5,
-          ease: 'power3.out',
+          duration: 0.4,
+          ease: 'back.out(1.4)',
           overwrite: 'auto'
         });
       } else {
-        const offsetX = i < hoveredIdx ? -140 : 140;
+        const offsetX = i < hoveredIdx ? -160 : 160;
         const pushedTransform = getPushedTransform(baseTransform, offsetX);
 
         const distance = Math.abs(hoveredIdx - i);
-        const delay = distance * 0.02;
+        const delay = distance * 0.05;
 
         gsap.to(selector, {
           transform: pushedTransform,
-          duration: 0.5,
-          ease: 'power3.out',
+          duration: 0.4,
+          ease: 'back.out(1.4)',
           delay,
           overwrite: 'auto'
         });
@@ -123,8 +121,8 @@ export default function BounceCards({
       const baseTransform = transformStyles[i] || 'none';
       gsap.to(selector, {
         transform: baseTransform,
-        duration: 0.5,
-        ease: 'power3.out',
+        duration: 0.4,
+        ease: 'back.out(1.4)',
         overwrite: 'auto'
       });
     });
@@ -142,15 +140,16 @@ export default function BounceCards({
       {displayItems.map((item, idx) => (
         <div
           key={idx}
-          className={`card card-${idx} absolute w-full max-w-[280px] aspect-[4/3] border border-white/5 bg-[#0a0a0a] backdrop-blur-md rounded-[20px] overflow-hidden flex flex-col p-6 text-white`}
+          className={`card card-${idx} absolute w-full max-w-[280px] aspect-[4/3] border border-white/10 bg-[#111111]/80 backdrop-blur-xl rounded-[24px] overflow-hidden flex flex-col p-6 text-white`}
           style={{
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
             transform: transformStyles[idx] || 'none'
           }}
           onMouseEnter={() => pushSiblings(idx)}
           onMouseLeave={resetSiblings}
         >
           {typeof item === 'string' && !items.length ? (
-            <img className="w-full h-full object-cover opacity-80" src={item} alt={`card-${idx}`} />
+            <img className="w-full h-full object-cover" src={item} alt={`card-${idx}`} />
           ) : (
             item
           )}
