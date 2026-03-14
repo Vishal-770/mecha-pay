@@ -34,7 +34,15 @@ export default function OAuthCallbackPage() {
     if (!isReady || redirected.current) return;
     if (session) {
       redirected.current = true;
-      router.replace("/setup-pin");
+      
+      // Check for stored redirect URL from login flow
+      const redirectUrl = sessionStorage.getItem("circle_auth_redirect_url");
+      if (redirectUrl) {
+        sessionStorage.removeItem("circle_auth_redirect_url"); // Clean up
+        router.replace(redirectUrl);
+      } else {
+        router.replace("/setup-pin");
+      }
     }
   }, [session, isReady, router]);
 

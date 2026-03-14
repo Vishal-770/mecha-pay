@@ -9,6 +9,7 @@ import CardSwap, { Card } from "@/components/CardSwap";
 import { Terminal, AnimatedSpan, TypingAnimation } from "@/components/ui/terminal";
 import AppPreview from "@/components/AppPreview";
 import ApiShowcase from "@/components/ApiShowcase";
+import GraphShowcase from "@/components/GraphShowcase";
 
 
 
@@ -17,36 +18,36 @@ const featureItems = [
     <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
       <Zap className="h-5 w-5 text-[#b6f09c]" />
     </div>
-    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Gasless</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Native USDC gas abstraction for zero-friction payments globally.</p>
+    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Gas Subsidized</h3>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Enjoy seamless transactions with subsidized gas fee on Arc Testnet.</p>
   </div>,
   <div key="2" className="flex flex-col gap-3 pointer-events-auto">
-    <div className="h-10 w-10 rounded-xl bg-[#3b82f6]/10 flex items-center justify-center border border-[#3b82f6]/20">
-      <Shield className="h-5 w-5 text-[#3b82f6]" />
+    <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
+      <Shield className="h-5 w-5 text-[#b6f09c]" />
     </div>
-    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Secure</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Enterprise-grade MPC security with non-custodial control.</p>
+    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Secure MPC</h3>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Enterprise-grade MPC security with non-custodial Circle Wallets.</p>
   </div>,
   <div key="3" className="flex flex-col gap-3 pointer-events-auto">
     <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
       <Globe className="h-5 w-5 text-[#b6f09c]" />
     </div>
-    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Unified</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">One balance across 15+ chains via Circle CCTP integration.</p>
+    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Native USDC</h3>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Bridge canonical USDC across 15+ chains via Circle CCTP protocol.</p>
   </div>,
   <div key="4" className="flex flex-col gap-3 pointer-events-auto">
-    <div className="h-10 w-10 rounded-xl bg-[#f59e0b]/10 flex items-center justify-center border border-[#f59e0b]/20">
-      <Coins className="h-5 w-5 text-[#f59e0b]" />
+    <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
+      <Coins className="h-5 w-5 text-[#b6f09c]" />
     </div>
-    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Yield</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Automated protocol yield generation for idle USDC balances.</p>
+    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Zero Fees</h3>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Standard transaction fees are $0.00 for users paying via Arc.</p>
   </div>,
   <div key="5" className="flex flex-col gap-3 pointer-events-auto">
-    <div className="h-10 w-10 rounded-xl bg-[#ef4444]/10 flex items-center justify-center border border-[#ef4444]/20">
-      <Activity className="h-5 w-5 text-[#ef4444]" />
+    <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
+      <Activity className="h-5 w-5 text-[#b6f09c]" />
     </div>
-    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Realtime</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Sub-second finality on ARC Testnet for instant operations.</p>
+    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Instant Finality</h3>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Sub-second transaction times on Arc Testnet for instant confirmation.</p>
   </div>
 ];
 
@@ -91,10 +92,10 @@ export default function LandingPage() {
             <LayoutGrid className="h-4 w-4 text-[#b6f09c]" />
             Home
           </Link>
-          <Link href="#features" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Exchange</Link>
-          <Link href="#protocol" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Protocol</Link>
-          <Link href="#community" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Community</Link>
-          <Link href="#community" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Support</Link>
+          <Link href="#features" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Features</Link>
+          <Link href="#bridge" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Bridge</Link>
+          <Link href="/docs" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Docs</Link>
+          <Link href="/dashboard/marketplace" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Marketplace</Link>
         </nav>
 
         <div className="flex items-center gap-4">
@@ -121,7 +122,7 @@ export default function LandingPage() {
                    A new standard of trust, built for payments who value speed, clarity, and control.
                 </span>
               </span>
-              Payments
+              Subscriptions
             </h1>
           </div>
           
@@ -129,8 +130,8 @@ export default function LandingPage() {
              <Link href="/login" className="h-12 px-10 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-xs uppercase shadow-xl shadow-[#b6f09c]/20 transition-all hover:opacity-90">
                 Connect Wallet <ArrowUpRight className="ml-2 h-4 w-4 stroke-[3px]" />
              </Link>
-             <Link href="#features" className="h-12 px-10 flex items-center justify-center rounded-xl border border-[#ffffff]/20 bg-[#ffffff]/5 backdrop-blur-md text-[#ffffff] font-extrabold text-xs uppercase transition-all hover:bg-[#ffffff]/10">
-                Explore Protocol
+             <Link href="/dashboard/marketplace" className="h-12 px-10 flex items-center justify-center rounded-xl border border-[#ffffff]/20 bg-[#ffffff]/5 backdrop-blur-md text-[#ffffff] font-extrabold text-xs uppercase transition-all hover:bg-[#ffffff]/10">
+                Browse Marketplace
              </Link>
           </div>
         </div>
@@ -173,22 +174,22 @@ export default function LandingPage() {
             Trustless. <br/><span className="text-[#b6f09c]">Borderless.</span>
           </h2>
           <p className="text-[#a1a1aa] font-medium leading-relaxed text-lg mt-4">
-            Mecha Pay fundamentally redesigns the payment stack by uniting institutional-grade custody with sub-second finality. Enjoy zero-friction global operations with natively subsidized gas fees and built-in cross-chain swapping protocols.
+            Mecha Pay is a Web3 subscription platform built on Arc Testnet with Circle CCTP integration. Create and manage recurring subscription plans with direct USDC payouts, MPC security, and cross-chain bridging across 15+ testnets.
           </p>
           <div className="grid grid-cols-2 gap-6 mt-8">
              <div className="flex flex-col gap-2">
-                <span className="text-3xl font-black italic text-[#ffffff]">15+</span>
-                <span className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest">Supported Chains</span>
+                <span className="text-3xl font-black italic text-[#ffffff]">Arc</span>
+                <span className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest">Testnet Live</span>
              </div>
              <div className="flex flex-col gap-2">
-                <span className="text-3xl font-black italic text-[#ffffff]">100%</span>
-                <span className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest">MPC Covered</span>
+                <span className="text-3xl font-black italic text-[#ffffff]">Circle</span>
+                <span className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest">MPC Wallets</span>
              </div>
           </div>
         </div>
 
         <div className="flex-1 w-full flex items-center justify-center relative h-[600px] pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-tr from-[#b6f09c]/5 to-[#3b82f6]/5 rounded-full blur-3xl opacity-50 z-0" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-tr from-[#b6f09c]/5 to-[#b6f09c]/5 rounded-full blur-3xl opacity-50 z-0" />
           
           <div className="relative w-[320px] h-[200px] z-10 lg:right-10 pointer-events-auto">
             <CardSwap width={320} height={200} cardDistance={40} verticalDistance={50}>
@@ -205,30 +206,30 @@ export default function LandingPage() {
                   <div className="text-4xl font-black italic tracking-tighter text-[#ffffff]">150<span className="text-xl text-[#b6f09c]">ms</span></div>
                 </div>
               </Card>
-              <Card className="bg-[#000000]/80 border border-[#3b82f6]/30 backdrop-blur-xl shadow-2xl shadow-[#3b82f6]/10 rounded-2xl flex flex-col justify-between p-6">
+              <Card className="bg-[#000000]/80 border border-[#b6f09c]/30 backdrop-blur-xl shadow-2xl shadow-[#b6f09c]/10 rounded-2xl flex flex-col justify-between p-6">
                 <div className="flex justify-between items-center text-[#ffffff]">
                   <div className="flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-[#3b82f6]"/> 
+                    <Shield className="w-5 h-5 text-[#b6f09c]"/> 
                     <span className="text-xs font-black uppercase tracking-widest italic">MPC Security</span>
                   </div>
-                  <span className="text-xs font-bold text-[#3b82f6] bg-[#3b82f6]/10 px-2 py-1 rounded-md">Audited</span>
+                  <span className="text-xs font-bold text-[#b6f09c] bg-[#b6f09c]/10 px-2 py-1 rounded-md">Audited</span>
                 </div>
                 <div>
                   <div className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest mb-1">Protection</div>
-                  <div className="text-4xl font-black italic tracking-tighter text-[#ffffff]">100<span className="text-xl text-[#3b82f6]">%</span></div>
+                  <div className="text-4xl font-black italic tracking-tighter text-[#ffffff]">100<span className="text-xl text-[#b6f09c]">%</span></div>
                 </div>
               </Card>
-              <Card className="bg-[#000000]/80 border border-[#f59e0b]/30 backdrop-blur-xl shadow-2xl shadow-[#f59e0b]/10 rounded-2xl flex flex-col justify-between p-6">
+              <Card className="bg-[#000000]/80 border border-[#b6f09c]/30 backdrop-blur-xl shadow-2xl shadow-[#b6f09c]/10 rounded-2xl flex flex-col justify-between p-6">
                 <div className="flex justify-between items-center text-[#ffffff]">
                   <div className="flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-[#f59e0b]"/> 
-                    <span className="text-xs font-black uppercase tracking-widest italic">Gas Subsidized</span>
+                    <Zap className="w-5 h-5 text-[#b6f09c]"/> 
+                    <span className="text-xs font-black uppercase tracking-widest italic tracking-tight">Gas Subsidized</span>
                   </div>
-                  <span className="text-xs font-bold text-[#f59e0b] bg-[#f59e0b]/10 px-2 py-1 rounded-md">Wrapped</span>
+                  <span className="text-xs font-bold text-[#b6f09c] bg-[#b6f09c]/10 px-2 py-1 rounded-md">Native USDC</span>
                 </div>
                 <div>
                   <div className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest mb-1">Transaction Fee</div>
-                  <div className="text-4xl font-black italic tracking-tighter text-[#ffffff]">$0.<span className="text-xl text-[#f59e0b]">00</span></div>
+                  <div className="text-4xl font-black italic tracking-tighter text-[#ffffff] animate-pulse">$0.<span className="text-xl text-[#b6f09c]">00</span></div>
                 </div>
               </Card>
             </CardSwap>
@@ -244,26 +245,23 @@ export default function LandingPage() {
               &gt; npm install mecha-pay
             </TypingAnimation>
             <AnimatedSpan delay={1500} className="text-[#b6f09c] font-mono mt-2 block">
-              ✔ Installed mecha-pay@latest
-            </AnimatedSpan>
-            <AnimatedSpan delay={2000} className="text-[#3b82f6] font-mono block">
-              ✔ Added peer dependencies: react, next
+              ✔ Package installed successfully
             </AnimatedSpan>
             
-            <TypingAnimation delay={3000} duration={30} className="text-[#a1a1aa] font-mono mt-6 block">
-              &gt; cat components/Billing.tsx
+            <TypingAnimation delay={2500} duration={30} className="text-[#a1a1aa] font-mono mt-6 block">
+              &gt; cat components/Subscription.tsx
             </TypingAnimation>
             
-            <AnimatedSpan delay={4000} className="text-[#ffffff] font-mono mt-2 block whitespace-pre-wrap leading-relaxed">
-              <span className="text-[#f59e0b]">import</span> {'{'} PricingTable {'}'} <span className="text-[#f59e0b]">from</span> "mecha-pay";
+            <AnimatedSpan delay={3500} className="text-[#ffffff] font-mono mt-2 block whitespace-pre-wrap leading-relaxed">
+              <span className="text-[#b6f09c]">import</span> {'{'} PricingTable {'}'} <span className="text-[#b6f09c]">from</span> <span className="text-[#b6f09c]">'mecha-pay'</span>;
               <br/><br/>
-              <span className="text-[#f59e0b]">export default function</span> <span className="text-[#3b82f6]">Billing</span>() {'{'}
+              <span className="text-[#f59e0b]">export default function</span> <span className="text-[#b6f09c]">Page</span>() {'{'}
               <br/>
               {'  '}<span className="text-[#f59e0b]">return</span> (
               <br/>
               {'    '}&lt;<span className="text-[#b6f09c]">PricingTable</span> 
               <br/>
-              {'      '}merchantId=<span className="text-[#b6f09c]">"your-id"</span> 
+              {'      '}planId=<span className="text-[#b6f09c]">"0x123..."</span> 
               <br/>
               {'      '}theme=<span className="text-[#b6f09c]">"dark"</span> 
               <br/>
@@ -277,21 +275,21 @@ export default function LandingPage() {
         </div>
 
         <div className="flex-1 flex flex-col gap-6 max-w-2xl px-4">
-          <div className="px-4 py-2 bg-[#3b82f6]/10 border border-[#3b82f6]/20 rounded-full w-fit">
-            <span className="text-[#3b82f6] text-[10px] font-bold uppercase tracking-widest">Developer SDK</span>
+          <div className="px-4 py-2 bg-[#b6f09c]/10 border border-[#b6f09c]/20 rounded-full w-fit">
+            <span className="text-[#b6f09c] text-[10px] font-bold uppercase tracking-widest">Developer API</span>
           </div>
           <h2 className="text-4xl lg:text-6xl font-black uppercase italic tracking-tighter text-[#ffffff]">
-            Embed Your <br/><span className="text-[#3b82f6]">Checkout.</span>
+            Integrate with <br/><span className="text-[#b6f09c]">Mecha SDK.</span>
           </h2>
           <p className="text-[#a1a1aa] font-medium leading-relaxed text-lg mt-4">
-            Mecha Pay isn't just a dashboard. We provide a robust <span className="text-[#ffffff] font-bold">NPM package</span> that lets you drop beautifully designed crypto pricing tables directly into your own website with a few lines of code. 
+            Mecha Pay provides a powerful <span className="text-[#ffffff] font-bold">React SDK</span> and npm package for seamless on-chain subscription management. Import pre-built UI components like <span className="text-[#ffffff] font-bold">PricingTable</span> or use our hooks to interact with the protocol.
           </p>
           <p className="text-[#a1a1aa] font-medium leading-relaxed text-lg mt-2">
-            The <span className="font-mono text-[#b6f09c] text-sm bg-[#b6f09c]/10 px-2 py-1 rounded">PricingTable</span> component automatically syncs with the subscription plans you configure in your dashboard. Zero backend integration required.
+            Get started by installing the <span className="font-mono text-[#b6f09c] text-sm bg-[#b6f09c]/10 px-2 py-1 rounded">mecha-pay</span> package and connecting your merchant account in minutes.
           </p>
           <div className="flex gap-4 mt-6">
-            <Link href="/docs" className="h-12 px-8 flex items-center justify-center rounded-xl bg-[#3b82f6] text-[#ffffff] font-black text-xs uppercase shadow-xl shadow-[#3b82f6]/20 transition-all hover:opacity-90">
-              Read Documentation <ArrowUpRight className="ml-2 h-4 w-4 stroke-[3px]" />
+            <Link href="/docs" className="h-12 px-8 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-xs uppercase shadow-xl shadow-[#b6f09c]/20 transition-all hover:opacity-90">
+              Explore SDK Docs <ArrowUpRight className="ml-2 h-4 w-4 stroke-[3px]" />
             </Link>
           </div>
         </div>
@@ -299,11 +297,13 @@ export default function LandingPage() {
 
       <ApiShowcase />
 
+      <GraphShowcase />
+
       {/* Multi-Chain Bridge Showcase Section */}
 
       <section id="bridge" className="relative w-full bg-[#000000] py-32 px-12 lg:px-20 z-20 border-t border-[#ffffff]/5 overflow-hidden">
         {/* Subtle Institutional Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-[#3b82f6]/5 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-[#b6f09c]/5 to-transparent pointer-events-none" />
         
         <div className="relative z-10 flex flex-col items-center text-center mb-24 gap-6">
           <div className="px-3 py-1 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit">
@@ -357,6 +357,51 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Protocol Economics Section */}
+      <section className="relative w-full bg-[#060608] py-32 px-12 lg:px-20 z-20 border-t border-[#ffffff]/10 overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#b6f09c]/5 blur-[120px] rounded-full -z-10" />
+        
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20">
+          <div className="flex-1 flex flex-col gap-6">
+            <div className="px-4 py-2 bg-[#b6f09c]/10 border border-[#b6f09c]/20 rounded-full w-fit">
+              <span className="text-[#b6f09c] text-[10px] font-bold uppercase tracking-widest">Fee Transparency</span>
+            </div>
+            <h2 className="text-4xl lg:text-7xl font-black uppercase italic tracking-tighter text-[#ffffff] leading-tight">
+              Pure Efficiency. <br/>
+              <span className="text-[#b6f09c]">Zero Waste.</span>
+            </h2>
+            <p className="text-[#a1a1aa] font-medium leading-relaxed text-lg mt-4 max-w-xl">
+              Traditional payment rails eat into your margins with hidden fees and expensive gas costs. Mecha Pay redefines protocol economics.
+            </p>
+          </div>
+
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <div className="p-8 rounded-3xl bg-[#ffffff]/5 border border-[#ffffff]/10 backdrop-blur-sm hover:border-[#b6f09c]/30 transition-all group">
+              <div className="text-5xl font-black italic text-[#ffffff] mb-4 group-hover:text-[#b6f09c] transition-colors">$0.00</div>
+              <h4 className="text-lg font-black uppercase italic text-[#ffffff] mb-2 tracking-tighter">Transaction fee</h4>
+              <p className="text-sm text-[#71717a] font-medium leading-relaxed">Pay subscriptions without the heavy overhead. Zero hidden fees on Arc Testnet.</p>
+            </div>
+            
+            <div className="p-8 rounded-3xl bg-[#ffffff]/5 border border-[#ffffff]/10 backdrop-blur-sm hover:border-[#b6f09c]/30 transition-all group">
+              <div className="text-5xl font-black italic text-[#ffffff] mb-4 group-hover:text-[#b6f09c] transition-colors">Gasless</div>
+              <h4 className="text-lg font-black uppercase italic text-[#ffffff] mb-2 tracking-tighter">Subsidized Fees</h4>
+              <p className="text-sm text-[#71717a] font-medium leading-relaxed">Focus on your payments, not the platform costs. Subsidized gas infrastructure for all users.</p>
+            </div>
+            
+            <div className="p-8 rounded-3xl bg-[#ffffff]/5 border border-[#ffffff]/10 backdrop-blur-sm hover:border-[#b6f09c]/30 transition-all group md:col-span-2">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="h-12 w-12 rounded-2xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
+                   <Globe className="h-6 w-6 text-[#b6f09c]" />
+                </div>
+                <div className="text-4xl font-black italic text-[#ffffff] group-hover:text-[#b6f09c] transition-colors">15+ Chains</div>
+              </div>
+              <h4 className="text-lg font-black uppercase italic text-[#ffffff] mb-2 tracking-tighter">Native CCTP Integration</h4>
+              <p className="text-sm text-[#71717a] font-medium leading-relaxed">No wrapped assets. Move canonical USDC seamlessly between Ethereum, Base, Polygon, and more with 100% asset security.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="relative w-full bg-[#000000] py-20 px-12 lg:px-20 border-t border-[#ffffff]/10 z-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
@@ -366,7 +411,7 @@ export default function LandingPage() {
               <span className="text-2xl font-black tracking-tight text-[#ffffff] uppercase italic">Mecha Pay</span>
             </div>
             <p className="text-[#a1a1aa] font-medium leading-relaxed text-sm">
-              The unified standard for modern on-chain payments. Zero gas friction, institutional security, and instant global finality on ARC.
+              Web3 subscription platform on Arc Testnet with Circle CCTP bridging and MPC wallets. Currently in testnet phase.
             </p>
             <div className="flex items-center gap-4">
              
@@ -379,30 +424,30 @@ export default function LandingPage() {
           <div className="flex flex-col gap-6">
             <h4 className="text-[#ffffff] font-black uppercase text-xs tracking-widest italic">Product</h4>
             <div className="flex flex-col gap-3">
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Features</Link>
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Pricing</Link>
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Integration</Link>
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">API Reference</Link>
+              <Link href="#features" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Features</Link>
+              <Link href="/dashboard/marketplace" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Marketplace</Link>
+              <Link href="/dashboard/plans/create" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Create Plan</Link>
+              <Link href="/docs" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">API Reference</Link>
             </div>
           </div>
 
           <div className="flex flex-col gap-6">
-            <h4 className="text-[#ffffff] font-black uppercase text-xs tracking-widest italic">Protocol</h4>
+            <h4 className="text-[#ffffff] font-black uppercase text-xs tracking-widest italic">Platform</h4>
             <div className="flex flex-col gap-3">
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Whitepaper</Link>
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Smart Contracts</Link>
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Security Audit</Link>
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Governance</Link>
+              <Link href="/dashboard/bridge" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Bridge</Link>
+              <Link href="/dashboard/wallet" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Wallet</Link>
+              <Link href="/dashboard/developer" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Developer</Link>
+              <Link href="/dashboard/admin" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Admin</Link>
             </div>
           </div>
 
           <div className="flex flex-col gap-6">
             <h4 className="text-[#ffffff] font-black uppercase text-xs tracking-widest italic">Resources</h4>
             <div className="flex flex-col gap-3">
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Documentation</Link>
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Tutorials</Link>
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Community</Link>
-              <Link href="#" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Support</Link>
+              <Link href="/docs" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Documentation</Link>
+              <Link href="https://github.com/yourusername/mecha-pay" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GitHub</Link>
+              <Link href="https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.2" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GraphQL API</Link>
+              <Link href="https://testnet.arcscan.net/address/0x2BC2f391fca4144f708eEa918d94348684Bdb544" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Contract Explorer</Link>
             </div>
           </div>
         </div>
@@ -412,9 +457,8 @@ export default function LandingPage() {
             © 2026 Mecha Pay Protocol. All rights reserved.
           </span>
           <div className="flex items-center gap-8">
-            <Link href="#" className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest hover:text-[#ffffff] transition-all">Privacy Policy</Link>
-            <Link href="#" className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest hover:text-[#ffffff] transition-all">Terms of Service</Link>
-            <Link href="#" className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest hover:text-[#ffffff] transition-all">Cookie Settings</Link>
+            <span className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest hover:text-[#ffffff] transition-all cursor-not-allowed">Terms (Coming Soon)</span>
+            <span className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest hover:text-[#ffffff] transition-all cursor-not-allowed">Privacy (Coming Soon)</span>
           </div>
         </div>
       </footer>

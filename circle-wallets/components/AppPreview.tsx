@@ -8,15 +8,7 @@ import { ArrowUpRight } from "lucide-react"
 export default function AppPreview() {
   return (
     <section className="relative w-full py-24 lg:py-40 overflow-hidden bg-[#000000] border-t border-[#ffffff]/5">
-      {/* Background Mesh - Extreme Subtlety for Contrast */}
-      <div className="absolute inset-0 z-0 bg-[#000000]">
-        <div 
-          className="absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_50%_-20%,rgba(182,240,156,1),transparent_70%)]"
-          style={{ filter: "blur(140px)" }}
-        />
-      </div>
-
-
+      
       <div className="relative z-10 container mx-auto px-6 lg:px-12 flex flex-col items-center text-center">
         {/* Badge - Static & Clean */}
         <motion.div
@@ -64,7 +56,7 @@ export default function AppPreview() {
           viewport={{ once: true }}
           className="flex flex-col sm:flex-row items-center gap-5 mb-24"
         >
-          <Link href="/login" className="h-14 px-12 flex items-center justify-center rounded-xl bg-[#ffffff] text-[#000000] font-black text-xs uppercase tracking-widest transition-all hover:bg-[#ebf0f5]">
+          <Link href="/login" className="h-14 px-12 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-xs uppercase tracking-widest transition-all hover:opacity-90">
             Get Started
           </Link>
           <Link href="/docs" className="h-14 px-12 flex items-center justify-center rounded-xl border border-[#ffffff]/10 bg-[#ffffff]/5 text-[#ffffff] font-extrabold text-xs uppercase tracking-widest transition-all hover:bg-[#ffffff]/10">
@@ -80,18 +72,16 @@ export default function AppPreview() {
           viewport={{ once: true }}
           className="relative w-full max-w-6xl"
         >
-          {/* Subtle Glow */}
-          <div className="absolute -inset-10 bg-[#b6f09c]/5 blur-[120px] rounded-full -z-10" />
           
           {/* Main App Image Container */}
-          <div className="relative rounded-[2.5rem] border border-[#ffffff]/10 bg-[#000000] p-3 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)] overflow-hidden">
+          <div className="relative rounded-[2.5rem] border border-[#ffffff]/10 bg-[#000000] p-3 shadow-2xl shadow-[#000000] overflow-hidden">
              <div className="relative rounded-[1.8rem] overflow-hidden">
                <Image 
                  src="/demo-app.png" 
                  alt="Mecha Pay Dashboard" 
                  width={2560} 
                  height={1440} 
-                 className="w-full object-cover active:scale-100"
+                 className="w-full object-cover active:scale-100 grayscale hover:grayscale-0 transition-all duration-700"
                  priority
                />
              </div>
