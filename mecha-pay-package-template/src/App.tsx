@@ -1,25 +1,21 @@
-import { use } from "react";
+
 import "./App.css";
-import axios from "axios";
 
-const BASEURL = "https://mecha-pay.vercel.app/api/v1/me";
 
-async function fetchData() {
-  try {
-    const respone = await axios.get(BASEURL, {
-      headers: {
-        "x-api-key": "mp_live_dfb6eb6c52c3cce679cb42ff10235a438c48f02d5c90c0a1",
-      },
-    });
-    console.log(respone.data);
-  } catch (error) {
-    console.error(error);
-  }
-}
+// Import Pricing table from mecha-pay package
+
+import PricingTable from "mecha-pay";
+
 function App() {
-  const data = use(fetchData());
-
-  return <></>;
+  const apiKey = import.meta.env.VITE_API_KEY!;
+  const userId = "user_1234567890";
+  const planId =
+    "0xacbc49f2fef52733cf471aae1be8efd557851c6c0fff0dcba81327cc84b46646";
+  return (
+    <>
+      <PricingTable apiKey={apiKey} userId={userId} planId={planId} />
+    </>
+  );
 }
 
 export default App;
