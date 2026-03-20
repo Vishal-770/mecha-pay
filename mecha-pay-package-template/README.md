@@ -1,4 +1,4 @@
- This is a example project to show how to use mecha-pay package in a react app.  
+This is an example project showing how to use the `mecha-pay` package in a React app and pass custom styles to the pricing table.
 
 # Getting Started
 1. Clone the repository
@@ -12,6 +12,32 @@ VITE_API_KEY=mp_live_b.........
 ```
 4. Start the development server
 ```bash
-npm start
+npm run dev
 ```
 
+## Custom Styles
+
+The template uses a style-wrapper pattern so you can pass a `customStyles` object in `src/App.tsx` and theme the pricing table without editing package source.
+
+Available style keys:
+- `cardGradientStart`
+- `cardGradientEnd`
+- `cardBorder`
+- `buttonBackground`
+- `buttonText`
+- `buttonHoverBackground`
+- `containerMaxWidth`
+
+Example (already wired in `src/App.tsx`):
+
+```ts
+const customStyles = {
+	cardGradientStart: "#0f172a",
+	cardGradientEnd: "#1d4ed8",
+	cardBorder: "rgba(147, 197, 253, 0.35)",
+	buttonBackground: "#f8fafc",
+	buttonText: "#1d4ed8",
+	buttonHoverBackground: "#e2e8f0",
+	containerMaxWidth: "980px",
+};
+```
