@@ -1,10 +1,7 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useWallets, usePrivy } from "@privy-io/react-auth";
-import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
-import { BridgeKit, type BridgeResult } from "@circle-fin/bridge-kit";
-import { createViemAdapterFromProvider } from "@circle-fin/adapter-viem-v2";
 import {
   Loader2,
   ExternalLink,
@@ -23,9 +20,7 @@ import {
   formatUnits,
   parseUnits,
   encodeFunctionData,
-  keccak256,
   type Log,
-  type EIP1193Provider,
 } from "viem";
 import {
   baseSepolia,
@@ -39,6 +34,8 @@ import {
 import { arcTestnet, customSepolia, seiTestnet, worldChainSepolia, inkTestnet, xdcApothem, monadTestnet, codexTestnet } from "@/lib/privy_config";
 import { useQuery } from "@tanstack/react-query";
 import { cn, formatBalance } from "@/lib/utils";
+import { useCircleSDK } from "@/context/CircleSDKContext";
+import { ARC_BLOCKCHAIN } from "@/lib/subscription";
 
 // shadcn UI components
 import { Button } from "@/components/ui/button";
@@ -76,15 +73,42 @@ interface UIStep {
   errorMessage?: string;
 }
 
-// BridgeStep is not publicly exported from bridge-kit, so we mirror its shape
-interface BridgeKitStep {
-  name: string;
-  state: "pending" | "success" | "error" | "noop";
-  explorerUrl?: string;
-  data?: unknown;
-  errorMessage?: string;
-  error?: unknown;
+interface CircleWalletSummary {
+  id: string;
+  address: string;
+  blockchain: string;
 }
+
+interface WalletRequestProvider {
+  request: (args: { method: string; params?: unknown[] | Record<string, unknown> }) => Promise<unknown>;
+}
+
+const GAS_CAPS_BY_SELECTOR: Record<string, bigint> = {
+  // approve(address,uint256)
+  "0x095ea7b3": 120000n,
+  // depositForBurn(uint256,uint32,bytes32,address)
+  "0x5fe11e4a": 500000n,
+  // receiveMessage(bytes,bytes)
+  "0x57ecfd28": 900000n,
+};
+
+const CONSERVATIVE_GAS_CAPS_BY_SELECTOR: Record<string, bigint> = {
+  "0x095ea7b3": 100000n,
+  "0x5fe11e4a": 300000n,
+  "0x57ecfd28": 700000n,
+};
+
+const DEFAULT_TX_GAS_CAP = 900000n;
+const CCTP_USE_FAST_TRANSFER = true;
+const CCTP_MIN_FINALITY_THRESHOLD = CCTP_USE_FAST_TRANSFER ? 1000 : 2000;
+const CCTP_STANDARD_FEE_BUFFER_BPS = 5000n; // +50%
+const CCTP_STANDARD_FEE_MIN_BUFFER = 50000n; // 0.05 USDC (6 decimals)
+const CCTP_INSUFFICIENT_FEE_MAX_POLLS = 24; // ~2 minutes at 5s interval
+const CCTP_MIN_FEE_QUOTE_RETRIES = 3;
+const CCTP_FALLBACK_MAX_FEE_BPS = 2000n; // 20% of transfer amount when quote read fails
+const CCTP_FALLBACK_MAX_FEE_MIN = 100000n; // 0.10 USDC
+const ATTESTATION_POLL_INTERVAL_MS = 5000;
+const ATTESTATION_MAX_POLLS = 360;
 
 const ERC20_ABI = [
   {
@@ -118,8 +142,9 @@ const SUPPORTED_CHAINS = [
     name: "Arc Testnet",
     identifier: "Arc_Testnet" as BridgeChain,
     viemChain: arcTestnet,
-    usdcAddress: null,
-    decimals: 18,
+    // Arc uses USDC as native gas (18 decimals), while ERC-20 USDC token operations are 6 decimals.
+    usdcAddress: "0x3600000000000000000000000000000000000000",
+    decimals: 6,
     symbol: "Arc",
     icon: "/arc-logo.png",
   },
@@ -291,8 +316,18 @@ const TOKEN_MESSENGER_ABI = [
       { name: "destinationDomain", type: "uint32" },
       { name: "mintRecipient", type: "bytes32" },
       { name: "burnToken", type: "address" },
+      { name: "destinationCaller", type: "bytes32" },
+      { name: "maxFee", type: "uint256" },
+      { name: "minFinalityThreshold", type: "uint32" },
     ],
     outputs: [{ name: "nonce", type: "uint64" }],
+  },
+  {
+    name: "getMinFeeAmount",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: [{ name: "minFee", type: "uint256" }],
   },
 ] as const;
 
@@ -302,8 +337,8 @@ const MESSAGE_TRANSMITTER_ADDRESS =
 // keccak256("MessageSent(bytes)") — topic emitted by TokenMessenger on burn
 const MESSAGE_SENT_TOPIC =
   "0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036";
-const CCTP_ATTESTATION_API =
-  "https://iris-api-sandbox.circle.com/v1/attestations/";
+const CCTP_MESSAGES_API_BASE =
+  "https://iris-api-sandbox.circle.com/v2/messages";
 
 const RECEIVE_MESSAGE_ABI = [
   {
@@ -390,6 +425,7 @@ export default function BridgeUSDC({
   defaultDestChain?: BridgeChain;
 }) {
   const { user, authenticated, login, logout } = usePrivy();
+  const { session, executeChallenge } = useCircleSDK();
   const { wallets } = useWallets();
   const [amount, setAmount] = useState("1.00");
   const [status, setStatus] = useState<
@@ -397,9 +433,9 @@ export default function BridgeUSDC({
   >("idle");
   const [steps, setSteps] = useState<UIStep[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { client } = useSmartWallets();
-  const smartAccount = client?.account; // Access account directly from the smart wallet client
-
+  const [arcCircleWallet, setArcCircleWallet] =
+    useState<CircleWalletSummary | null>(null);
+  const [isLoadingCircleWallet, setIsLoadingCircleWallet] = useState(false);
   // Synchronous guard — prevents double-burn on fast double-clicks
   const isBridging = useRef(false);
 
@@ -416,26 +452,48 @@ export default function BridgeUSDC({
     [destKey],
   );
 
+  const bridgeDirectionLabel =
+    sourceKey === "Arc_Testnet"
+      ? "Circle Wallet (Arc) -> EOA"
+      : "EOA -> Circle Wallet (Arc Testnet)";
+
   const handleSourceChange = (newSource: BridgeChain) => {
-    if (newSource === destKey) {
-      // Swap them
-      setDestKey(sourceKey);
-    }
     setSourceKey(newSource);
+    if (newSource === "Arc_Testnet") {
+      if (destKey === "Arc_Testnet") {
+        setDestKey("Ethereum_Sepolia");
+      }
+      return;
+    }
+    setDestKey("Arc_Testnet");
   };
 
-  const handleDestChange = (newDest: BridgeChain) => {
-    if (newDest === sourceKey) {
-      // Swap them
-      setSourceKey(destKey);
+  const handleDestChange = (newDest?: BridgeChain) => {
+    if (!newDest) {
+      return;
     }
+
+    if (sourceKey !== "Arc_Testnet") {
+      setDestKey("Arc_Testnet");
+      return;
+    }
+
+    if (newDest === "Arc_Testnet") {
+      setDestKey("Ethereum_Sepolia");
+      return;
+    }
+
     setDestKey(newDest);
   };
 
   const switchChains = () => {
-    const temp = sourceKey;
-    setSourceKey(destKey);
-    setDestKey(temp);
+    if (sourceKey === "Arc_Testnet" && destKey !== "Arc_Testnet") {
+      setSourceKey(destKey);
+      setDestKey("Arc_Testnet");
+    } else if (sourceKey !== "Arc_Testnet" && destKey === "Arc_Testnet") {
+      setSourceKey("Arc_Testnet");
+      setDestKey(sourceKey);
+    }
     setAmount("1.00");
     setStatus("idle");
     setSteps([]);
@@ -474,8 +532,8 @@ export default function BridgeUSDC({
     if (!chain.usdcAddress) return;
     try {
       await addChainToWallet(chainKey);
-      const provider = await wallet.getEthereumProvider();
-      await (provider as EIP1193Provider).request({
+      const provider = (await wallet.getEthereumProvider()) as unknown as WalletRequestProvider;
+      await provider.request({
         method: "wallet_watchAsset",
         params: {
           type: "ERC20",
@@ -492,7 +550,62 @@ export default function BridgeUSDC({
     }
   };
 
-  const address = smartAccount?.address || user?.wallet?.address;
+  const address = user?.wallet?.address;
+  const sourceAddress =
+    sourceKey === "Arc_Testnet" ? arcCircleWallet?.address : address;
+  const destinationAddress =
+    destKey === "Arc_Testnet" ? arcCircleWallet?.address : address;
+
+  useEffect(() => {
+    const fetchArcWallet = async () => {
+      if (!session?.userToken) {
+        setArcCircleWallet(null);
+        return;
+      }
+
+      setIsLoadingCircleWallet(true);
+      try {
+        const response = await fetch("/api/wallets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userToken: session.userToken }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load Circle wallets");
+        }
+
+        const data = await response.json();
+        const arcWallet = (data.wallets ?? []).find(
+          (wallet: CircleWalletSummary) => wallet.blockchain === ARC_BLOCKCHAIN,
+        );
+        setArcCircleWallet(arcWallet ?? null);
+      } catch (walletError) {
+        console.error("Failed to fetch Arc Circle wallet:", walletError);
+        setArcCircleWallet(null);
+      } finally {
+        setIsLoadingCircleWallet(false);
+      }
+    };
+
+    void fetchArcWallet();
+  }, [session?.userToken]);
+
+  useEffect(() => {
+    if (sourceKey === destKey) {
+      if (sourceKey === "Arc_Testnet") {
+        setDestKey("Ethereum_Sepolia");
+      } else {
+        setDestKey("Arc_Testnet");
+      }
+      return;
+    }
+
+    if (sourceKey !== "Arc_Testnet" && destKey !== "Arc_Testnet") {
+      setDestKey("Arc_Testnet");
+    }
+  }, [sourceKey, destKey]);
+
   const wallet = useMemo(() => {
     return wallets.find(
       (w) => w.address.toLowerCase() === user?.wallet?.address?.toLowerCase(),
@@ -516,8 +629,12 @@ export default function BridgeUSDC({
   }, []);
 
   const getBalance = useCallback(
-    async (chainKey: BridgeChain, isNative: boolean = false) => {
-      if (!address) return "0.00";
+    async (
+      chainKey: BridgeChain,
+      isNative: boolean = false,
+      targetAddress?: string,
+    ) => {
+      if (!targetAddress) return "0.00";
       const chain = SUPPORTED_CHAINS.find((c) => c.identifier === chainKey)!;
 
       try {
@@ -525,7 +642,7 @@ export default function BridgeUSDC({
         let balance: bigint;
         if (isNative || !chain.usdcAddress) {
           balance = await publicClient.getBalance({
-            address: address as `0x${string}`,
+            address: targetAddress as `0x${string}`,
           });
           const decimals = chain.viemChain.nativeCurrency.decimals;
           return formatUnits(balance, decimals);
@@ -534,7 +651,7 @@ export default function BridgeUSDC({
             address: chain.usdcAddress as `0x${string}`,
             abi: ERC20_ABI,
             functionName: "balanceOf",
-            args: [address as `0x${string}`],
+            args: [targetAddress as `0x${string}`],
           });
           return formatUnits(balance, chain.decimals);
         }
@@ -543,7 +660,7 @@ export default function BridgeUSDC({
         return "0.00";
       }
     },
-    [address, clients],
+    [clients],
   );
 
   const {
@@ -551,16 +668,16 @@ export default function BridgeUSDC({
     isLoading: isLoadingSource,
     refetch: refetchSource,
   } = useQuery({
-    queryKey: ["balance", sourceKey, address, "usdc"],
-    queryFn: () => getBalance(sourceKey, false),
-    enabled: !!address && status !== "bridging",
+    queryKey: ["balance", sourceKey, sourceAddress, "usdc"],
+    queryFn: () => getBalance(sourceKey, false, sourceAddress),
+    enabled: !!sourceAddress && status !== "bridging",
   });
 
   const { data: nativeSourceBalance = "0.00", refetch: refetchNativeSource } =
     useQuery({
-      queryKey: ["balance", sourceKey, address, "native"],
-      queryFn: () => getBalance(sourceKey, true),
-      enabled: !!address && status !== "bridging",
+      queryKey: ["balance", sourceKey, sourceAddress, "native"],
+      queryFn: () => getBalance(sourceKey, true, sourceAddress),
+      enabled: !!sourceAddress && status !== "bridging",
     });
 
   const {
@@ -568,26 +685,275 @@ export default function BridgeUSDC({
     isLoading: isLoadingDest,
     refetch: refetchDest,
   } = useQuery({
-    queryKey: ["balance", destKey, address, "usdc"],
-    queryFn: () => getBalance(destKey, false),
-    enabled: !!address && status !== "bridging",
+    queryKey: ["balance", destKey, destinationAddress, "usdc"],
+    queryFn: () => getBalance(destKey, false, destinationAddress),
+    enabled: !!destinationAddress && status !== "bridging",
   });
 
   const { data: nativeDestBalance = "0.00", refetch: refetchNativeDest } =
     useQuery({
-      queryKey: ["balance", destKey, address, "native"],
-      queryFn: () => getBalance(destKey, true),
-      enabled: !!address && status !== "bridging",
+      queryKey: ["balance", destKey, destinationAddress, "native"],
+      queryFn: () => getBalance(destKey, true, destinationAddress),
+      enabled: !!destinationAddress && status !== "bridging",
     });
 
   const isLoadingBalances = isLoadingSource || isLoadingDest;
+
+  const toRecipientBytes32 = (recipient: string) =>
+    (`0x000000000000000000000000${recipient.slice(2).toLowerCase()}` as `0x${string}`);
+
+  const extractTxHash = (input: unknown): `0x${string}` | null => {
+    const seen = new Set<unknown>();
+    const queue: unknown[] = [input];
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current || seen.has(current)) continue;
+      seen.add(current);
+
+      if (typeof current === "string" && /^0x[a-fA-F0-9]{64}$/.test(current)) {
+        return current as `0x${string}`;
+      }
+
+      if (Array.isArray(current)) {
+        queue.push(...current);
+      } else if (typeof current === "object") {
+        queue.push(...Object.values(current as Record<string, unknown>));
+      }
+    }
+
+    return null;
+  };
+
+  const requestCircleChallenge = async (
+    endpoint: string,
+    payload: Record<string, unknown>,
+  ): Promise<string> => {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || "Failed to create Circle challenge");
+    }
+    if (!data.challengeId) {
+      throw new Error("Circle did not return a challengeId");
+    }
+
+    return data.challengeId;
+  };
+
+  const resolveChallengeTxHash = async (
+    challengeId: string,
+    userToken: string,
+  ): Promise<`0x${string}`> => {
+    const response = await fetch("/api/bridge/resolve-challenge-tx-hash", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ challengeId, userToken }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || "Failed to resolve Circle challenge tx hash");
+    }
+
+    const txHash = data?.txHash;
+    if (!txHash || !/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+      throw new Error("Circle challenge resolved without a valid transaction hash.");
+    }
+
+    return txHash as `0x${string}`;
+  };
+
+  const sendEoaTransaction = async ({
+    chainKey,
+    provider,
+    from,
+    to,
+    data,
+  }: {
+    chainKey: BridgeChain;
+    provider: WalletRequestProvider;
+    from: string;
+    to: string;
+    data: `0x${string}`;
+  }): Promise<`0x${string}`> => {
+    const selector = data.slice(0, 10).toLowerCase();
+    const conservativeCap =
+      CONSERVATIVE_GAS_CAPS_BY_SELECTOR[selector] ?? DEFAULT_TX_GAS_CAP;
+
+    const getErrorText = (err: unknown): string => {
+      if (typeof err === "string") return err;
+      if (err instanceof Error) return err.message;
+      if (!err || typeof err !== "object") return "";
+
+      const rec = err as Record<string, unknown>;
+      const direct = rec.message;
+      if (typeof direct === "string") return direct;
+
+      const nestedError = rec.error as Record<string, unknown> | undefined;
+      if (nestedError && typeof nestedError.message === "string") {
+        return nestedError.message;
+      }
+
+      const nestedData = rec.data as Record<string, unknown> | undefined;
+      if (nestedData && typeof nestedData.message === "string") {
+        return nestedData.message;
+      }
+
+      try {
+        return JSON.stringify(err);
+      } catch {
+        return "";
+      }
+    };
+
+    const isGasLimitTooHighError = (err: unknown) => {
+      const message = getErrorText(err);
+      return /gas limit too high|exceeds block gas limit|intrinsic gas too high/i.test(
+        message,
+      );
+    };
+
+    let gasHex: `0x${string}` | undefined;
+
+    try {
+      const publicClient = clients[chainKey];
+      const selectorCap = GAS_CAPS_BY_SELECTOR[selector] ?? DEFAULT_TX_GAS_CAP;
+      const estimated = await publicClient.estimateGas({
+        account: from as `0x${string}`,
+        to: to as `0x${string}`,
+        data,
+      });
+
+      // Add a small safety buffer but cap against block gas limit to avoid wallet rejections.
+      let gasLimit = (estimated * 120n) / 100n;
+      if (gasLimit > selectorCap) {
+        gasLimit = selectorCap;
+      }
+
+      const latestBlock = await publicClient.getBlock({ blockTag: "latest" });
+      if (latestBlock.gasLimit > 0n) {
+        const maxAllowed = (latestBlock.gasLimit * 90n) / 100n;
+        if (gasLimit > maxAllowed) gasLimit = maxAllowed;
+      }
+
+      gasHex = `0x${gasLimit.toString(16)}` as `0x${string}`;
+    } catch {
+      // If estimation fails, still send with a conservative cap instead of letting wallet guess an oversized limit.
+      gasHex = `0x${conservativeCap.toString(16)}` as `0x${string}`;
+    }
+
+    const txParams: {
+      from: string;
+      to: string;
+      data: `0x${string}`;
+      gas?: `0x${string}`;
+    } = {
+      from,
+      to,
+      data,
+    };
+
+    if (gasHex) {
+      txParams.gas = gasHex;
+    }
+
+    const sendWithParams = async (params: { from: string; to: string; data: `0x${string}`; gas?: `0x${string}` }) => {
+      return (await provider.request({
+        method: "eth_sendTransaction",
+        params: [params] as unknown[],
+      })) as `0x${string}`;
+    };
+
+    try {
+      return await sendWithParams(txParams);
+    } catch (err) {
+      if (isGasLimitTooHighError(err)) {
+
+        try {
+          const conservativeParams = {
+            from,
+            to,
+            data,
+            gas: `0x${conservativeCap.toString(16)}` as `0x${string}`,
+          };
+          return await sendWithParams(conservativeParams);
+        } catch (err2) {
+          if (!isGasLimitTooHighError(err2)) {
+            throw err2;
+          }
+        }
+
+        const retryParams = {
+          from,
+          to,
+          data,
+        };
+        return await sendWithParams(retryParams);
+      }
+      throw err;
+    }
+  };
+
+  const getReadableError = (err: unknown): string => {
+    if (err instanceof Error && err.message) return err.message;
+    if (typeof err === "string") return err;
+    if (!err || typeof err !== "object") return "Unknown error";
+
+    const rec = err as Record<string, unknown>;
+    const candidates = [
+      rec.shortMessage,
+      rec.message,
+      (rec.details as Record<string, unknown> | undefined)?.message,
+      (rec.cause as Record<string, unknown> | undefined)?.message,
+    ];
+
+    for (const c of candidates) {
+      if (typeof c === "string" && c.trim().length > 0) return c;
+    }
+
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return "Unknown error";
+    }
+  };
 
   const handleBridge = async () => {
     if (isBridging.current) return;
     isBridging.current = true;
 
     if (!wallet) {
-      setError("Please connect your wallet first.");
+      setError("Please connect your EOA wallet first.");
+      isBridging.current = false;
+      return;
+    }
+
+    if (!sourceAddress || !destinationAddress) {
+      setError("Missing source or destination wallet address.");
+      isBridging.current = false;
+      return;
+    }
+
+    if (!/^0x[a-fA-F0-9]{40}$/.test(destinationAddress)) {
+      setError("Destination address is invalid.");
+      isBridging.current = false;
+      return;
+    }
+
+    if (!arcCircleWallet && (sourceKey === "Arc_Testnet" || destKey === "Arc_Testnet")) {
+      setError("Arc Circle wallet not found. Please complete Circle wallet setup first.");
+      isBridging.current = false;
+      return;
+    }
+
+    if (!session?.userToken && (sourceKey === "Arc_Testnet" || destKey === "Arc_Testnet")) {
+      setError("Circle session is required for Arc wallet signing.");
       isBridging.current = false;
       return;
     }
@@ -606,137 +972,419 @@ export default function BridgeUSDC({
       return;
     }
 
-    // Batch approve+burn into a single ERC-4337 UserOperation (1 signature)
-    // Works for any CCTP-supported chain when a smart account is available
-    const canBatch = !!smartAccount;
-
     setStatus("bridging");
     setError(null);
     setSteps([]);
 
     try {
-      const provider = await wallet.getEthereumProvider();
+      const amountInUsdc = parseUnits(amount, 6);
+      const destinationDomain = CCTP_CONFIG[destKey].domain;
+      const messenger = CCTP_CONFIG[sourceKey].messenger;
+      const recipientBytes32 = toRecipientBytes32(destinationAddress);
 
-      if (canBatch && smartAccount) {
-        // ── Step 1: Approve + DepositForBurn batched into a single UserOp ──────────
-        setSteps([{ name: "Approve & Burn (Batched)", state: "bridging" }]);
+      let burnTxHash: `0x${string}`;
+      let burnDataV2: `0x${string}` | null = null;
+      let burnMaxFeeHuman = "n/a";
+      let feeQuoteSourceLabel = "n/a";
 
-        const amountWei = parseUnits(amount, sourceChain.decimals);
-        const destinationDomain = CCTP_CONFIG[destKey].domain;
-        const messenger = CCTP_CONFIG[sourceKey].messenger;
-        const recipientBytes32 = ("0x000000000000000000000000" +
-          address!.substring(2)) as `0x${string}`;
+      if (sourceKey === "Arc_Testnet") {
+        if (!arcCircleWallet || !session?.userToken) {
+          throw new Error("Arc Circle wallet session is required for Arc source bridge.");
+        }
 
-        const calls = [
+        setSteps([{ name: "Approve", state: "bridging" }]);
+        const approveChallengeId = await requestCircleChallenge(
+          "/api/bridge/prepare-approve",
           {
-            to: sourceChain.usdcAddress as `0x${string}`,
-            data: encodeFunctionData({
-              abi: [
-                {
-                  name: "approve",
-                  type: "function",
-                  inputs: [
-                    { name: "spender", type: "address" },
-                    { name: "amount", type: "uint256" },
-                  ],
-                },
-              ],
-              functionName: "approve",
-              args: [messenger as `0x${string}`, amountWei],
-            }),
+            userToken: session.userToken,
+            walletId: arcCircleWallet.id,
+            amount,
           },
-          {
-            to: messenger as `0x${string}`,
-            data: encodeFunctionData({
-              abi: TOKEN_MESSENGER_ABI,
-              functionName: "depositForBurn",
-              args: [
-                amountWei,
-                destinationDomain,
-                recipientBytes32,
-                sourceChain.usdcAddress as `0x${string}`,
-              ],
-            }),
-          },
-        ];
+        );
+        const approveResult = await executeChallenge(approveChallengeId);
+        const approveTxHash = extractTxHash(approveResult);
 
-        const txHash = await client.sendTransaction({ calls });
         setSteps([
           {
-            name: "Approve & Burn (Batched)",
+            name: "Approve",
             state: "success",
-            data: {
-              explorerUrl: `${sourceChain.viemChain.blockExplorers?.default.url}/tx/${txHash}`,
-            },
+            data: approveTxHash
+              ? {
+                  explorerUrl: `${sourceChain.viemChain.blockExplorers?.default.url}/tx/${approveTxHash}`,
+                }
+              : undefined,
           },
+          { name: "Burn", state: "bridging" },
         ]);
 
-        // ── Step 2: Wait for receipt & parse MessageSent log ─────────────────────
-        setSteps((prev) => [
-          ...prev,
-          { name: "Confirming Burn", state: "bridging" },
-        ]);
-        const srcPublicClient = clients[sourceKey];
-        const receipt = await srcPublicClient.waitForTransactionReceipt({
-          hash: txHash,
+        const burnChallengeId = await requestCircleChallenge(
+          "/api/bridge/prepare-burn",
+          {
+            userToken: session.userToken,
+            walletId: arcCircleWallet.id,
+            amount,
+            destinationChain: destKey,
+            recipientAddress: destinationAddress,
+          },
+        );
+        const burnResult = await executeChallenge(burnChallengeId);
+        let extractedBurnTxHash = extractTxHash(burnResult);
+        if (!extractedBurnTxHash) {
+          extractedBurnTxHash = await resolveChallengeTxHash(
+            burnChallengeId,
+            session.userToken,
+          );
+        }
+        burnTxHash = extractedBurnTxHash;
+        burnMaxFeeHuman = "circle-managed";
+        feeQuoteSourceLabel = "circle-managed";
+      } else {
+        const provider = (await wallet.getEthereumProvider()) as unknown as WalletRequestProvider;
+
+        try {
+          await provider.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: `0x${sourceChain.viemChain.id.toString(16)}` }],
+          });
+        } catch {
+          await addChainToWallet(sourceKey);
+          await provider.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: `0x${sourceChain.viemChain.id.toString(16)}` }],
+          });
+        }
+
+        const activeChainHex = (await provider.request({
+          method: "eth_chainId",
+        })) as string;
+        const activeChainId = Number.parseInt(activeChainHex, 16);
+        if (activeChainId !== sourceChain.viemChain.id) {
+          throw new Error(
+            `Wallet is on chain ${activeChainId}, expected ${sourceChain.viemChain.id} (${sourceChain.name}). Please switch network and retry.`,
+          );
+        }
+
+        setSteps([{ name: "Approve", state: "bridging" }]);
+
+        const approveData = encodeFunctionData({
+          abi: [
+            {
+              name: "approve",
+              type: "function",
+              inputs: [
+                { name: "spender", type: "address" },
+                { name: "amount", type: "uint256" },
+              ],
+            },
+          ],
+          functionName: "approve",
+          args: [messenger as `0x${string}`, amountInUsdc],
         });
 
-        const msgLog = receipt.logs.find(
-          (l: Log) => l.topics[0]?.toLowerCase() === MESSAGE_SENT_TOPIC,
-        );
-        if (!msgLog)
-          throw new Error(
-            "MessageSent event not found in receipt — check that the source chain TokenMessenger is correct.",
-          );
+        const approveTxHash = await sendEoaTransaction({
+          chainKey: sourceKey,
+          provider,
+          from: sourceAddress,
+          to: sourceChain.usdcAddress as `0x${string}`,
+          data: approveData,
+        });
 
-        const messageBytes = msgLog.data as `0x${string}`;
-        const messageHash = keccak256(messageBytes);
-        setSteps((prev) => [
-          ...prev.slice(0, -1),
-          { ...prev[prev.length - 1], state: "success" },
+        await clients[sourceKey].waitForTransactionReceipt({ hash: approveTxHash });
+        setSteps([
+          {
+            name: "Approve",
+            state: "success",
+            data: {
+              explorerUrl: `${sourceChain.viemChain.blockExplorers?.default.url}/tx/${approveTxHash}`,
+            },
+          },
+          { name: "Burn", state: "bridging" },
         ]);
 
-        // ── Step 3: Poll Circle attestation API ──────────────────────────────────
-        setSteps((prev) => [
-          ...prev,
-          { name: "Waiting for Attestation", state: "bridging" },
-        ]);
-        let attestation = "";
-        for (let i = 0; i < 90; i++) {
-          await new Promise((r) => setTimeout(r, 5000));
-          try {
-            const res = await fetch(`${CCTP_ATTESTATION_API}${messageHash}`);
-            if (res.ok) {
-              const data = await res.json();
-              if (data.status === "complete" && data.attestation) {
-                attestation = data.attestation;
-                break;
+        let minFee = 0n;
+        let feeQuoteReadFailed = false;
+        const shouldQuoteMinFee = CCTP_MIN_FINALITY_THRESHOLD >= 2000;
+
+        if (shouldQuoteMinFee) {
+          for (let attempt = 1; attempt <= CCTP_MIN_FEE_QUOTE_RETRIES; attempt++) {
+            try {
+              minFee = await clients[sourceKey].readContract({
+                address: messenger as `0x${string}`,
+                abi: TOKEN_MESSENGER_ABI,
+                functionName: "getMinFeeAmount",
+                args: [amountInUsdc],
+              });
+              feeQuoteReadFailed = false;
+              break;
+            } catch {
+              feeQuoteReadFailed = true;
+              if (attempt < CCTP_MIN_FEE_QUOTE_RETRIES) {
+                await new Promise((resolve) => setTimeout(resolve, attempt * 750));
               }
             }
-          } catch {
-            /* retry */
           }
         }
-        if (!attestation)
-          throw new Error("Attestation timed out after 7.5 minutes.");
+
+        const burnMaxFee = (() => {
+          if (!shouldQuoteMinFee || feeQuoteReadFailed) {
+            const pctFallback = (amountInUsdc * CCTP_FALLBACK_MAX_FEE_BPS) / 10000n;
+            return pctFallback > CCTP_FALLBACK_MAX_FEE_MIN
+              ? pctFallback
+              : CCTP_FALLBACK_MAX_FEE_MIN;
+          }
+
+          if (minFee <= 0n) return 0n;
+          const pctBuffer = (minFee * CCTP_STANDARD_FEE_BUFFER_BPS) / 10000n;
+          const extra =
+            pctBuffer > CCTP_STANDARD_FEE_MIN_BUFFER
+              ? pctBuffer
+              : CCTP_STANDARD_FEE_MIN_BUFFER;
+          return minFee + extra;
+        })();
+
+        if (burnMaxFee >= amountInUsdc) {
+          throw new Error(
+            `Bridge amount too small for current fee quote. Required maxFee ${formatUnits(burnMaxFee, 6)} USDC for transfer amount ${amount} USDC. Increase amount or retry later.`,
+          );
+        }
+
+        burnMaxFeeHuman = formatUnits(burnMaxFee, 6);
+        feeQuoteSourceLabel = !shouldQuoteMinFee
+          ? "fast-policy"
+          : feeQuoteReadFailed
+            ? "fallback"
+            : "quoted";
+        burnDataV2 = encodeFunctionData({
+          abi: TOKEN_MESSENGER_ABI,
+          functionName: "depositForBurn",
+          args: [
+            amountInUsdc,
+            destinationDomain,
+            recipientBytes32,
+            sourceChain.usdcAddress as `0x${string}`,
+            "0x0000000000000000000000000000000000000000000000000000000000000000",
+            burnMaxFee,
+            CCTP_MIN_FINALITY_THRESHOLD,
+          ],
+        });
+
+        burnTxHash = await sendEoaTransaction({
+          chainKey: sourceKey,
+          provider,
+          from: sourceAddress,
+          to: messenger,
+          data: burnDataV2,
+        });
+      }
+
+      setSteps((prev) => [
+        ...prev.slice(0, -1),
+        {
+          name: "Burn Submitted",
+          state: "pending",
+          data: {
+            explorerUrl: `${sourceChain.viemChain.blockExplorers?.default.url}/tx/${burnTxHash}`,
+          },
+        },
+        { name: "Confirming Burn", state: "bridging" },
+      ]);
+
+      const receipt = await clients[sourceKey].waitForTransactionReceipt({ hash: burnTxHash });
+
+      if (receipt.status !== "success") {
+        let revertHint = "";
+        try {
+          if (burnDataV2) {
+            await clients[sourceKey].call({
+              account: sourceAddress as `0x${string}`,
+              to: messenger as `0x${string}`,
+              data: burnDataV2,
+            });
+          }
+        } catch (callErr) {
+          const reason = getReadableError(callErr);
+          if (reason) {
+            revertHint = ` Revert reason: ${reason}`;
+          }
+        }
+
+        setSteps((prev) =>
+          prev.map((step) => {
+            if (step.name === "Burn Submitted") {
+              return { ...step, state: "error", errorMessage: "Transaction reverted" };
+            }
+            if (step.name === "Confirming Burn") {
+              return { ...step, state: "error" };
+            }
+            return step;
+          }),
+        );
+
+        throw new Error(
+          `Burn transaction reverted on ${sourceChain.name}. Tx: ${burnTxHash}.${revertHint}`,
+        );
+      }
+
+      setSteps((prev) =>
+        prev.map((step) => {
+          if (step.name === "Burn Submitted") {
+            return { ...step, name: "Burn", state: "success" };
+          }
+          if (step.name === "Confirming Burn") {
+            return { ...step, state: "success" };
+          }
+          return step;
+        }),
+      );
+
+      const msgLog = receipt.logs.find(
+        (log: Log) => log.topics[0]?.toLowerCase() === MESSAGE_SENT_TOPIC,
+      );
+      if (!msgLog) {
+        throw new Error(
+          `Burn confirmed but MessageSent event not found in receipt. Tx: ${burnTxHash}.`,
+        );
+      }
+
+      setSteps((prev) => [...prev, { name: "Waiting for Attestation", state: "bridging" }]);
+      let attestation = "";
+      let attestedMessageBytes: `0x${string}` | null = null;
+      const sourceDomain = CCTP_CONFIG[sourceKey].domain;
+      let insufficientFeePolls = 0;
+
+      for (let i = 0; i < ATTESTATION_MAX_POLLS; i++) {
+        await new Promise((resolve) => setTimeout(resolve, ATTESTATION_POLL_INTERVAL_MS));
+        try {
+          const qs = new URLSearchParams({
+            transactionHash: burnTxHash,
+          });
+          const response = await fetch(
+            `${CCTP_MESSAGES_API_BASE}/${sourceDomain}?${qs.toString()}`,
+          );
+          if (!response.ok) {
+            continue;
+          }
+
+          const data = await response.json();
+          const messages = Array.isArray(data?.messages)
+            ? data.messages
+            : [];
+
+          const pendingMessage = messages.find((m: unknown) => {
+            const row = m as Record<string, unknown>;
+            return row?.status === "pending_confirmations";
+          }) as Record<string, unknown> | undefined;
+
+          const delayReason =
+            pendingMessage && typeof pendingMessage.delayReason === "string"
+              ? pendingMessage.delayReason
+              : null;
+
+          if (delayReason === "insufficient_fee") {
+            insufficientFeePolls += 1;
+            if (insufficientFeePolls >= CCTP_INSUFFICIENT_FEE_MAX_POLLS) {
+              throw new Error(
+                `Iris reports insufficient_fee for this burn after ${CCTP_INSUFFICIENT_FEE_MAX_POLLS} polls. This transfer is unlikely to complete with current ${feeQuoteSourceLabel} maxFee (${burnMaxFeeHuman} USDC). Submit a new bridge transaction. Burn tx: ${burnTxHash}`,
+              );
+            }
+          }
+
+          if (pendingMessage && i % 12 === 0) {
+            const waitingMsg =
+              delayReason === "insufficient_fee"
+                ? `Attestation delayed: ${feeQuoteSourceLabel} maxFee ${burnMaxFeeHuman} USDC is currently insufficient. Retry with a higher amount so maxFee can cover the current fee quote.`
+                : "Iris is waiting for source-chain confirmations...";
+
+            setSteps((prev) =>
+              prev.map((step) =>
+                step.name === "Waiting for Attestation"
+                  ? {
+                      ...step,
+                      errorMessage: waitingMsg,
+                    }
+                  : step,
+              ),
+            );
+          }
+
+          const completed = messages.find(
+            (m: unknown) => {
+              const row = m as Record<string, unknown>;
+              return (
+                typeof row?.attestation === "string" &&
+                row.attestation !== "PENDING" &&
+                typeof row?.message === "string" &&
+                row.message.startsWith("0x")
+              );
+            },
+          ) as Record<string, unknown> | undefined;
+
+          if (completed) {
+            attestation = completed.attestation as string;
+            attestedMessageBytes = completed.message as `0x${string}`;
+            break;
+          }
+        } catch (pollErr) {
+          if (
+            pollErr instanceof Error &&
+            pollErr.message.startsWith("Iris reports insufficient_fee")
+          ) {
+            throw pollErr;
+          }
+          // retry transient poll errors
+        }
+      }
+
+      if (!attestation || !attestedMessageBytes) {
+        throw new Error("Attestation timed out while waiting for confirmations.");
+      }
+
+      setSteps((prev) => [
+        ...prev.slice(0, -1),
+        { ...prev[prev.length - 1], state: "success" },
+      ]);
+
+      setSteps((prev) => [...prev, { name: "Minting on Destination", state: "bridging" }]);
+      if (destKey === "Arc_Testnet") {
+        if (!arcCircleWallet || !session?.userToken) {
+          throw new Error("Arc Circle wallet session is required for destination mint.");
+        }
+        const mintChallengeId = await requestCircleChallenge(
+          "/api/bridge/prepare-mint",
+          {
+            userToken: session.userToken,
+            walletId: arcCircleWallet.id,
+            message: attestedMessageBytes,
+            attestation,
+          },
+        );
+        const mintResult = await executeChallenge(mintChallengeId);
+        const mintTxHash = extractTxHash(mintResult);
+
         setSteps((prev) => [
           ...prev.slice(0, -1),
-          { ...prev[prev.length - 1], state: "success" },
+          {
+            name: "Minting on Destination",
+            state: "success",
+            data: mintTxHash
+              ? {
+                  explorerUrl: `${destChain.viemChain.blockExplorers?.default.url}/tx/${mintTxHash}`,
+                }
+              : undefined,
+          },
         ]);
+      } else {
+        if (!wallet || !address) {
+          throw new Error("EOA wallet is required to mint on destination chain.");
+        }
 
-        // ── Step 4: Switch to destination chain & call receiveMessage ─────────────
-        setSteps((prev) => [
-          ...prev,
-          { name: "Minting on Destination", state: "bridging" },
-        ]);
-        const provider = await wallet.getEthereumProvider();
+        const provider = (await wallet.getEthereumProvider()) as unknown as WalletRequestProvider;
         try {
           await provider.request({
             method: "wallet_switchEthereumChain",
             params: [{ chainId: `0x${destChain.viemChain.id.toString(16)}` }],
           });
         } catch {
-          // Chain may already be added; try adding it first
           await addChainToWallet(destKey);
           await provider.request({
             method: "wallet_switchEthereumChain",
@@ -747,103 +1395,27 @@ export default function BridgeUSDC({
         const receiveData = encodeFunctionData({
           abi: RECEIVE_MESSAGE_ABI,
           functionName: "receiveMessage",
-          args: [messageBytes, attestation as `0x${string}`],
+          args: [attestedMessageBytes, attestation as `0x${string}`],
         });
 
-        const mintTxHash = (await provider.request({
-          method: "eth_sendTransaction",
-          params: [
-            {
-              from: address,
-              to: MESSAGE_TRANSMITTER_ADDRESS,
-              data: receiveData,
-            },
-          ],
-        })) as `0x${string}`;
+        const mintTxHash = await sendEoaTransaction({
+          chainKey: destKey,
+          provider,
+          from: address,
+          to: MESSAGE_TRANSMITTER_ADDRESS,
+          data: receiveData,
+        });
 
         setSteps((prev) => [
           ...prev.slice(0, -1),
           {
-            ...prev[prev.length - 1],
+            name: "Minting on Destination",
             state: "success",
             data: {
               explorerUrl: `${destChain.viemChain.blockExplorers?.default.url}/tx/${mintTxHash}`,
             },
           },
         ]);
-      } else {
-        // Robust Gas Fee Fix: Intercept the provider's request method
-        // This ensures that even if the SDK hardcodes low fees, we force the correct values
-        // right before they reach MetaMask.
-        const interceptedProvider: EIP1193Provider = {
-          ...provider,
-          request: async (args: any) => {
-            if (
-              args.method === "eth_sendTransaction" &&
-              args.params?.[0] &&
-              (sourceKey === "Arbitrum_Sepolia" ||
-                sourceKey === "Polygon_Amoy_Testnet")
-            ) {
-              const tx = args.params[0];
-              console.log("Intercepted Bridge Transaction:", tx);
-
-              // Force the gas values to meet network minimums
-              // maxPriorityFeePerGas: 30 Gwei, maxFeePerGas: 60 Gwei (to be safe above base fee)
-              tx.maxPriorityFeePerGas = `0x${parseUnits("30", 9).toString(16)}`;
-              tx.maxFeePerGas = `0x${parseUnits("60", 9).toString(16)}`;
-
-              console.log("Forced Gas Overrides Applied:", {
-                maxPriorityFeePerGas: tx.maxPriorityFeePerGas,
-                maxFeePerGas: tx.maxFeePerGas,
-              });
-            }
-            return (provider as any).request(args);
-          },
-        } as any;
-
-        const kit = new BridgeKit();
-        const adapter = await createViemAdapterFromProvider({
-          provider: interceptedProvider,
-        } as any);
-
-        // Still pass gas values to kit.bridge if supported (as a fallback)
-        const gasOverrides =
-          sourceKey === "Arbitrum_Sepolia" ||
-          sourceKey === "Polygon_Amoy_Testnet"
-            ? {
-                maxPriorityFeePerGas: parseUnits("30", 9),
-                maxFeePerGas: parseUnits("60", 9),
-              }
-            : {};
-
-        const result = await kit.bridge({
-          from: { adapter, chain: sourceKey },
-          to: { adapter, chain: destKey },
-          amount: formatBalance(amount, 6),
-          ...gasOverrides,
-        });
-
-        setSteps(
-          (result as BridgeResult).steps?.map((s: BridgeKitStep) => ({
-            name: s.name,
-            state: s.state as StepState,
-            data: s.explorerUrl ? { explorerUrl: s.explorerUrl } : undefined,
-            errorMessage: s.errorMessage,
-          })) ?? [],
-        );
-
-        if (result.state === "error") {
-          const failedStep = result.steps?.find(
-            (s: BridgeKitStep) => s.state === "error",
-          );
-          setError(
-            failedStep
-              ? `Failed at step: ${failedStep.name}`
-              : "Bridging failed.",
-          );
-          setStatus("error");
-          return;
-        }
       }
 
       setStatus("success");
@@ -1004,7 +1576,7 @@ export default function BridgeUSDC({
                 <CardTitle className="text-2xl font-bold text-foreground">
                   Swap
                 </CardTitle>
-                <CardDescription>Bridge USDC across testnets</CardDescription>
+                <CardDescription>{bridgeDirectionLabel}</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 {authenticated ? (
@@ -1046,7 +1618,11 @@ export default function BridgeUSDC({
               {/* Source Chain */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs font-medium text-muted-foreground">
-                  <span>From</span>
+                  <span>
+                    {sourceKey === "Arc_Testnet"
+                      ? "From (Circle Wallet on Arc Testnet)"
+                      : "From (EOA)"}
+                  </span>
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center gap-1">
                       <Wallet className="h-3 w-3" />
@@ -1134,15 +1710,7 @@ export default function BridgeUSDC({
                       variant="link"
                       className="h-auto p-0 text-primary font-bold"
                       onClick={() => {
-                        if (sourceKey === "Arc_Testnet") {
-                          const bal = parseFloat(sourceBalance);
-                          // Truncate to 6 decimals for bridge compatibility
-                          const buffered = Math.max(0, bal - 1).toString();
-                          setAmount(formatBalance(buffered, 6));
-                        } else {
-                          // Ensure even non-Arc balances are capped at 6 decimals for UI/Bridge consistency
-                          setAmount(formatBalance(sourceBalance, 6));
-                        }
+                        setAmount(formatBalance(sourceBalance, 6));
                       }}
                       disabled={status === "bridging"}
                     >
@@ -1168,7 +1736,11 @@ export default function BridgeUSDC({
               {/* Destination Chain */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs font-medium text-muted-foreground">
-                  <span>To</span>
+                  <span>
+                    {destKey === "Arc_Testnet"
+                      ? "To (Circle Wallet on Arc Testnet)"
+                      : "To (EOA)"}
+                  </span>
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center gap-1">
                       <Wallet className="h-3 w-3" />
@@ -1190,16 +1762,18 @@ export default function BridgeUSDC({
                   <div className="flex items-center justify-between gap-3">
                     <Select
                       value={destKey}
-                      onValueChange={(val) =>
-                        handleDestChange(val as BridgeChain)
-                      }
-                      disabled={status === "bridging"}
+                      onValueChange={(val) => handleDestChange(val as BridgeChain)}
+                      disabled={status === "bridging" || sourceKey !== "Arc_Testnet"}
                     >
                       <SelectTrigger className="w-[180px] border-none shadow-none bg-transparent hover:bg-accent font-bold text-lg h-auto py-1 px-2 text-left">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {SUPPORTED_CHAINS.map((c) => (
+                        {SUPPORTED_CHAINS.filter((c) =>
+                          sourceKey === "Arc_Testnet"
+                            ? c.identifier !== "Arc_Testnet"
+                            : c.identifier === "Arc_Testnet",
+                        ).map((c) => (
                           <SelectItem key={c.identifier} value={c.identifier}>
                             <div className="flex items-center gap-2">
                               {c.icon && (
@@ -1255,6 +1829,28 @@ export default function BridgeUSDC({
                   <AlertTitle>Success</AlertTitle>
                   <AlertDescription className="text-xs">
                     Transaction completed successfully!
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {(isLoadingCircleWallet || arcCircleWallet) && (
+                <Alert className="border-border">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <AlertTitle>Arc Circle Wallet</AlertTitle>
+                  <AlertDescription className="text-xs break-all">
+                    {isLoadingCircleWallet
+                      ? "Loading Arc wallet..."
+                      : arcCircleWallet?.address}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {!isLoadingCircleWallet && !arcCircleWallet && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Arc Circle Wallet Required</AlertTitle>
+                  <AlertDescription className="text-xs">
+                    Create/login your Circle wallet on Arc testnet to receive bridged USDC.
                   </AlertDescription>
                 </Alert>
               )}
@@ -1349,7 +1945,9 @@ export default function BridgeUSDC({
                         onClick={handleBridge}
                         disabled={
                           !isValidAmount ||
-                          parseFloat(nativeSourceBalance) < 0.001
+                          parseFloat(nativeSourceBalance) < 0.001 ||
+                          !arcCircleWallet ||
+                          isLoadingCircleWallet
                         }
                         className="w-full h-11 font-bold"
                       >

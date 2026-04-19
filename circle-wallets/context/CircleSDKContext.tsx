@@ -24,6 +24,8 @@ type W3SSocialLoginResult = {
   refreshToken: string;
 };
 
+type W3SChallengeResult = unknown;
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface SdkSession {
@@ -41,7 +43,7 @@ interface CircleSDKContextValue {
   setLoginTokens: (deviceToken: string, deviceEncryptionKey: string) => void;
   getDeviceId: () => Promise<string>;
   performLogin: () => void;
-  executeChallenge: (challengeId: string) => Promise<void>;
+  executeChallenge: (challengeId: string) => Promise<W3SChallengeResult>;
   loginError: string | null;
 }
 
@@ -125,8 +127,8 @@ export function CircleSDKProvider({ children }: { children: ReactNode }) {
     sdk: null,
     isReady: false,
   });
-  const [session, setSessionState] = useState<SdkSession | null>(
-    () => readSession(),
+  const [session, setSessionState] = useState<SdkSession | null>(() =>
+    readSession(),
   );
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -156,7 +158,9 @@ export function CircleSDKProvider({ children }: { children: ReactNode }) {
         if (sdkRef.current) {
           const configs = buildConfigs(undefined, undefined, newSession);
           sdkRef.current.updateConfigs(configs, undefined);
-          console.log("[Circle SDK] SDK authentication updated with new session.");
+          console.log(
+            "[Circle SDK] SDK authentication updated with new session.",
+          );
         }
 
         console.log("[Circle SDK] Login complete – session stored.");
@@ -171,10 +175,17 @@ export function CircleSDKProvider({ children }: { children: ReactNode }) {
       deviceToken?: string,
       deviceEncryptionKey?: string,
     ) => {
-      const configs = buildConfigs(deviceToken, deviceEncryptionKey, currentSession);
+      const configs = buildConfigs(
+        deviceToken,
+        deviceEncryptionKey,
+        currentSession,
+      );
       let instance: W3SSdk;
       if (sdkRef.current) {
-        sdkRef.current.updateConfigs(configs, onLoginComplete as W3SLoginCallback);
+        sdkRef.current.updateConfigs(
+          configs,
+          onLoginComplete as W3SLoginCallback,
+        );
         instance = sdkRef.current;
       } else {
         instance = new W3SSdk(configs, onLoginComplete as W3SLoginCallback);
@@ -246,15 +257,15 @@ export function CircleSDKProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const executeChallenge = useCallback(
-    (challengeId: string): Promise<void> => {
+    (challengeId: string): Promise<W3SChallengeResult> => {
       if (!sdkRef.current) return Promise.reject(new Error("SDK not ready"));
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<W3SChallengeResult>((resolve, reject) => {
         sdkRef.current!.execute(challengeId, (error, result) => {
           if (error) {
             reject(new Error(error.message ?? "Challenge execution failed"));
           } else {
             console.log("[Circle SDK] Challenge complete:", result);
-            resolve();
+            resolve(result);
           }
         });
       });

@@ -5,12 +5,12 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useCircleSDK } from "@/context/CircleSDKContext";
 import { formatUnits } from "ethers";
 import { cn } from "@/lib/utils";
-import { 
-  ShieldCheck, 
-  Wallet, 
-  ArrowRight, 
-  Zap, 
-  CheckCircle2, 
+import {
+  ShieldCheck,
+  Wallet,
+  ArrowRight,
+  Zap,
+  CheckCircle2,
   AlertCircle,
   Clock,
   ExternalLink,
@@ -18,19 +18,25 @@ import {
   Search,
   ChevronRight,
   Loader2,
-  ArrowDownUp
+  ArrowDownUp,
 } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
   Sheet,
@@ -82,10 +88,16 @@ export default function PaymentPage() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const [wallet, setWallet] = useState<{ id: string; address: string; balance: string } | null>(null);
+
+  const [wallet, setWallet] = useState<{
+    id: string;
+    address: string;
+    balance: string;
+  } | null>(null);
   const [walletLoading, setWalletLoading] = useState(false);
-  const [txStatus, setTxStatus] = useState<"idle" | "approving" | "subscribing" | "success" | "error">("idle");
+  const [txStatus, setTxStatus] = useState<
+    "idle" | "approving" | "subscribing" | "success" | "error"
+  >("idle");
   const [txHash, setTxHash] = useState<string | null>(null);
   const [hasSubscribed, setHasSubscribed] = useState<boolean>(false);
 
@@ -137,7 +149,9 @@ export default function PaymentPage() {
         const data = await res.json();
         setPlan(data.plan);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load protocol");
+        setError(
+          err instanceof Error ? err.message : "Failed to load protocol",
+        );
       } finally {
         setLoading(false);
       }
@@ -156,17 +170,22 @@ export default function PaymentPage() {
         body: JSON.stringify({ userToken: session.userToken }),
       });
       const data = await res.json();
-      const arcWallet = data.wallets?.find((w: any) => w.blockchain === "ARC-TESTNET");
-      
+      const arcWallet = data.wallets?.find(
+        (w: any) => w.blockchain === "ARC-TESTNET",
+      );
+
       if (arcWallet) {
         // 1. Try exact match
-        let usdc = arcWallet.tokenBalances?.find((t: any) => t.symbol.toUpperCase() === "USDC");
-        
+        let usdc = arcWallet.tokenBalances?.find(
+          (t: any) => t.symbol.toUpperCase() === "USDC",
+        );
+
         // 2. Try fuzzy match
         if (!usdc) {
-          usdc = arcWallet.tokenBalances?.find((t: any) => 
-            t.symbol.toUpperCase().includes("USDC") || 
-            t.name.toUpperCase().includes("USD COIN")
+          usdc = arcWallet.tokenBalances?.find(
+            (t: any) =>
+              t.symbol.toUpperCase().includes("USDC") ||
+              t.name.toUpperCase().includes("USD COIN"),
           );
         }
 
@@ -178,7 +197,7 @@ export default function PaymentPage() {
         setWallet({
           id: arcWallet.id,
           address: arcWallet.address,
-          balance: usdc?.amount || "0"
+          balance: usdc?.amount || "0",
         });
       }
     } catch (err) {
@@ -197,7 +216,7 @@ export default function PaymentPage() {
 
     try {
       setTxStatus("approving");
-      
+
       // 1. Check & Approve USDC
       const approveRes = await fetch("/api/payment/approve-usdc", {
         method: "POST",
@@ -208,7 +227,7 @@ export default function PaymentPage() {
           amount: formatUnits(plan.price, 6),
         }),
       });
-      
+
       if (approveRes.ok) {
         const { challengeId } = await approveRes.json();
         await executeChallenge(challengeId);
@@ -227,8 +246,9 @@ export default function PaymentPage() {
         }),
       });
 
-      if (!subRes.ok) throw new Error("Failed to execute protocol subscription");
-      
+      if (!subRes.ok)
+        throw new Error("Failed to execute protocol subscription");
+
       const { challengeId: subChallengeId } = await subRes.json();
       await executeChallenge(subChallengeId);
 
@@ -236,7 +256,9 @@ export default function PaymentPage() {
       setTxHash("SUCCESS_PROTOCOL_SETTLED"); // Generic success indicator
     } catch (err) {
       setTxStatus("error");
-      setError(err instanceof Error ? err.message : "Protocol execution failed");
+      setError(
+        err instanceof Error ? err.message : "Protocol execution failed",
+      );
     }
   };
 
@@ -244,7 +266,9 @@ export default function PaymentPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse">Syncing Registry...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse">
+          Syncing Registry...
+        </p>
       </div>
     );
   }
@@ -260,20 +284,28 @@ export default function PaymentPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-sm font-medium text-muted-foreground">{error}</p>
-            <Button onClick={() => window.location.reload()} variant="outline" className="w-full h-11 border-rose-500/20 text-rose-500 font-bold uppercase tracking-widest text-[10px]">Retry Sync</Button>
+            <Button
+              onClick={() => window.location.reload()}
+              variant="outline"
+              className="w-full h-11 border-rose-500/20 text-rose-500 font-bold uppercase tracking-widest text-[10px]"
+            >
+              Retry Sync
+            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  const isInsufficient = wallet && plan ? Number(wallet.balance) < Number(formatUnits(plan.price, 6)) : false;
+  const isInsufficient =
+    wallet && plan
+      ? Number(wallet.balance) < Number(formatUnits(plan.price, 6))
+      : false;
 
   return (
     <main className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       <div className="max-w-7xl mx-auto py-12 px-6 lg:px-12">
         <div className="grid lg:grid-cols-[1fr_400px] gap-12 lg:gap-16">
-          
           {/* Left: Detailed Plan Ledger */}
           <div className="space-y-12">
             <header className="space-y-4">
@@ -291,7 +323,8 @@ export default function PaymentPage() {
                 {plan?.metadata?.name || "Protocol Gateway"}
               </h1>
               <p className="text-sm lg:text-base text-muted-foreground leading-relaxed max-w-2xl break-words">
-                {plan?.metadata?.description || "A secure, automated subscription protocol settling on the Arc network via high-precision USDC transfers."}
+                {plan?.metadata?.description ||
+                  "A secure, automated subscription protocol settling on the Arc network via high-precision USDC transfers."}
               </p>
             </header>
 
@@ -301,16 +334,22 @@ export default function PaymentPage() {
             <section className="space-y-6">
               <div className="flex items-center gap-3">
                 <TableIcon size={16} className="text-primary" />
-                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Capabilities & Features</h3>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Capabilities & Features
+                </h3>
               </div>
-              
+
               <Card className="border-border shadow-none overflow-hidden">
                 <div className="overflow-x-auto w-full">
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-transparent">
-                        <TableHead className="w-1/3 min-w-[120px] text-xs font-bold uppercase tracking-widest py-4 px-6">Headline</TableHead>
-                        <TableHead className="min-w-[200px] text-xs font-bold uppercase tracking-widest py-4 px-6">Proposition</TableHead>
+                        <TableHead className="w-1/3 min-w-[120px] text-xs font-bold uppercase tracking-widest py-4 px-6">
+                          Headline
+                        </TableHead>
+                        <TableHead className="min-w-[200px] text-xs font-bold uppercase tracking-widest py-4 px-6">
+                          Proposition
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -324,9 +363,14 @@ export default function PaymentPage() {
                           </TableCell>
                         </TableRow>
                       ))}
-                      {(!plan?.metadata?.features?.length) && (
+                      {!plan?.metadata?.features?.length && (
                         <TableRow>
-                          <TableCell colSpan={2} className="h-24 text-center text-sm text-muted-foreground">No features declared in registry.</TableCell>
+                          <TableCell
+                            colSpan={2}
+                            className="h-24 text-center text-sm text-muted-foreground"
+                          >
+                            No features declared in registry.
+                          </TableCell>
                         </TableRow>
                       )}
                     </TableBody>
@@ -337,12 +381,23 @@ export default function PaymentPage() {
 
             <footer className="pt-8 flex flex-col sm:flex-row sm:items-center gap-10">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Recurrence</span>
-                <p className="text-xl font-bold">{plan ? humanDuration(plan.duration) : "—"}</p>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Recurrence
+                </span>
+                <p className="text-xl font-bold">
+                  {plan ? humanDuration(plan.duration) : "—"}
+                </p>
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Asset Layer</span>
-                <p className="text-xl font-bold">USDC <span className="text-xs text-muted-foreground">(Arc Testnet)</span></p>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Asset Layer
+                </span>
+                <p className="text-xl font-bold">
+                  USDC{" "}
+                  <span className="text-xs text-muted-foreground">
+                    (Arc Testnet)
+                  </span>
+                </p>
               </div>
             </footer>
           </div>
@@ -354,14 +409,21 @@ export default function PaymentPage() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground break-words line-clamp-2">Secure Settlement</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground break-words line-clamp-2">
+                      Secure Settlement
+                    </span>
                   </div>
                   <ShieldCheck size={18} className="text-primary shrink-0" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Subscription Cost</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Subscription Cost
+                  </span>
                   <p className="text-4xl font-bold tracking-tight text-foreground break-words">
-                    {plan ? formatUnits(plan.price, 6) : "0.00"} <span className="text-sm text-muted-foreground uppercase font-bold">USDC</span>
+                    {plan ? formatUnits(plan.price, 6) : "0.00"}{" "}
+                    <span className="text-sm text-muted-foreground uppercase font-bold">
+                      USDC
+                    </span>
                   </p>
                 </div>
               </CardHeader>
@@ -369,47 +431,71 @@ export default function PaymentPage() {
               <CardContent className="p-6 pt-8 space-y-6">
                 {!session ? (
                   <div className="space-y-4 text-center p-6 border border-dashed rounded-xl bg-muted/30">
-                     <p className="text-xs text-muted-foreground font-medium">Please sign in with Circle Wallets to proceed with this subscription.</p>
-                     <Button 
-                       onClick={() => {
-                         // Preserve the full URL with all query params for post-login redirect
-                         const currentPath = window.location.pathname;
-                         const currentSearch = window.location.search;
-                         const redirectUrl = encodeURIComponent(`${currentPath}${currentSearch}`);
-                         router.push(`/login?redirect=${redirectUrl}`);
-                       }}
-                       className="w-full h-11 text-xs font-bold uppercase tracking-widest"
-                     >
-                       Sign In to Continue
-                       <ArrowRight className="ml-2 size-4" />
-                     </Button>
+                    <p className="text-xs text-muted-foreground font-medium">
+                      Please sign in with Circle Wallets to proceed with this
+                      subscription.
+                    </p>
+                    <Button
+                      onClick={() => {
+                        // Preserve the full URL with all query params for post-login redirect
+                        const currentPath = window.location.pathname;
+                        const currentSearch = window.location.search;
+                        const redirectUrl = encodeURIComponent(
+                          `${currentPath}${currentSearch}`,
+                        );
+                        router.push(`/login?redirect=${redirectUrl}`);
+                      }}
+                      className="w-full h-11 text-xs font-bold uppercase tracking-widest"
+                    >
+                      Sign In to Continue
+                      <ArrowRight className="ml-2 size-4" />
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {/* Wallet Box */}
                     <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
                       <div className="flex items-center justify-between">
-                         <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Connected Wallet</span>
-                         <Badge variant="outline" className="text-[8px] h-4">ARC-L2</Badge>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                          Connected Wallet
+                        </span>
+                        <Badge variant="outline" className="text-[8px] h-4">
+                          ARC-L2
+                        </Badge>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-xs font-mono text-foreground truncate max-w-full block overflow-hidden text-ellipsis">{wallet?.address || truncateAddress("0x0000000000000000000000000000000000000000")}</p>
+                        <p className="text-xs font-mono text-foreground truncate max-w-full block overflow-hidden text-ellipsis">
+                          {wallet?.address ||
+                            truncateAddress(
+                              "0x0000000000000000000000000000000000000000",
+                            )}
+                        </p>
                         <div className="flex items-center justify-between pt-2 gap-2">
-                          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Available</span>
-                          <span className={cn(
-                            "text-sm font-bold",
-                            isInsufficient ? "text-destructive" : "text-foreground"
-                          )}>
-                            {walletLoading ? "..." : (wallet ? Number(wallet.balance).toFixed(2) : "0.00")} USDC
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">
+                            Available
+                          </span>
+                          <span
+                            className={cn(
+                              "text-sm font-bold",
+                              isInsufficient
+                                ? "text-destructive"
+                                : "text-foreground",
+                            )}
+                          >
+                            {walletLoading
+                              ? "..."
+                              : wallet
+                                ? Number(wallet.balance).toFixed(2)
+                                : "0.00"}{" "}
+                            USDC
                           </span>
                         </div>
                       </div>
                     </div>
 
-
                     {/* Final Action */}
                     {hasSubscribed ? (
-                      <Button 
+                      <Button
                         disabled
                         variant="ghost"
                         className="w-full h-12 bg-emerald-500/10 text-emerald-600 font-bold uppercase tracking-widest text-xs cursor-default hover:bg-emerald-500/10"
@@ -418,9 +504,11 @@ export default function PaymentPage() {
                         Active Subscription Detected
                       </Button>
                     ) : (
-                      <Button 
+                      <Button
                         onClick={handlePayment}
-                        disabled={!wallet || isInsufficient || txStatus !== "idle"}
+                        disabled={
+                          !wallet || isInsufficient || txStatus !== "idle"
+                        }
                         className="w-full h-12 text-xs font-bold uppercase tracking-widest transition-all"
                       >
                         {txStatus === "idle" ? (
@@ -430,13 +518,15 @@ export default function PaymentPage() {
                           </>
                         ) : txStatus === "success" ? (
                           <>
-                           Settlement Confirmed
-                           <CheckCircle2 className="ml-2 size-4" />
+                            Settlement Confirmed
+                            <CheckCircle2 className="ml-2 size-4" />
                           </>
                         ) : (
                           <div className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="animate-pulse">{txStatus.toUpperCase()}...</span>
+                            <span className="animate-pulse">
+                              {txStatus.toUpperCase()}...
+                            </span>
                           </div>
                         )}
                       </Button>
@@ -451,14 +541,19 @@ export default function PaymentPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <ArrowDownUp className="h-5 w-5 text-primary" />
-                  <h3 className="text-sm font-bold uppercase tracking-widest">Bridge USDC</h3>
+                  <h3 className="text-sm font-bold uppercase tracking-widest">
+                    Bridge USDC
+                  </h3>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Transfer USDC from other networks to Arc Testnet using your Privy wallet.
+                  Move USDC between your EOA wallet and your Arc Circle wallet.
                 </p>
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" className="w-full h-11 text-xs font-bold uppercase tracking-widest">
+                    <Button
+                      variant="outline"
+                      className="w-full h-11 text-xs font-bold uppercase tracking-widest"
+                    >
                       Open Bridge
                       <ArrowDownUp className="ml-2 h-4 w-4" />
                     </Button>
@@ -467,11 +562,15 @@ export default function PaymentPage() {
                     <SheetHeader>
                       <SheetTitle>Bridge USDC</SheetTitle>
                       <SheetDescription>
-                        Move USDC across networks to Arc Testnet
+                        Bidirectional USDC bridge between EOA and Arc Circle
+                        wallet
                       </SheetDescription>
                     </SheetHeader>
                     <div className="mt-6">
-                      <BridgeUSDC isCompact={true} defaultDestChain="Arc_Testnet" />
+                      <BridgeUSDC
+                        isCompact={true}
+                        defaultDestChain="Arc_Testnet"
+                      />
                     </div>
                   </SheetContent>
                 </Sheet>
@@ -480,17 +579,19 @@ export default function PaymentPage() {
 
             {/* Support Footer */}
             <div className="px-2 space-y-4">
-               <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
-                 By executing this protocol, you authorize the automated transfer of {plan ? formatUnits(plan.price, 6) : "0"} USDC per cycle from your Arc Vault.
-               </p>
-               <Separator />
-               <div className="flex items-center justify-center gap-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
-                 <span>Secure</span>
-                 <span>•</span>
-                 <span>Non-Custodial</span>
-                 <span>•</span>
-                 <span>Arc Built</span>
-               </div>
+              <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
+                By executing this protocol, you authorize the automated transfer
+                of {plan ? formatUnits(plan.price, 6) : "0"} USDC per cycle from
+                your Arc Vault.
+              </p>
+              <Separator />
+              <div className="flex items-center justify-center gap-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
+                <span>Secure</span>
+                <span>•</span>
+                <span>Non-Custodial</span>
+                <span>•</span>
+                <span>Arc Built</span>
+              </div>
             </div>
           </div>
         </div>

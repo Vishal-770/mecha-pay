@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export default function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   // Handle preflight requests
   if (request.method === 'OPTIONS') {
     return new NextResponse(null, {
@@ -17,15 +17,15 @@ export default function middleware(request: NextRequest) {
 
   // Handle actual requests
   const response = NextResponse.next();
-  
+
   response.headers.set('Access-Control-Allow-Origin', '*');
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key');
-  
+
   return response;
 }
 
-// Apply middleware only to API routes
+// Apply proxy only to API routes
 export const config = {
   matcher: '/api/:path*',
 };
