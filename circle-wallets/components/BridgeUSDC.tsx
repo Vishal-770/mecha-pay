@@ -750,23 +750,35 @@ export default function BridgeUSDC({
     challengeId: string,
     userToken: string,
   ): Promise<`0x${string}`> => {
-    const response = await fetch("/api/bridge/resolve-challenge-tx-hash", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ challengeId, userToken }),
-    });
+    const maxAttempts = 8;
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data?.error || "Failed to resolve Circle challenge tx hash");
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const response = await fetch("/api/bridge/resolve-challenge-tx-hash", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeId, userToken }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const txHash = data?.txHash;
+        if (txHash && /^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+          return txHash as `0x${string}`;
+        }
+      }
+
+      // 404 is expected while Circle indexes correlation and tx hash.
+      if (response.status !== 404 || attempt === maxAttempts) {
+        throw new Error(
+          data?.error || "Failed to resolve Circle challenge tx hash",
+        );
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
     }
 
-    const txHash = data?.txHash;
-    if (!txHash || !/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
-      throw new Error("Circle challenge resolved without a valid transaction hash.");
-    }
-
-    return txHash as `0x${string}`;
+    throw new Error("Failed to resolve Circle challenge tx hash");
   };
 
   const sendEoaTransaction = async ({
