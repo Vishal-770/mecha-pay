@@ -17,6 +17,7 @@ type SubscriptionState = {
   lastStartTime: string;
   lastEndTime: string;
   lastBuyerData: string;
+  lastTierId: string;
   updatedAt: string;
   seller: {
     id: string;
@@ -48,6 +49,7 @@ const query = `
       lastStartTime
       lastEndTime
       lastBuyerData
+      lastTierId
       updatedAt
       seller {
         id
@@ -77,28 +79,75 @@ export async function GET(
     const { planId } = await params;
     const { searchParams } = new URL(req.url);
     const subscriber = searchParams.get("subscriber");
+    const userId = searchParams.get("userId");
 
-    if (!subscriber) {
+    if (!subscriber && !userId) {
       return NextResponse.json(
-        { error: "subscriber is required" },
+        { error: "subscriber or userId is required" },
         { status: 400 }
       );
     }
 
-    const id = `${toLowerHex(subscriber)}-${toLowerHex(planId)}`;
-    const data = await querySubgraph<{ subscriptionState: SubscriptionState | null }>(
-      query,
-      { id }
-    );
+    let entry: SubscriptionState | null = null;
 
-    if (!data.subscriptionState) {
+    if (subscriber) {
+      const id = `${toLowerHex(subscriber)}-${toLowerHex(planId)}`;
+      const data = await querySubgraph<{ subscriptionState: SubscriptionState | null }>(
+        query,
+        { id }
+      );
+      entry = data.subscriptionState;
+    } else if (userId) {
+      // Query by buyer data (userId)
+      const userQuery = `
+        query SubscriptionsByUserId($planId: Bytes!, $userId: String!) {
+          subscriptionStates(
+            where: { plan_: { id: $planId }, lastBuyerData: $userId }
+            first: 1
+            orderBy: updatedAt
+            orderDirection: desc
+          ) {
+            id
+            status
+            subscriptionCount
+            totalSpent
+            totalFeesPaid
+            firstStartTime
+            lastStartTime
+            lastEndTime
+            lastBuyerData
+            lastTierId
+            updatedAt
+            seller { id }
+            plan {
+              id
+              duration
+              ipfsHash
+              active
+              subscriptionCount
+              tiers {
+                tierId
+                price
+                label
+                active
+              }
+            }
+          }
+        }
+      `;
+      const data = await querySubgraph<{ subscriptionStates: SubscriptionState[] }>(
+        userQuery,
+        { planId: toLowerHex(planId), userId }
+      );
+      entry = data.subscriptionStates?.[0] || null;
+    }
+
+    if (!entry) {
       return NextResponse.json(
         { error: "Subscription not found" },
         { status: 404 }
       );
     }
-
-    const entry = data.subscriptionState;
     const now = toSecondsNow();
 
     let metadata: unknown = null;

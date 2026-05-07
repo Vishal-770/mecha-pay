@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { ipfsHashToHttpUrl } from "@/lib/subscription";
 import { querySubgraph } from "@/lib/subgraph";
 
+interface SubgraphTier {
+  id: string;
+  tierId: string;
+  price: string;
+  label: string;
+  active: boolean;
+}
+
 interface SubgraphPlan {
   id: string;
   seller: {
@@ -23,6 +31,7 @@ interface SubgraphPlan {
   totalGrossVolume: string;
   totalFeesCollected: string;
   lastSubscriptionAt: string | null;
+  tiers: SubgraphTier[];
 }
 
 const query = `
@@ -38,7 +47,6 @@ const query = `
         totalNetRevenue
         totalFeeContributed
       }
-      price
       duration
       ipfsHash
       active
@@ -48,6 +56,13 @@ const query = `
       totalGrossVolume
       totalFeesCollected
       lastSubscriptionAt
+      tiers(orderBy: tierId, orderDirection: asc) {
+        id
+        tierId
+        price
+        label
+        active
+      }
     }
   }
 `;

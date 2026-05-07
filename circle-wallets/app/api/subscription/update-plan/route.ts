@@ -1,58 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCircleClient } from "@/lib/circleClient";
-import { HIGH_FEE, SUBSCRIPTION_GATEWAY_ADDRESS } from "@/lib/subscription";
+import { HIGH_FEE, SUBSCRIPTION_GATEWAY_ADDRESS, normalizeIpfsUri } from "@/lib/subscription";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as {
+    const body = await req.json() as {
       userToken?: string;
       walletId?: string;
       planId?: string;
-      price?: string;
-      duration?: number;
+      durationSeconds?: number;
       ipfsHash?: string;
     };
 
-    const { userToken, walletId, planId, price, duration, ipfsHash } = body;
+    const { userToken, walletId, planId, durationSeconds, ipfsHash } = body;
 
-    if (!userToken || !walletId || !planId || !price || !duration || !ipfsHash) {
-      return NextResponse.json(
-        { error: "Missing required fields (userToken, walletId, planId, price, duration, ipfsHash)" },
-        { status: 400 },
-      );
+    if (!userToken || !walletId || !planId || !durationSeconds || !ipfsHash) {
+      return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
     }
 
-    if (!/^0x[a-fA-F0-9]{64}$/.test(planId)) {
-      return NextResponse.json(
-        { error: "planId must be bytes32 hex" },
-        { status: 400 },
-      );
+    if (durationSeconds <= 0 || !Number.isFinite(durationSeconds)) {
+      return NextResponse.json({ error: "durationSeconds must be a positive number" }, { status: 400 });
     }
 
     const client = getCircleClient();
-    const response =
-      await client.createUserTransactionContractExecutionChallenge({
-        userToken,
-        walletId,
-        contractAddress: SUBSCRIPTION_GATEWAY_ADDRESS,
-        abiFunctionSignature: "updatePlan(bytes32,uint256,uint32,string)",
-        abiParameters: [planId, price, duration.toString(), ipfsHash],
-        fee: HIGH_FEE,
-      });
+    const response = await client.createUserTransactionContractExecutionChallenge({
+      userToken,
+      walletId,
+      contractAddress: SUBSCRIPTION_GATEWAY_ADDRESS,
+      abiFunctionSignature: "updatePlanMetadata(bytes32,uint32,string)",
+      abiParameters: [
+        planId,
+        durationSeconds,
+        normalizeIpfsUri(ipfsHash)
+      ],
+      fee: HIGH_FEE,
+    });
 
     const challengeId = response.data?.challengeId;
 
-    if (!challengeId) {
-      return NextResponse.json(
-        { error: "No challengeId returned by Circle" },
-        { status: 500 },
-      );
-    }
-
+    if (!challengeId) return NextResponse.json({ error: "No challengeId" }, { status: 500 });
     return NextResponse.json({ challengeId });
   } catch (err) {
     console.error("[/api/subscription/update-plan]", err);
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Unknown error" }, { status: 500 });
   }
 }

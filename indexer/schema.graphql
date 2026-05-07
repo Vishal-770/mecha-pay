@@ -159,6 +159,7 @@ type SubscriptionState @entity(immutable: false) {
   lastStartTime: BigInt!
   lastEndTime: BigInt!
   lastBuyerData: String!
+  lastTierId: BigInt!
   firstSeenAt: BigInt!
   updatedAt: BigInt!
   lastTxHash: Bytes!

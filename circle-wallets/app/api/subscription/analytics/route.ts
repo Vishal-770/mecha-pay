@@ -89,7 +89,7 @@ type Transaction = {
 
 const sellerPlansQuery = `
   query SellerPlans($seller: Bytes!) {
-    plans(where: { seller: $seller }, orderBy: createdAt, orderDirection: desc) {
+    plans(where: { seller_: { id: $seller } }, orderBy: createdAt, orderDirection: desc) {
       id
       seller { id }
       duration
@@ -112,7 +112,7 @@ const sellerPlansQuery = `
 
 const buyerStatesQuery = `
   query BuyerStates($subscriber: Bytes!) {
-    subscriptionStates(where: { subscriber: $subscriber }, orderBy: updatedAt, orderDirection: desc) {
+    subscriptionStates(where: { subscriber_: { id: $subscriber } }, orderBy: updatedAt, orderDirection: desc) {
       id
       status
       lastEndTime
@@ -179,8 +179,8 @@ const subscriberQuery = `
 `;
 
 const monthlyStatsQuery = `
-  query MonthlyStats {
-    monthlyStats(orderBy: monthStartTimestamp, orderDirection: desc, first: 12) {
+  query MonthlyStatsCollection {
+    monthlyStats_collection(orderBy: monthStartTimestamp, orderDirection: desc, first: 12) {
       id
       monthStartTimestamp
       plansCreated
@@ -198,7 +198,7 @@ const transactionsQuery = `
       first: $first,
       orderBy: blockTimestamp,
       orderDirection: desc,
-      where: { or: [{ from: $user }, { to: $user }, { seller: $user }, { subscriber: $user }] }
+      where: { or: [{ from: $user }, { to: $user }] }
     ) {
       id
       type
@@ -222,48 +222,32 @@ export async function GET(req: Request) {
     const now = Math.floor(Date.now() / 1000);
     const thirtyDaysAgo = Math.max(now - 30 * 24 * 60 * 60, 0);
 
-    const [
-      sellerData,
-      subscriberData,
-      recentEventsData,
-      sellerPlansData,
-      buyerStatesData,
-      monthlyStatsData,
-      transactionsData,
-    ] = await Promise.all([
-
+    const results = await Promise.allSettled([
+      // 0: seller metrics
       seller
-        ? querySubgraph<{ seller: Seller | null }>(sellerQuery, {
-            id: toLowerHex(seller),
-          })
+        ? querySubgraph<{ seller: Seller | null }>(sellerQuery, { id: toLowerHex(seller) })
         : Promise.resolve({ seller: null }),
+      // 1: subscriber metrics
       subscriber
-        ? querySubgraph<{ subscriber: Subscriber | null }>(subscriberQuery, {
-            id: toLowerHex(subscriber),
-          })
+        ? querySubgraph<{ subscriber: Subscriber | null }>(subscriberQuery, { id: toLowerHex(subscriber) })
         : Promise.resolve({ subscriber: null }),
-      querySubgraph<{ subscribeds: SubscribedEvent[] }>(
-        recentSubscriptionsQuery,
-        {
-          user: toLowerHex(seller || subscriber || "0x0000000000000000000000000000000000000000"),
-          first: eventsFirst,
-          since: thirtyDaysAgo,
-        },
-      ),
+      // 2: recent subscription events
+      querySubgraph<{ subscribeds: SubscribedEvent[] }>(recentSubscriptionsQuery, {
+        user: toLowerHex(seller || subscriber || "0x0000000000000000000000000000000000000000"),
+        first: eventsFirst,
+        since: String(thirtyDaysAgo),
+      }),
+      // 3: seller plans
       seller
-        ? querySubgraph<{ plans: Plan[] }>(sellerPlansQuery, {
-            seller: toLowerHex(seller),
-          })
+        ? querySubgraph<{ plans: Plan[] }>(sellerPlansQuery, { seller: toLowerHex(seller) })
         : Promise.resolve({ plans: [] }),
+      // 4: buyer subscription states
       subscriber
-        ? querySubgraph<{ subscriptionStates: SubscriptionState[] }>(
-            buyerStatesQuery,
-            {
-              subscriber: toLowerHex(subscriber),
-            },
-          )
+        ? querySubgraph<{ subscriptionStates: SubscriptionState[] }>(buyerStatesQuery, { subscriber: toLowerHex(subscriber) })
         : Promise.resolve({ subscriptionStates: [] }),
+      // 5: monthly stats
       querySubgraph<{ monthlyStats: MonthlyStats[] }>(monthlyStatsQuery),
+      // 6: transactions
       (seller || subscriber)
         ? querySubgraph<{ transactions: Transaction[] }>(transactionsQuery, {
             user: toLowerHex(seller || subscriber!),
@@ -271,6 +255,25 @@ export async function GET(req: Request) {
           })
         : Promise.resolve({ transactions: [] }),
     ]);
+
+    // Log any individual failures for debugging
+    const queryNames = ["sellerMetrics", "subscriberMetrics", "recentEvents", "sellerPlans", "buyerStates", "monthlyStats", "transactions"];
+    results.forEach((r, i) => {
+      if (r.status === "rejected") {
+        console.error(`[analytics] Query "${queryNames[i]}" failed:`, r.reason);
+      }
+    });
+
+    const unwrap = <T>(r: PromiseSettledResult<T>, fallback: T): T =>
+      r.status === "fulfilled" ? r.value : fallback;
+
+    const sellerData = unwrap(results[0] as PromiseSettledResult<{ seller: Seller | null }>, { seller: null });
+    const subscriberData = unwrap(results[1] as PromiseSettledResult<{ subscriber: Subscriber | null }>, { subscriber: null });
+    const recentEventsData = unwrap(results[2] as PromiseSettledResult<{ subscribeds: SubscribedEvent[] }>, { subscribeds: [] });
+    const sellerPlansData = unwrap(results[3] as PromiseSettledResult<{ plans: Plan[] }>, { plans: [] });
+    const buyerStatesData = unwrap(results[4] as PromiseSettledResult<{ subscriptionStates: SubscriptionState[] }>, { subscriptionStates: [] });
+    const monthlyStatsData = unwrap(results[5] as PromiseSettledResult<{ monthlyStats_collection: MonthlyStats[] }>, { monthlyStats_collection: [] });
+    const transactionsData = unwrap(results[6] as PromiseSettledResult<{ transactions: Transaction[] }>, { transactions: [] });
 
 
     const recentSubscriptions = recentEventsData.subscribeds ?? [];
@@ -352,7 +355,7 @@ export async function GET(req: Request) {
       topPlans: topPlansWithMetadata,
       recentSubscriptions,
       revenueHistory,
-      monthlyStats: monthlyStatsData.monthlyStats ?? [],
+      monthlyStats: monthlyStatsData.monthlyStats_collection ?? [],
       transactions: transactionsData.transactions ?? [],
     });
 

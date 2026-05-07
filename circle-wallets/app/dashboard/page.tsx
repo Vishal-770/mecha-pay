@@ -4,117 +4,116 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { formatUnits } from "ethers";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
-  Area
-} from "recharts";
-import { 
-  Wallet, 
-  TrendingUp, 
-  Users, 
-  CreditCard, 
-  ArrowUpRight, 
-  Plus, 
-  ShoppingBag, 
-  Activity 
-} from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
+import {
+  ArrowUpRight, ArrowDownRight, Plus, ExternalLink,
+  TrendingUp, Activity,
+} from "lucide-react";
+
+/* ─── Resolve a CSS variable to a concrete colour string ─── */
+function useCssColors() {
+  const [clr, setClr] = useState({
+    primary:    "#22c55e",
+    muted:      "#64748b",
+    border:     "rgba(148,163,184,0.12)",
+    tooltip:    { bg: "#0f172a", border: "#1e293b" },
+  });
+
+  useEffect(() => {
+    const style = getComputedStyle(document.documentElement);
+    const get = (v: string) => style.getPropertyValue(v).trim();
+    // CSS vars are e.g. "oklch(…)" — wrap in var() so the browser resolves it
+    // We use a hidden temp element to convert oklch → rgb for Recharts (SVG fill)
+    const resolve = (varName: string): string => {
+      const el = document.createElement("div");
+      el.style.color = `var(${varName})`;
+      el.style.display = "none";
+      document.body.appendChild(el);
+      const rgb = getComputedStyle(el).color; // always returns rgb(…)
+      document.body.removeChild(el);
+      return rgb || "#22c55e";
+    };
+
+    setClr({
+      primary: resolve("--primary"),
+      muted:   resolve("--muted-foreground"),
+      border:  `rgba(148,163,184,0.10)`,
+      tooltip: { bg: "#0f172a", border: "#1e293b" },
+    });
+  }, []);
+
+  return clr;
+}
+
+
 
 type AnalyticsResponse = {
-  globalOverview: {
-    totalPlans: number;
-    activePlans: number;
-    totalSubscriptions: number;
-    activeSubscriptions: number;
-  };
-  sellerMetrics: {
-    planCount: number;
-    activePlanCount: number;
-    subscriptionCount: number;
-    totalGrossRevenue: string;
-    totalNetRevenue: string;
-    totalFeeContributed: string;
-  } | null;
-  buyerMetrics: {
-    subscriptionCount: number;
-    activeSubscriptionCount: number;
-    totalSpent: string;
-    totalFeesPaid: string;
-  } | null;
-  topPlans: Array<{
-    id: string;
-    subscriptionCount: number;
-    totalGrossVolume: string;
-    netRevenue: string;
-    metadata: { 
-      name?: string;
-      brand?: { name?: string };
-    } | null;
-  }>;
-  recentSubscriptions: Array<{
-    id: string;
-    subscriber: string;
-    seller: string;
-    planId: string;
-    totalAmount: string;
-    blockTimestamp: string;
-  }>;
-  revenueHistory?: Array<{
-    date: string;
-    revenue: string;
-  }>;
-  monthlyStats?: Array<{
-    id: string;
-    monthStartTimestamp: string;
-    plansCreated: number;
-    subscriptionsCreated: number;
-    totalGrossVolume: string;
-    totalFeesCollected: string;
-    totalFeeWithdrawals: string;
-  }>;
-  transactions?: Array<{
-    id: string;
-    type: string;
-    from: string;
-    to: string | null;
-    amount: string | null;
-    fee: string | null;
-    plan: { id: string } | null;
-    blockTimestamp: string;
-  }>;
+  sellerMetrics: { planCount: number; activePlanCount: number; subscriptionCount: number; totalGrossRevenue: string; totalNetRevenue: string; totalFeeContributed: string } | null;
+  buyerMetrics: { subscriptionCount: number; activeSubscriptionCount: number; totalSpent: string; totalFeesPaid: string } | null;
+  topPlans: Array<{ id: string; subscriptionCount: number; totalGrossVolume: string; netRevenue: string; active: boolean; tiers?: { tierId: string; price: string; label: string }[]; metadata: { name?: string; brand?: { name?: string } } | null }>;
+  recentSubscriptions: Array<{ id: string; subscriber: string; seller: string; planId: string; tierId: string; tier: { label: string; price: string } | null; totalAmount: string; feeAmount: string; blockTimestamp: string }>;
+  revenueHistory?: Array<{ date: string; revenue: string }>;
+  monthlyStats?: Array<{ id: string; monthStartTimestamp: string; plansCreated: number; subscriptionsCreated: number; totalGrossVolume: string; totalFeesCollected: string }>;
+  transactions?: Array<{ id: string; type: string; from: string; to: string | null; amount: string | null; fee: string | null; plan: { id: string } | null; blockTimestamp: string }>;
 };
 
+const fmt = (v: string | null | undefined) =>
+  Number(formatUnits(v ?? "0", 6)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function truncate(value: string) {
-  return `${value.slice(0, 6)}…${value.slice(-4)}`;
+const trunc = (v: string) => `${v.slice(0, 6)}…${v.slice(-4)}`;
+
+const TX_LABELS: Record<string, string> = {
+  SUBSCRIBE:   "Subscribe",
+  CREATE_PLAN: "Plan Created",
+  UPDATE_PLAN: "Plan Updated",
+  WITHDRAW:    "Withdraw",
+  SET_FEE:     "Fee Update",
+};
+
+/* ─── Reusable metric row ─── */
+function MetricRow({ label, value, sub, loading }: { label: string; value: string; sub?: string; loading: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between py-2.5 border-b border-border/20 last:border-0">
+      <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold leading-none">{label}</span>
+      <div className="text-right">
+        {loading ? <Skeleton className="h-3.5 w-20 inline-block" /> : (
+          <>
+            <span className="text-sm font-mono font-bold text-foreground">{value}</span>
+            {sub && <span className="ml-2 text-[10px] text-muted-foreground">{sub}</span>}
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
+
+/* ─── Section label ─── */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground mb-4 leading-none">
+      {children}
+    </p>
+  );
+}
+
 
 export default function DashboardOverviewPage() {
   const { wallet } = useDashboardContext();
+  const clr = useCssColors();
+  const tooltipStyle = {
+    background: clr.tooltip.bg,
+    border: `1px solid ${clr.tooltip.border}`,
+    borderRadius: 6,
+    fontSize: 11,
+    color: "#e2e8f0",
+    padding: "6px 10px",
+  };
   const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -122,403 +121,375 @@ export default function DashboardOverviewPage() {
     let mounted = true;
     const run = async () => {
       try {
-        const params = new URLSearchParams();
-        if (wallet?.address) {
-          params.set("seller", wallet.address);
-          params.set("subscriber", wallet.address);
-        }
-
-        const response = await fetch(
-          `/api/subscription/analytics?${params.toString()}`,
-          {
-            cache: "no-store",
-          },
-        );
-        const json = (await response.json()) as AnalyticsResponse;
+        const p = new URLSearchParams();
+        if (wallet?.address) { p.set("seller", wallet.address); p.set("subscriber", wallet.address); }
+        const res = await fetch(`/api/subscription/analytics?${p}`, { cache: "no-store" });
+        const json = await res.json() as AnalyticsResponse;
         if (mounted) setAnalytics(json);
-      } finally {
-        if (mounted) setLoading(false);
-      }
+      } finally { if (mounted) setLoading(false); }
     };
-
     void run();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [wallet?.address]);
 
   const usdcBalance = useMemo(() => {
     if (!wallet?.tokenBalances) return "0.00";
-    
-    // 1. Try exact match
-    let token = wallet.tokenBalances.find((t) => t.symbol.toUpperCase() === "USDC");
-    
-    // 2. Try fuzzy match (USDC.e, USD Coin, etc)
-    if (!token) {
-      token = wallet.tokenBalances.find((t) => 
-        t.symbol.toUpperCase().includes("USDC") || 
-        t.name.toUpperCase().includes("USD COIN")
-      );
-    }
-
-    // 3. If on Arc, the native token IS USDC
-    if (!token && wallet.blockchain === "ARC-TESTNET") {
-      token = wallet.tokenBalances.find(t => t.isNative);
-    }
-
-    if (!token) return "0.00";
-    return Number(token.amount).toFixed(2);
+    let t = wallet.tokenBalances.find(t => t.symbol.toUpperCase() === "USDC");
+    if (!t) t = wallet.tokenBalances.find(t => t.symbol.toUpperCase().includes("USDC"));
+    if (!t && wallet.blockchain === "ARC-TESTNET") t = wallet.tokenBalances.find(t => t.isNative);
+    return t ? Number(t.amount).toFixed(2) : "0.00";
   }, [wallet?.tokenBalances, wallet?.blockchain]);
 
-  const seller = analytics?.sellerMetrics;
-  const buyer = analytics?.buyerMetrics;
+  const revenueChart = useMemo(() =>
+    (analytics?.revenueHistory ?? []).map(e => ({
+      d: e.date.slice(5),
+      v: Number(formatUnits(e.revenue, 6)),
+    })), [analytics?.revenueHistory]);
 
-  const chartData = useMemo(() => {
-    if (!analytics?.revenueHistory) return [];
-    
-    return analytics.revenueHistory.map((entry: { date: string, revenue: string }) => ({
-      name: entry.date.split("-").slice(1).join("/"), // MM/DD
-      value: Number(formatUnits(entry.revenue, 6))
-    }));
-  }, [analytics?.revenueHistory]);
+  const monthlyChart = useMemo(() =>
+    [...(analytics?.monthlyStats ?? [])].reverse().map(e => ({
+      m: new Date(Number(e.monthStartTimestamp) * 1000).toLocaleDateString("en", { month: "short" }),
+      vol: Number(formatUnits(e.totalGrossVolume, 6)),
+      subs: e.subscriptionsCreated,
+    })), [analytics?.monthlyStats]);
 
-  const monthlyChartData = useMemo(() => {
-    if (!analytics?.monthlyStats) return [];
-    
-    return [...analytics.monthlyStats].reverse().map((entry) => ({
-      name: new Date(Number(entry.monthStartTimestamp) * 1000).toLocaleDateString(undefined, { month: 'short' }),
-      volume: Number(formatUnits(entry.totalGrossVolume, 6)),
-      subs: entry.subscriptionsCreated
-    }));
-  }, [analytics?.monthlyStats]);
-
+  const s = analytics?.sellerMetrics;
+  const b = analytics?.buyerMetrics;
 
   return (
-    <div className="flex flex-col gap-8 p-4 md:p-8 animate-in fade-in duration-500">
-      {/* Header Section */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Command Center</h1>
-        <p className="text-muted-foreground">
-          Real-time insights across your creator and buyer profiles.
-        </p>
-      </div>
+    <div className="w-full min-h-screen bg-background">
 
-      {/* Primary Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="relative overflow-hidden border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Creator Earnings</CardTitle>
-            <TrendingUp className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-9 w-32" />
-            ) : (
-              <div className="text-3xl font-bold tracking-tight">
-                ${Number(formatUnits(seller?.totalNetRevenue ?? "0", 6)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-              </div>
-            )}
-            <p className="mt-1 text-xs text-muted-foreground">Cumulative after protocol fees</p>
-          </CardContent>
-          <div className="absolute bottom-0 right-0 h-16 w-32 opacity-10">
-             <TrendingUp className="h-full w-full" />
+      {/* ── Top bar ── */}
+      <div className="border-b border-border/40 px-5 md:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-sm font-bold tracking-tight">Overview</h1>
+          <p className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate max-w-[200px] sm:max-w-xs md:max-w-none opacity-60">
+            {wallet?.address ?? "—"}
+          </p>
+        </div>
+        <div className="flex items-center gap-5 sm:gap-7">
+          <div className="hidden sm:block text-right">
+            <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">Balance</p>
+            {loading
+              ? <Skeleton className="h-5 w-20 mt-1" />
+              : <p className="text-base font-black font-mono mt-0.5">{usdcBalance} <span className="text-[10px] font-normal text-muted-foreground">USDC</span></p>
+            }
           </div>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Active Memberships</CardTitle>
-            <Activity className="h-4 w-4 text-sky-500" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-9 w-12" />
-            ) : (
-              <div className="text-3xl font-bold tracking-tight">{buyer?.activeSubscriptionCount ?? 0}</div>
-            )}
-            <p className="mt-1 text-xs text-muted-foreground">Active subscriptions you hold</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Capital Deployed</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-indigo-500" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-9 w-32" />
-            ) : (
-              <div className="text-3xl font-bold tracking-tight">
-                ${Number(formatUnits(buyer?.totalSpent ?? "0", 6)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-              </div>
-            )}
-            <p className="mt-1 text-xs text-muted-foreground">Total spent across all plans</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-7">
-        {/* Revenue Visualization */}
-        <Card className="lg:col-span-4 border-border bg-card">
-          <CardHeader>
-            <CardTitle>Net Revenue Growth</CardTitle>
-            <CardDescription>Estimated earnings performance over current cycle</CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                  <XAxis 
-                    dataKey="name" 
-                    stroke="var(--muted-foreground)" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
-                  />
-                  <YAxis 
-                    stroke="var(--muted-foreground)" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
-                    tickFormatter={(value) => `$${value}`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--card)', 
-                      borderColor: 'var(--border)',
-                      borderRadius: '8px',
-                      color: 'var(--foreground)'
-                    }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="var(--primary)" 
-                    fillOpacity={1} 
-                    fill="url(#colorValue)" 
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Wallet Snapshot */}
-        <div className="flex flex-col gap-6 lg:col-span-3">
-          <Card className="border-border bg-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Wallet className="h-4 w-4" />
-                Wallet Insight
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="rounded-lg border border-border bg-muted/30 p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground p-0 mb-1">Managed Address</p>
-                  <p className="font-mono text-xs text-foreground break-all">
-                    {wallet?.address ?? "No active wallet"}
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">USDC Balance</p>
-                    <p className="text-xl font-bold">{usdcBalance}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Creator Plans</p>
-                    <p className="text-xl font-bold">{seller?.planCount ?? 0}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border bg-card flex-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Quick Discovery
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-2">
-              <Button asChild variant="default" className="w-full justify-start gap-3 h-12 rounded-none shadow-lg shadow-primary/20">
-                <Link href="/dashboard/plans/create" className="flex items-center">
-                  <ArrowUpRight className="h-4 w-4 shrink-0" />
-                  <span className="font-black uppercase italic tracking-tighter text-xs">Launch New Plan</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full justify-start gap-3 h-12 rounded-none border-border">
-                <Link href="/dashboard/marketplace" className="flex items-center">
-                  <ShoppingBag className="h-4 w-4 shrink-0" />
-                  <span className="font-bold uppercase italic tracking-tighter text-xs">Marketplace</span>
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" className="w-full justify-start gap-3 h-12 rounded-none hover:bg-muted font-bold">
-                <Link href="/dashboard/subscriptions" className="flex items-center">
-                  <Activity className="h-4 w-4 shrink-0" />
-                  <span className="font-bold uppercase italic tracking-tighter text-xs">Activity History</span>
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="hidden md:block text-right">
+            <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">Network</p>
+            <p className="text-xs font-bold font-mono mt-0.5 text-foreground/80">{wallet?.blockchain ?? "—"}</p>
+          </div>
+          <Link href="/dashboard/plans/create" className={cn(buttonVariants({ variant: "default", size: "sm" }), "gap-1.5 text-xs font-bold uppercase tracking-wider shrink-0 h-8 px-3")}>
+            <Plus className="h-3.5 w-3.5" /> New Plan
+          </Link>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Top Plans */}
-        <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle>Top Performing Plans</CardTitle>
-            <CardDescription>Best-sellers by subscription volume and revenue</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-6">Plan</TableHead>
-                  <TableHead className="text-right">Subs</TableHead>
-                  <TableHead className="text-right pr-6">Net Revenue</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="pl-6"><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
-                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : (analytics?.topPlans ?? []).length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center py-10">
-                      <div className="flex flex-col items-center gap-2">
-                        <ShoppingBag className="h-8 w-8 text-muted-foreground opacity-20" />
-                        <p className="text-sm text-muted-foreground font-medium">You haven't launched any plans yet</p>
-                        <Link 
-                          href="/dashboard/plans/create" 
-                          className={cn(buttonVariants({ variant: "link", size: "sm" }), "h-auto p-0")}
-                        >
-                          Create your first plan
-                        </Link>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (analytics?.topPlans ?? []).map((plan) => (
-                  <TableRow key={plan.id}>
-                    <TableCell className="pl-6 font-medium">
-                      <Link className="hover:text-primary transition-colors" href={`/dashboard/marketplace/${plan.id}`}>
-                        {plan.metadata?.name ?? plan.metadata?.brand?.name ?? truncate(plan.id)}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-right">{plan.subscriptionCount}</TableCell>
-                    <TableCell className="text-right pr-6 font-bold">
-                      ${Number(formatUnits(plan.netRevenue, 6)).toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      {/* ── Main grid ── */}
+      <div className="flex flex-col xl:grid xl:grid-cols-12 xl:divide-x divide-border/40">
 
-        {/* Recent Activity */}
-        <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Monitor incoming and outgoing subscriptions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {loading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-3 w-1/4" />
-                    </div>
-                  </div>
-                ))
-                            ) : (analytics?.transactions ?? []).length === 0 ? (
-                  <p className="text-center py-10 text-muted-foreground italic text-sm">No transactions recorded yet</p>
-              ) : (analytics?.transactions ?? []).slice(0, 10).map((tx) => {
-                const isFromMe = tx.from.toLowerCase() === wallet?.address?.toLowerCase();
-                const isToMe = tx.to?.toLowerCase() === wallet?.address?.toLowerCase();
-                
-                let icon = <Activity className="h-5 w-5" />;
-                let colorClass = "bg-muted text-muted-foreground";
-                let label = tx.type.replace("_", " ");
-                
-                if (tx.type === "SUBSCRIBE") {
-                  icon = isToMe ? <ArrowUpRight className="h-5 w-5" /> : <CreditCard className="h-5 w-5" />;
-                  colorClass = isToMe ? "bg-emerald-50 text-emerald-600" : "bg-sky-50 text-sky-600";
-                  label = isToMe ? "Payment Received" : "Subscription Paid";
-                } else if (tx.type === "CREATE_PLAN") {
-                  icon = <Plus className="h-5 w-5" />;
-                  colorClass = "bg-indigo-50 text-indigo-600";
-                  label = "Plan Created";
-                } else if (tx.type === "WITHDRAW") {
-                  icon = <Wallet className="h-5 w-5" />;
-                  colorClass = "bg-amber-50 text-amber-600";
-                  label = "Revenue Withdrawn";
+        {/* ── Left: metrics ── */}
+        <div className="xl:col-span-2 flex flex-col sm:flex-row xl:flex-col divide-y xl:divide-y sm:divide-y-0 sm:divide-x xl:divide-x-0 divide-border/40 border-b xl:border-b-0">
+
+          <div className="px-5 py-5 flex-1">
+            <SectionLabel>As Seller</SectionLabel>
+            <MetricRow label="Net Rev."  value={`$${fmt(s?.totalNetRevenue)}`}   loading={loading} />
+            <MetricRow label="Gross"     value={`$${fmt(s?.totalGrossRevenue)}`} loading={loading} />
+            <MetricRow label="Plans"     value={`${s?.activePlanCount ?? 0} / ${s?.planCount ?? 0}`} sub="live" loading={loading} />
+            <MetricRow label="Subs"      value={String(s?.subscriptionCount ?? 0)} loading={loading} />
+            <MetricRow label="Fees Out"  value={`$${fmt(s?.totalFeeContributed)}`} loading={loading} />
+          </div>
+
+          <div className="px-5 py-5 flex-1">
+            <SectionLabel>As Buyer</SectionLabel>
+            <MetricRow label="Spent"     value={`$${fmt(b?.totalSpent)}`}              loading={loading} />
+            <MetricRow label="Active"    value={String(b?.activeSubscriptionCount ?? 0)} loading={loading} />
+            <MetricRow label="Total"     value={String(b?.subscriptionCount ?? 0)}       loading={loading} />
+            <MetricRow label="Fees Paid" value={`$${fmt(b?.totalFeesPaid)}`}            loading={loading} />
+          </div>
+
+          <div className="px-5 py-5 flex-1 hidden sm:block">
+            <SectionLabel>Navigate</SectionLabel>
+            {[
+              { href: "/dashboard/my-plans",     label: "My Plans" },
+              { href: "/dashboard/subscriptions", label: "Subscriptions" },
+              { href: "/dashboard/marketplace",   label: "Marketplace" },
+              { href: "/dashboard/plans/create",  label: "Create Plan" },
+            ].map(l => (
+              <Link key={l.href} href={l.href} className="flex items-center justify-between py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors group">
+                {l.label}
+                <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Center: charts + tx feed ── */}
+        <div className="xl:col-span-7 flex flex-col divide-y divide-border/40 border-b xl:border-b-0">
+
+          {/* Revenue area chart */}
+          <div className="px-6 py-6">
+            <div className="flex items-end justify-between mb-5">
+              <div>
+                <SectionLabel>30-Day Revenue</SectionLabel>
+                {loading
+                  ? <Skeleton className="h-7 w-28" />
+                  : <p className="text-2xl font-black font-mono leading-none">${fmt(s?.totalNetRevenue)}</p>
                 }
+              </div>
+              <div className="flex items-center gap-1.5 text-emerald-500 text-[10px] font-bold mb-1">
+                <TrendingUp className="h-3.5 w-3.5" /> Net earnings
+              </div>
+            </div>
+            {loading ? <Skeleton className="h-44 w-full rounded-lg" /> : (
+              <div className="h-44">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueChart} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stopColor={clr.primary} stopOpacity={0.3} />
+                        <stop offset="100%" stopColor={clr.primary} stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 6" vertical={false} stroke={clr.border} />
+                    <XAxis
+                      dataKey="d"
+                      fontSize={9}
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: clr.muted }}
+                      interval={4}
+                    />
+                    <YAxis
+                      fontSize={9}
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: clr.muted }}
+                      tickFormatter={v => `$${v}`}
+                    />
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      cursor={{ stroke: clr.primary, strokeWidth: 1, strokeDasharray: "3 3" }}
+                      formatter={(v) => [`$${Number(v ?? 0).toFixed(2)}`, "Revenue"]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="v"
+                      stroke={clr.primary}
+                      strokeWidth={2}
+                      fill="url(#revenueGrad)"
+                      dot={false}
+                      activeDot={{ r: 4, fill: clr.primary, strokeWidth: 0 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
 
-                return (
-                  <div key={tx.id} className="flex items-center gap-4 relative">
-                    <div className={cn(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border",
-                      colorClass
-                    )}>
-                      {icon}
-                    </div>
-                    <div className="flex flex-1 flex-col gap-0.5 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold truncate text-foreground capitalize">
-                          {label}
-                        </p>
-                        {tx.amount && (
-                          <p className={cn(
-                            "text-sm font-bold",
-                            isToMe ? "text-emerald-600" : tx.type === "WITHDRAW" ? "text-amber-600" : "text-foreground"
-                          )}>
-                            {isToMe ? "+" : tx.type === "WITHDRAW" ? "" : "-"}${Number(formatUnits(tx.amount, 6)).toFixed(2)}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground truncate font-medium">
-                          {tx.plan ? `Plan ${truncate(tx.plan.id)}` : tx.type}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">
-                          {new Date(Number(tx.blockTimestamp) * 1000).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
+          {/* Monthly bar chart */}
+          <div className="px-6 py-6">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <SectionLabel>Monthly Volume</SectionLabel>
+                <p className="text-xs text-muted-foreground">12-month gross USDC &amp; subscription count</p>
+              </div>
+              <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-sm inline-block" style={{ background: clr.primary, opacity: 0.9 }} />
+                  Volume
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-sm inline-block" style={{ background: clr.muted }} />
+                  Subs
+                </span>
+              </div>
+            </div>
+            {loading ? <Skeleton className="h-36 w-full rounded-lg" /> : (
+              <div className="h-36">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyChart} barSize={9} barGap={3} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 6" vertical={false} stroke={clr.border} />
+                    <XAxis
+                      dataKey="m"
+                      fontSize={9}
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: clr.muted }}
+                    />
+                    <YAxis
+                      fontSize={9}
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: clr.muted }}
+                      tickFormatter={v => `$${v}`}
+                    />
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      cursor={{ fill: `${clr.primary}18` }}
+                      formatter={(v, name) => {
+                        const num = Number(v ?? 0);
+                        return [name === "vol" ? `$${num.toFixed(2)}` : num, name === "vol" ? "Volume" : "Subs"];
+                      }}
+                    />
+                    <Bar dataKey="vol"  fill={clr.primary} radius={[3, 3, 0, 0]} opacity={0.9} />
+                    <Bar dataKey="subs" fill={clr.muted}   radius={[3, 3, 0, 0]} opacity={0.7} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* On-chain activity feed */}
+          <div className="flex-1">
+            <div className="px-6 py-4 border-b border-border/30 flex items-center justify-between">
+              <SectionLabel>On-Chain Activity</SectionLabel>
+              <Link href="/dashboard/subscriptions" className="text-[10px] font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                All <ExternalLink className="h-2.5 w-2.5" />
+              </Link>
+            </div>
+            {loading ? (
+              <div className="divide-y divide-border/20">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 px-6 py-3.5">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-3 flex-1" />
+                    <Skeleton className="h-3 w-14" />
+                    <Skeleton className="h-3 w-10" />
                   </div>
-                );
-              })}
+                ))}
+              </div>
+            ) : (analytics?.transactions ?? []).length === 0 ? (
+              <div className="flex items-center justify-center h-28 text-muted-foreground text-xs">No transactions yet</div>
+            ) : (
+              <div className="divide-y divide-border/20">
+                {(analytics?.transactions ?? []).slice(0, 12).map(tx => {
+                  const isIn = tx.to?.toLowerCase() === wallet?.address?.toLowerCase();
+                  const label = TX_LABELS[tx.type] ?? tx.type;
+                  return (
+                    <div key={tx.id} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-5 px-6 py-3.5 hover:bg-muted/10 transition-colors">
+                      <div>
+                        <p className="text-xs font-semibold leading-none">{label}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono mt-1">{trunc(tx.from)}</p>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground font-mono truncate">{tx.plan ? trunc(tx.plan.id) : "—"}</p>
+                      {tx.amount ? (
+                        <div className={cn("flex items-center gap-0.5 text-xs font-mono font-bold", isIn ? "text-emerald-400" : "text-slate-400")}>
+                          {isIn ? <ArrowDownRight className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
+                          ${fmt(tx.amount)}
+                        </div>
+                      ) : <span />}
+                      <p className="text-[10px] text-muted-foreground tabular-nums">
+                        {new Date(Number(tx.blockTimestamp) * 1000).toLocaleDateString("en", { month: "short", day: "numeric" })}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
 
+        {/* ── Right: top plans + events + month stats ── */}
+        <div className="xl:col-span-3 flex flex-col divide-y divide-border/40">
+
+          {/* Top plans ranked */}
+          <div className="px-5 py-5">
+            <div className="flex items-center justify-between mb-4">
+              <SectionLabel>Top Plans</SectionLabel>
+              <Link href="/dashboard/my-plans" className="text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                All →
+              </Link>
             </div>
-          </CardContent>
-          { (analytics?.recentSubscriptions ?? []).length > 5 && (
-            <div className="p-6 pt-0">
-              <Button  variant="ghost" size="sm" className="w-full text-muted-foreground">
-                <Link href="/dashboard/subscriptions">View all transactions</Link>
-              </Button>
+            {loading ? (
+              <div className="space-y-2.5">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-md" />)}</div>
+            ) : (analytics?.topPlans ?? []).length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-xs text-muted-foreground mb-3">No plans yet</p>
+                <Link href="/dashboard/plans/create" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-xs h-7")}>
+                  <Plus className="h-3 w-3 mr-1.5" /> Create
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                {(analytics?.topPlans ?? []).map((plan, i) => {
+                  const name = plan.metadata?.brand?.name ?? plan.metadata?.name ?? trunc(plan.id);
+                  return (
+                    <Link key={plan.id} href={`/dashboard/my-plans/${plan.id}`}
+                      className="flex items-center gap-3 px-2.5 py-2.5 rounded-md hover:bg-muted/30 transition-colors group">
+                      <span className="text-[10px] text-muted-foreground font-mono w-4 shrink-0 text-center">{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold truncate group-hover:text-indigo-400 transition-colors">{name}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{plan.subscriptionCount} subs · {plan.tiers?.length ?? 0} tiers</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-mono font-bold">${fmt(plan.netRevenue)}</p>
+                        <div className={cn("text-[9px] font-black uppercase mt-0.5", plan.active ? "text-emerald-400" : "text-muted-foreground/50")}>
+                          {plan.active ? "live" : "off"}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Recent sub events */}
+          <div className="flex-1 px-5 py-5">
+            <div className="flex items-center justify-between mb-4">
+              <SectionLabel>Recent Events</SectionLabel>
+              <Activity className="h-3.5 w-3.5 text-muted-foreground/60" />
             </div>
-          )}
-        </Card>
+            {loading ? (
+              <div className="space-y-2.5">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-9 w-full rounded" />)}</div>
+            ) : (analytics?.recentSubscriptions ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-6">No events in last 30 days</p>
+            ) : (
+              <div>
+                {(analytics?.recentSubscriptions ?? []).slice(0, 10).map(sub => {
+                  const isSale = sub.seller.toLowerCase() === wallet?.address?.toLowerCase();
+                  return (
+                    <div key={sub.id} className="flex items-center gap-3 py-2.5 border-b border-border/15 last:border-0">
+                      <div className={cn("shrink-0 h-1.5 w-1.5 rounded-full mt-0.5", isSale ? "bg-emerald-400" : "bg-indigo-400")} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-mono text-muted-foreground truncate">{trunc(sub.subscriber)}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[9px] uppercase font-black tracking-wider text-indigo-400/80">
+                            {sub.tier?.label ?? `#${sub.tierId}`}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground/60">
+                            {new Date(Number(sub.blockTimestamp) * 1000).toLocaleDateString("en", { month: "short", day: "numeric" })}
+                          </span>
+                        </div>
+                      </div>
+                      <p className={cn("text-xs font-mono font-bold shrink-0 tabular-nums", isSale ? "text-emerald-400" : "text-slate-300")}>
+                        {isSale ? "+" : ""}{fmt(sub.totalAmount)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* This month's protocol stats */}
+          <div className="px-5 py-5">
+            <SectionLabel>Protocol · This Month</SectionLabel>
+            {(analytics?.monthlyStats ?? []).slice(0, 1).map(m => (
+              <div key={m.id}>
+                <MetricRow label="Volume"   value={`$${fmt(m.totalGrossVolume)}`}     loading={loading} />
+                <MetricRow label="New Subs" value={String(m.subscriptionsCreated)}    loading={loading} />
+                <MetricRow label="New Plans" value={String(m.plansCreated)}           loading={loading} />
+                <MetricRow label="Fees"     value={`$${fmt(m.totalFeesCollected)}`}   loading={loading} />
+              </div>
+            ))}
+            {(analytics?.monthlyStats ?? []).length === 0 && !loading && (
+              <p className="text-xs text-muted-foreground">No data this month</p>
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   );

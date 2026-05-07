@@ -446,7 +446,7 @@ export default function LandingPage() {
             <div className="flex flex-col gap-3">
               <Link href="/docs" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Documentation</Link>
               <Link href="https://github.com/yourusername/mecha-pay" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GitHub</Link>
-              <Link href="https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.2" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GraphQL API</Link>
+              <Link href="https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.8" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GraphQL API</Link>
               <Link href="https://testnet.arcscan.net/address/0x2BC2f391fca4144f708eEa918d94348684Bdb544" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Contract Explorer</Link>
             </div>
           </div>

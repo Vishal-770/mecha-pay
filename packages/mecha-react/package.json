@@ -1,0 +1,32 @@
+{
+  "name": "@mecha-pay/sdk-react",
+  "version": "0.1.0",
+  "description": "Mecha Pay React SDK for building high-performance subscription interfaces.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.tsx --format cjs,esm --dts --minify --clean",
+    "dev": "tsup src/index.tsx --format cjs,esm --watch --dts",
+    "lint": "eslint src"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "lucide-react": "^0.446.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.2",
+    "framer-motion": "^11.11.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.2"
+  }
+}

@@ -14,7 +14,7 @@ export const ARC_RPC_URL =
 
 export const SUBGRAPH_URL =
   process.env.NEXT_PUBLIC_SUBGRAPH_URL ??
-  `https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.7`;
+  `https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.8`;
 
 export const IPFS_GATEWAY_BASE =
   process.env.NEXT_PUBLIC_IPFS_GATEWAY_BASE ?? "https://ipfs.filebase.io/ipfs/";

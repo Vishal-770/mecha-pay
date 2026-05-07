@@ -162,7 +162,7 @@ We couldn't locate the \`graphql-api-reference.md\` file. Please ensure it exist
             <div className="flex flex-col gap-2">
               <div className="flex gap-2">
                 <a
-                  href="https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.3"
+                  href="https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.8"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1"
@@ -354,7 +354,7 @@ We couldn't locate the \`graphql-api-reference.md\` file. Please ensure it exist
                 </h4>
                 <div className="space-y-2 text-sm">
                   <a
-                    href="https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.2"
+                    href="https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.8"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-primary hover:underline"
@@ -452,7 +452,7 @@ We couldn't locate the \`graphql-api-reference.md\` file. Please ensure it exist
                 </h4>
                 <div className="space-y-2">
                   <code className="text-xs bg-background border border-border rounded px-2 py-1 block break-all">
-                    https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.3
+                    https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.8
                   </code>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <svg

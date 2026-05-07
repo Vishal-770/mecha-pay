@@ -9,9 +9,10 @@ export async function POST(req: NextRequest) {
       walletId?: string;
       planId?: string;
       userId?: string;
+      tierId?: string;
     };
 
-    const { userToken, walletId, planId, userId } = body;
+    const { userToken, walletId, planId, userId, tierId } = body;
 
     if (!userToken || !walletId || !planId || !userId) {
       return NextResponse.json(
@@ -27,9 +28,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use raw userId string for buyerData as requested by the user
-    // This simplifies the metadata to just the string instead of JSON-wrapped
-    const buyerData = userId;
+    // Encode userId + tierId into buyerData string
+    const buyerData = tierId ? `${userId}|tier:${tierId}` : (userId ?? "");
 
     const client = getCircleClient();
     const response =

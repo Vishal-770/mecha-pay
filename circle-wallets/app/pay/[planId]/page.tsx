@@ -1,43 +1,25 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCircleSDK } from "@/context/CircleSDKContext";
 import { formatUnits } from "ethers";
 import { cn } from "@/lib/utils";
 import {
   ShieldCheck,
-  Wallet,
   ArrowRight,
-  Zap,
   CheckCircle2,
   AlertCircle,
-  Clock,
-  ExternalLink,
-  Table as TableIcon,
-  Search,
-  ChevronRight,
   Loader2,
   ArrowDownUp,
+  ChevronRight,
+  ExternalLink,
+  Zap,
+  Lock,
+  LogOut,
 } from "lucide-react";
-
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Sheet,
   SheetContent,
@@ -46,121 +28,130 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
-
 import BridgeUSDC from "@/components/BridgeUSDC";
-import Loader from "@/components/Loader";
+import { ModeToggle } from "@/components/ModeToggle";
+
+/* ── Types ── */
+interface Tier {
+  id: string;
+  tierId: string;
+  price: string;
+  label: string;
+  active: boolean;
+}
 
 interface Plan {
   id: string;
   planId: string;
-  price: string;
   duration: string;
   active: boolean;
+  tiers: Tier[];
+  seller: {
+    id: string;
+  };
   metadata: {
     name?: string;
     description?: string;
-    brand?: {
-      name?: string;
-      website?: string;
-    };
-    features?: Array<{
-      title: string;
-      description: string;
+    brand?: { name?: string; website?: string };
+    tiers?: Array<{
+      label: string;
+      price: string;
+      features: Array<{ title: string; description: string }>;
     }>;
   } | null;
 }
 
-function humanDuration(secondsValue: string) {
-  const seconds = Number(secondsValue);
-  const days = Math.floor(seconds / 86400);
-  if (days >= 1) return `${days} day${days !== 1 ? "s" : ""}`;
-  const hours = Math.floor(seconds / 3600);
-  if (hours >= 1) return `${hours}h`;
-  return `${Math.max(Math.floor(seconds / 60), 1)}m`;
+type TierTxStatus = "idle" | "approving" | "subscribing" | "success" | "error";
+
+/* ── Helpers ── */
+function humanDuration(s: string) {
+  const sec = Number(s);
+  const d = Math.floor(sec / 86400);
+  if (d >= 1) return `${d} day${d !== 1 ? "s" : ""}`;
+  const h = Math.floor(sec / 3600);
+  if (h >= 1) return `${h}h`;
+  return `${Math.max(Math.floor(sec / 60), 1)}m`;
 }
 
+const trunc   = (v: string) => `${v.slice(0, 6)}…${v.slice(-4)}`;
+const fmt6    = (v: string) =>
+  Number(formatUnits(v, 6)).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+/* ══════════════════════════════════════════════════════ */
 export default function PaymentPage() {
-  const params = useParams();
+  const params       = useParams();
   const searchParams = useSearchParams();
-  const { session, executeChallenge, isReady } = useCircleSDK();
+  const router       = useRouter();
+  const { session, executeChallenge, isReady, clearSession } = useCircleSDK();
 
-  const [plan, setPlan] = useState<Plan | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const planId      = params.planId as string;
+  const userId      = searchParams.get("userId") ?? "";
+  const redirectUrl = searchParams.get("redirectUrl") ?? "";
 
-  const [wallet, setWallet] = useState<{
-    id: string;
-    address: string;
-    balance: string;
-  } | null>(null);
+  /* ── State ── */
+  const [plan, setPlan]           = useState<Plan | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [wallet, setWallet]           = useState<{ id: string; address: string; balance: string } | null>(null);
   const [walletLoading, setWalletLoading] = useState(false);
-  const [txStatus, setTxStatus] = useState<
-    "idle" | "approving" | "subscribing" | "success" | "error"
-  >("idle");
-  const [txHash, setTxHash] = useState<string | null>(null);
-  const [hasSubscribed, setHasSubscribed] = useState<boolean>(false);
 
-  const router = useRouter();
-  const planId = params.planId as string;
-  const userId = searchParams.get("userId");
+  // Per-tier tx state
+  const [tierStatus, setTierStatus] = useState<Record<string, TierTxStatus>>({});
+  const [tierError, setTierError]   = useState<Record<string, string>>({});
+  const [subscription, setSubscription] = useState<{
+    status: "ACTIVE" | "EXPIRED";
+    remainingSeconds: number;
+    lastEndTime: string;
+  } | null>(null);
 
-  // Redirect after success
+  // Success state — which tier was just purchased
+  const [succeededTier, setSucceededTier] = useState<Tier | null>(null);
+  const [countdown, setCountdown]         = useState(3);
+
+  /* ── Redirect countdown after success ── */
   useEffect(() => {
-    if (txStatus === "success") {
-      const timer = setTimeout(() => {
-        router.replace("/dashboard/subscriptions");
-      }, 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [txStatus, router]);
+    if (!succeededTier) return;
+    setCountdown(3);
+    const tick = setInterval(() => {
+      setCountdown(p => {
+        if (p <= 1) {
+          clearInterval(tick);
+          const dest = redirectUrl
+            ? decodeURIComponent(redirectUrl)
+            : "/dashboard/subscriptions";
+          router.replace(dest);
+        }
+        return p - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [succeededTier, redirectUrl, router]);
 
-  // Check if already subscribed
+  /* ── Load plan ── */
   useEffect(() => {
-    const checkEligibility = async () => {
-      if (!wallet?.address || !planId) return;
-      try {
-        const res = await fetch("/api/subscription/eligibility", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            subscriber: wallet.address,
-            planId: planId,
-          }),
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        // If not eligible to buy, it means they are already subscribed (ACTIVE)
-        setHasSubscribed(!data.eligible);
-      } catch (err) {
-        console.error("Failed to check subscription eligibility", err);
-      }
-    };
-    if (wallet?.address) checkEligibility();
-  }, [wallet?.address, planId]);
-
-  // Fetch plan details
-  useEffect(() => {
-    const fetchPlan = async () => {
+    if (!planId) return;
+    const run = async () => {
       try {
         setLoading(true);
         const res = await fetch(`/api/payment/plan/${planId}`);
-        if (!res.ok) throw new Error("Subscription plan not found in registry");
+        if (!res.ok) throw new Error("Plan not found in registry");
         const data = await res.json();
-        setPlan(data.plan);
+        setPlan(data.plan as Plan);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load protocol",
-        );
+        setLoadError(err instanceof Error ? err.message : "Failed to load plan");
       } finally {
         setLoading(false);
       }
     };
-    if (planId) fetchPlan();
+    void run();
   }, [planId]);
 
-  // Fetch wallet and balance
-  const refreshWalletData = useCallback(async () => {
+  /* ── Load wallet ── */
+  const refreshWallet = useCallback(async () => {
     if (!session?.userToken) return;
     setWalletLoading(true);
     try {
@@ -170,71 +161,72 @@ export default function PaymentPage() {
         body: JSON.stringify({ userToken: session.userToken }),
       });
       const data = await res.json();
-      const arcWallet = data.wallets?.find(
-        (w: any) => w.blockchain === "ARC-TESTNET",
-      );
-
-      if (arcWallet) {
-        // 1. Try exact match
-        let usdc = arcWallet.tokenBalances?.find(
-          (t: any) => t.symbol.toUpperCase() === "USDC",
-        );
-
-        // 2. Try fuzzy match
-        if (!usdc) {
-          usdc = arcWallet.tokenBalances?.find(
-            (t: any) =>
-              t.symbol.toUpperCase().includes("USDC") ||
-              t.name.toUpperCase().includes("USD COIN"),
-          );
-        }
-
-        // 3. Arc fallback
-        if (!usdc) {
-          usdc = arcWallet.tokenBalances?.find((t: any) => t.isNative);
-        }
-
-        setWallet({
-          id: arcWallet.id,
-          address: arcWallet.address,
-          balance: usdc?.amount || "0",
-        });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const arc = data.wallets?.find((w: any) => w.blockchain === "ARC-TESTNET");
+      if (arc) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const usdc = arc.tokenBalances?.find((t: any) => t.symbol.toUpperCase() === "USDC")
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ?? arc.tokenBalances?.find((t: any) => t.symbol.toUpperCase().includes("USDC"))
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ?? arc.tokenBalances?.find((t: any) => t.isNative);
+        setWallet({ id: arc.id, address: arc.address, balance: usdc?.amount ?? "0" });
       }
-    } catch (err) {
-      console.error("Wallet sync failed:", err);
-    } finally {
+    } catch { /* ignore */ } finally {
       setWalletLoading(false);
     }
   }, [session?.userToken]);
 
-  useEffect(() => {
-    if (session) refreshWalletData();
-  }, [session, refreshWalletData]);
+  useEffect(() => { if (session) void refreshWallet(); }, [session, refreshWallet]);
 
-  const handlePayment = async () => {
-    if (!session || !wallet || !plan || !userId) return;
+  /* ── Check existing subscription ── */
+  useEffect(() => {
+    if (!wallet?.address || !planId) return;
+    const checkSub = async () => {
+      try {
+        const res = await fetch(`/api/subscription/my-subscriptions/${planId}?subscriber=${wallet.address}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSubscription(data.subscription);
+        } else {
+          setSubscription(null);
+        }
+      } catch {
+        setSubscription(null);
+      }
+    };
+    void checkSub();
+  }, [wallet?.address, planId]);
+
+  const isOwner = wallet?.address.toLowerCase() === plan?.seller?.id?.toLowerCase();
+  const isActiveSub = subscription?.status === "ACTIVE" && (subscription?.remainingSeconds ?? 0) > 0;
+
+  /* ── Per-tier payment ── */
+  const handleTierPayment = async (tier: Tier) => {
+    if (!session || !wallet || !plan) return;
+
+    const tid = tier.id;
+    setTierError(p => ({ ...p, [tid]: "" }));
+    setTierStatus(p => ({ ...p, [tid]: "approving" }));
 
     try {
-      setTxStatus("approving");
-
-      // 1. Check & Approve USDC
+      // 1. Approve USDC
       const approveRes = await fetch("/api/payment/approve-usdc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userToken: session.userToken,
           walletId: wallet.id,
-          amount: formatUnits(plan.price, 6),
+          amount: formatUnits(tier.price, 6),
         }),
       });
-
       if (approveRes.ok) {
         const { challengeId } = await approveRes.json();
         await executeChallenge(challengeId);
       }
 
       // 2. Subscribe
-      setTxStatus("subscribing");
+      setTierStatus(p => ({ ...p, [tid]: "subscribing" }));
       const subRes = await fetch("/api/payment/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -242,364 +234,425 @@ export default function PaymentPage() {
           userToken: session.userToken,
           walletId: wallet.id,
           planId: plan.planId,
-          userId: userId,
+          userId: userId || wallet.address,
+          tierId: tier.tierId,
         }),
       });
 
-      if (!subRes.ok)
-        throw new Error("Failed to execute protocol subscription");
+      if (!subRes.ok) throw new Error("Subscription execution failed");
 
-      const { challengeId: subChallengeId } = await subRes.json();
-      await executeChallenge(subChallengeId);
+      const { challengeId: subChallenge } = await subRes.json();
+      await executeChallenge(subChallenge);
 
-      setTxStatus("success");
-      setTxHash("SUCCESS_PROTOCOL_SETTLED"); // Generic success indicator
+      setTierStatus(p => ({ ...p, [tid]: "success" }));
+      setSucceededTier(tier);
     } catch (err) {
-      setTxStatus("error");
-      setError(
-        err instanceof Error ? err.message : "Protocol execution failed",
-      );
+      setTierStatus(p => ({ ...p, [tid]: "error" }));
+      setTierError(p => ({
+        ...p,
+        [tid]: err instanceof Error ? err.message : "Transaction failed",
+      }));
     }
   };
 
+  const activeTiers = plan?.tiers.filter(t => t.active) ?? [];
+
+  /* ── Loading ── */
   if (!isReady || loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse">
-          Syncing Registry...
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
+        <Loader2 className="h-6 w-6 text-primary animate-spin" />
+        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground animate-pulse">
+          Syncing Registry…
         </p>
       </div>
     );
   }
 
-  if (error && txStatus !== "error") {
+  /* ── Load error ── */
+  if (loadError) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-        <Card className="max-w-md w-full border-rose-500/20 bg-rose-500/5 shadow-none rounded-2xl">
-          <CardHeader>
-            <CardTitle className="text-rose-500 flex items-center gap-2 font-black uppercase tracking-tight">
-              <AlertCircle size={20} /> Registry Fault
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <p className="text-sm font-medium text-muted-foreground">{error}</p>
-            <Button
-              onClick={() => window.location.reload()}
-              variant="outline"
-              className="w-full h-11 border-rose-500/20 text-rose-500 font-bold uppercase tracking-widest text-[10px]"
-            >
-              Retry Sync
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="max-w-sm w-full border border-rose-500/20 bg-rose-500/5 rounded-xl p-8 space-y-4">
+          <div className="flex items-center gap-2 text-rose-500">
+            <AlertCircle className="h-4 w-4" />
+            <p className="text-xs font-black uppercase tracking-widest">Registry Fault</p>
+          </div>
+          <p className="text-sm text-muted-foreground">{loadError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-xs font-bold uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors"
+          >
+            Retry →
+          </button>
+        </div>
       </div>
     );
   }
 
-  const isInsufficient =
-    wallet && plan
-      ? Number(wallet.balance) < Number(formatUnits(plan.price, 6))
-      : false;
+  /* ── Success screen ── */
+  if (succeededTier) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-6 p-6">
+        <div className="flex flex-col items-center gap-5 max-w-sm w-full text-center">
+          <div className="relative">
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-primary" />
+            </div>
+            <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping" />
+          </div>
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-2">
+              Protocol Settled
+            </p>
+            <h2 className="text-2xl font-black tracking-tight">Subscription Active</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {succeededTier.label} · ${fmt6(succeededTier.price)} USDC / {humanDuration(plan?.duration ?? "0")}
+            </p>
+          </div>
+          <div className="w-full border border-border/40 rounded-lg px-4 py-3 flex items-center justify-between">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Redirecting in</span>
+            <span className="text-sm font-black font-mono text-primary">{countdown}s</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            → {redirectUrl ? decodeURIComponent(redirectUrl) : "/dashboard/subscriptions"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Main UI ── */
+  const brandName = plan?.metadata?.brand?.name;
+  const planName  = plan?.metadata?.name ?? "Subscription Protocol";
 
   return (
-    <main className="min-h-screen bg-background text-foreground selection:bg-primary/20">
-      <div className="max-w-7xl mx-auto py-12 px-6 lg:px-12">
-        <div className="grid lg:grid-cols-[1fr_400px] gap-12 lg:gap-16">
-          {/* Left: Detailed Plan Ledger */}
-          <div className="space-y-12">
-            <header className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Badge variant="secondary" className="rounded-full">
-                  Subscription Protocol
-                </Badge>
-                {plan?.metadata?.brand?.name && (
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
-                    By {plan.metadata.brand.name}
-                  </span>
-                )}
-              </div>
-              <h1 className="text-4xl lg:text-6xl font-bold tracking-tight break-words">
-                {plan?.metadata?.name || "Protocol Gateway"}
-              </h1>
-              <p className="text-sm lg:text-base text-muted-foreground leading-relaxed max-w-2xl break-words">
-                {plan?.metadata?.description ||
-                  "A secure, automated subscription protocol settling on the Arc network via high-precision USDC transfers."}
-              </p>
-            </header>
+    <main className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row overflow-hidden">
+      
+      {/* ── Left Sidebar: Order Summary ── */}
+      <div className="w-full lg:w-[450px] bg-muted/20 border-b lg:border-b-0 lg:border-r border-border/40 flex flex-col h-full lg:h-screen sticky top-0 overflow-y-auto">
+        <div className="p-8 md:p-12 space-y-12">
+          
+          {/* Header */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <Zap className="h-6 w-6 text-primary fill-primary" />
+                <span className="text-sm font-black uppercase tracking-[0.3em]">Mecha Pay</span>
+              </Link>
+              <ModeToggle />
+            </div>
 
-            <Separator />
-
-            {/* Feature Ledger */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-3">
-                <TableIcon size={16} className="text-primary" />
-                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  Capabilities & Features
-                </h3>
-              </div>
-
-              <Card className="border-border shadow-none overflow-hidden">
-                <div className="overflow-x-auto w-full">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="hover:bg-transparent">
-                        <TableHead className="w-1/3 min-w-[120px] text-xs font-bold uppercase tracking-widest py-4 px-6">
-                          Headline
-                        </TableHead>
-                        <TableHead className="min-w-[200px] text-xs font-bold uppercase tracking-widest py-4 px-6">
-                          Proposition
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {(plan?.metadata?.features || []).map((f, i) => (
-                        <TableRow key={i} className="border-border">
-                          <TableCell className="font-bold text-xs px-6 py-5 text-primary break-words whitespace-normal">
-                            {f.title}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground px-6 py-5 break-words whitespace-normal">
-                            {f.description}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {!plan?.metadata?.features?.length && (
-                        <TableRow>
-                          <TableCell
-                            colSpan={2}
-                            className="h-24 text-center text-sm text-muted-foreground"
-                          >
-                            No features declared in registry.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </Card>
-            </section>
-
-            <footer className="pt-8 flex flex-col sm:flex-row sm:items-center gap-10">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Recurrence
-                </span>
-                <p className="text-xl font-bold">
-                  {plan ? humanDuration(plan.duration) : "—"}
+            <div className="space-y-2">
+              {brandName && (
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground">
+                  {brandName}
                 </p>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Asset Layer
-                </span>
-                <p className="text-xl font-bold">
-                  USDC{" "}
-                  <span className="text-xs text-muted-foreground">
-                    (Arc Testnet)
-                  </span>
-                </p>
-              </div>
-            </footer>
+              )}
+              <h1 className="text-3xl font-black tracking-tight leading-none">{planName}</h1>
+            </div>
           </div>
 
-          {/* Right: Payment Center */}
-          <div className="lg:sticky lg:top-12 h-fit space-y-6">
-            <Card className="border-border bg-card shadow-sm rounded-2xl overflow-hidden p-0">
-              <CardHeader className="p-6 pb-0 space-y-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground break-words line-clamp-2">
-                      Secure Settlement
-                    </span>
-                  </div>
-                  <ShieldCheck size={18} className="text-primary shrink-0" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Subscription Cost
-                  </span>
-                  <p className="text-4xl font-bold tracking-tight text-foreground break-words">
-                    {plan ? formatUnits(plan.price, 6) : "0.00"}{" "}
-                    <span className="text-sm text-muted-foreground uppercase font-bold">
-                      USDC
-                    </span>
-                  </p>
-                </div>
-              </CardHeader>
-
-              <CardContent className="p-6 pt-8 space-y-6">
-                {!session ? (
-                  <div className="space-y-4 text-center p-6 border border-dashed rounded-xl bg-muted/30">
-                    <p className="text-xs text-muted-foreground font-medium">
-                      Please sign in with Circle Wallets to proceed with this
-                      subscription.
-                    </p>
-                    <Button
-                      onClick={() => {
-                        // Preserve the full URL with all query params for post-login redirect
-                        const currentPath = window.location.pathname;
-                        const currentSearch = window.location.search;
-                        const redirectUrl = encodeURIComponent(
-                          `${currentPath}${currentSearch}`,
-                        );
-                        router.push(`/login?redirect=${redirectUrl}`);
-                      }}
-                      className="w-full h-11 text-xs font-bold uppercase tracking-widest"
-                    >
-                      Sign In to Continue
-                      <ArrowRight className="ml-2 size-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Wallet Box */}
-                    <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
-                          Connected Wallet
-                        </span>
-                        <Badge variant="outline" className="text-[8px] h-4">
-                          ARC-L2
-                        </Badge>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-mono text-foreground truncate max-w-full block overflow-hidden text-ellipsis">
-                          {wallet?.address ||
-                            truncateAddress(
-                              "0x0000000000000000000000000000000000000000",
-                            )}
-                        </p>
-                        <div className="flex items-center justify-between pt-2 gap-2">
-                          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">
-                            Available
-                          </span>
-                          <span
-                            className={cn(
-                              "text-sm font-bold",
-                              isInsufficient
-                                ? "text-destructive"
-                                : "text-foreground",
-                            )}
-                          >
-                            {walletLoading
-                              ? "..."
-                              : wallet
-                                ? Number(wallet.balance).toFixed(2)
-                                : "0.00"}{" "}
-                            USDC
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Final Action */}
-                    {hasSubscribed ? (
-                      <Button
-                        disabled
-                        variant="ghost"
-                        className="w-full h-12 bg-emerald-500/10 text-emerald-600 font-bold uppercase tracking-widest text-xs cursor-default hover:bg-emerald-500/10"
-                      >
-                        <CheckCircle2 className="mr-2 size-5" />
-                        Active Subscription Detected
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={handlePayment}
-                        disabled={
-                          !wallet || isInsufficient || txStatus !== "idle"
-                        }
-                        className="w-full h-12 text-xs font-bold uppercase tracking-widest transition-all"
-                      >
-                        {txStatus === "idle" ? (
-                          <>
-                            Confirm & Subscribe
-                            <ArrowRight className="ml-2 size-4" />
-                          </>
-                        ) : txStatus === "success" ? (
-                          <>
-                            Settlement Confirmed
-                            <CheckCircle2 className="ml-2 size-4" />
-                          </>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="animate-pulse">
-                              {txStatus.toUpperCase()}...
-                            </span>
-                          </div>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Bridge USDC Section */}
-            <Card className="border-border bg-card shadow-sm rounded-2xl overflow-hidden p-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <ArrowDownUp className="h-5 w-5 text-primary" />
-                  <h3 className="text-sm font-bold uppercase tracking-widest">
-                    Bridge USDC
-                  </h3>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Move USDC between your EOA wallet and your Arc Circle wallet.
-                </p>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full h-11 text-xs font-bold uppercase tracking-widest"
-                    >
-                      Open Bridge
-                      <ArrowDownUp className="ml-2 h-4 w-4" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-                    <SheetHeader>
-                      <SheetTitle>Bridge USDC</SheetTitle>
-                      <SheetDescription>
-                        Bidirectional USDC bridge between EOA and Arc Circle
-                        wallet
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="mt-6">
-                      <BridgeUSDC
-                        isCompact={true}
-                        defaultDestChain="Arc_Testnet"
-                      />
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </Card>
-
-            {/* Support Footer */}
-            <div className="px-2 space-y-4">
-              <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
-                By executing this protocol, you authorize the automated transfer
-                of {plan ? formatUnits(plan.price, 6) : "0"} USDC per cycle from
-                your Arc Vault.
-              </p>
-              <Separator />
-              <div className="flex items-center justify-center gap-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
-                <span>Secure</span>
-                <span>•</span>
-                <span>Non-Custodial</span>
-                <span>•</span>
-                <span>Arc Built</span>
+          {/* Order Details */}
+          <div className="pt-8 border-t border-border/20 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Duration</span>
+              <span className="text-xs font-bold">{plan ? humanDuration(plan.duration) : "—"}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Network</span>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-bold">Arc Testnet</span>
               </div>
             </div>
           </div>
+
+          {/* Subscription Status Alert */}
+          {isActiveSub && (
+            <div className="border border-emerald-500/20 bg-emerald-500/5 rounded-xl p-5 space-y-3">
+              <div className="flex items-center gap-2 text-emerald-500">
+                <CheckCircle2 className="h-4 w-4" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Active Subscription</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Time Remaining</p>
+                <p className="text-xl font-black font-mono tracking-tight">
+                  {humanDuration(String(subscription?.remainingSeconds ?? 0))}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isOwner && (
+            <div className="border border-primary/20 bg-primary/5 rounded-xl p-5 space-y-3">
+              <div className="flex items-center gap-2 text-primary">
+                <ShieldCheck className="h-4 w-4" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Ownership Detected</p>
+              </div>
+              <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
+                You are the creator of this protocol. Payments are disabled for the owner address.
+              </p>
+            </div>
+          )}
+
+          {brandName && plan?.metadata?.brand?.website && (
+            <div className="pt-4">
+              <a
+                href={plan.metadata.brand.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary flex items-center gap-2 transition-colors"
+              >
+                View Provider Site <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* ── Right Content: Payment Flow ── */}
+      <div className="flex-1 bg-background flex flex-col h-full lg:h-screen overflow-y-auto">
+        <div className="max-w-3xl w-full mx-auto px-6 md:px-12 py-12 space-y-12">
+          
+          {/* Section: Wallet */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+                Payment Method
+              </h2>
+              {session && (
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => clearSession()}
+                    className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors"
+                  >
+                    <LogOut className="h-3 w-3" /> Logout
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Connected</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {!session ? (
+              <div className="border border-border/40 rounded-2xl p-8 text-center space-y-4 bg-muted/5">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto">
+                  <Zap className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold">Sign in required</p>
+                  <p className="text-xs text-muted-foreground">Connect your Mecha wallet to process this payment.</p>
+                </div>
+                <Button
+                  onClick={() => {
+                    const here = `${window.location.pathname}${window.location.search}`;
+                    router.push(`/login?redirect=${encodeURIComponent(here)}`);
+                  }}
+                  className="px-8 h-10 text-[10px] font-black uppercase tracking-widest"
+                >
+                  Sign In to Continue
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-border/40 rounded-xl p-5 space-y-3 bg-muted/5">
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground">Your Balance</p>
+                  <div className="flex items-end gap-2">
+                    <p className="text-2xl font-black font-mono leading-none">
+                      {walletLoading ? "…" : wallet ? Number(wallet.balance).toFixed(2) : "0.00"}
+                    </p>
+                    <p className="text-xs font-bold text-muted-foreground mb-0.5">USDC</p>
+                  </div>
+                  <p className="text-[10px] font-mono text-muted-foreground/60">{wallet ? trunc(wallet.address) : "—"}</p>
+                </div>
+
+                <div className="border border-border/40 rounded-xl p-5 flex flex-col justify-between bg-muted/5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground">Top Up</p>
+                    <ArrowDownUp className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <button className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline text-left">
+                        Bridge USDC →
+                      </button>
+                    </SheetTrigger>
+                    <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+                      <SheetHeader>
+                        <SheetTitle>Bridge USDC</SheetTitle>
+                        <SheetDescription>Move USDC to your Arc Circle wallet</SheetDescription>
+                      </SheetHeader>
+                      <div className="mt-6">
+                        <BridgeUSDC isCompact={true} defaultDestChain="Arc_Testnet" />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Section: Tier Selection */}
+          <section className="space-y-6">
+            <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+              Select Tier
+            </h2>
+
+            {activeTiers.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No active tiers available.</p>
+            ) : (
+              <div className="space-y-4">
+                {activeTiers.map(tier => {
+                  const st = tierStatus[tier.id] ?? "idle";
+                  const err = tierError[tier.id];
+                  const isInsuf = wallet
+                    ? Number(wallet.balance) < Number(formatUnits(tier.price, 6))
+                    : false;
+                  const busy = st === "approving" || st === "subscribing";
+                  const succeeded = st === "success";
+
+                  const metaTier = plan?.metadata?.tiers?.find(mt => mt.label === tier.label);
+                  const tierFeatures = metaTier?.features ?? [];
+
+                  return (
+                    <div
+                      key={tier.id}
+                      className={cn(
+                        "group border rounded-xl p-6 transition-colors relative overflow-hidden",
+                        succeeded
+                          ? "border-primary bg-primary/5"
+                          : "border-border/40 hover:border-primary/40 hover:bg-muted/5",
+                        isInsuf && !succeeded && "opacity-70"
+                      )}
+                    >
+                      {succeeded && (
+                        <div className="absolute top-0 right-0 p-3">
+                          <CheckCircle2 className="h-5 w-5 text-primary" />
+                        </div>
+                      )}
+
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="space-y-1.5 flex-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-black tracking-tight">{tier.label}</h3>
+                            <span className="text-[9px] font-bold bg-muted border border-border/40 rounded px-2 py-0.5 text-muted-foreground uppercase tracking-widest">
+                              ID: {tier.tierId}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground font-medium">
+                            Full access for {humanDuration(plan?.duration ?? "0")} per cycle
+                          </p>
+
+                          {/* Tier-level Features (Vertical List) */}
+                          {tierFeatures.length > 0 && (
+                            <div className="space-y-2.5 pt-5">
+                              {tierFeatures.map((f, idx) => (
+                                <div key={idx} className="flex items-start gap-3">
+                                  <CheckCircle2 className="h-3 w-3 text-primary shrink-0 mt-0.5" />
+                                  <div className="min-w-0">
+                                    <p className="text-[11px] font-bold text-foreground/90 leading-none">{f.title}</p>
+                                    {f.description && (
+                                      <p className="text-[10px] text-muted-foreground mt-1.5 leading-relaxed font-medium">
+                                        {f.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col md:items-end gap-4 min-w-[140px]">
+                          <div className="text-right">
+                            <p className="text-2xl font-black font-mono leading-none">${fmt6(tier.price)}</p>
+                            <p className="text-[9px] text-muted-foreground uppercase tracking-widest mt-1 font-bold">USDC</p>
+                          </div>
+
+                          {isOwner ? (
+                            <div className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-4 py-2 rounded-lg text-center">
+                              Owner
+                            </div>
+                          ) : isActiveSub ? (
+                            <div className="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-4 py-2 rounded-lg text-center">
+                              Active
+                            </div>
+                          ) : !session ? null : succeeded ? (
+                            <div className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-4 py-2 rounded-lg text-center animate-pulse">
+                              Processing…
+                            </div>
+                          ) : (
+                            <Button
+                              onClick={() => handleTierPayment(tier)}
+                              disabled={busy || !wallet || isInsuf}
+                              size="sm"
+                              className="w-full h-9 text-[10px] font-black uppercase tracking-widest"
+                            >
+                              {busy ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : isInsuf ? (
+                                "Insuf. Funds"
+                              ) : (
+                                "Purchase"
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {st === "error" && err && (
+                        <p className="text-[10px] text-rose-500 mt-4 bg-rose-500/5 p-3 rounded-lg border border-rose-500/20 font-medium">
+                          {err}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* Context meta if provided */}
+          {(userId || redirectUrl) && (
+            <div className="border border-dashed border-border/60 rounded-xl p-6 space-y-3 bg-muted/5">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground">Transaction Metadata</p>
+              <div className="grid grid-cols-2 gap-4">
+                {userId && (
+                  <div>
+                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Buyer Context</p>
+                    <p className="text-[10px] font-mono break-all">{userId}</p>
+                  </div>
+                )}
+                {redirectUrl && (
+                  <div>
+                    <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Success Return</p>
+                    <p className="text-[10px] font-mono truncate">{decodeURIComponent(redirectUrl)}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Footer Security */}
+          <div className="pt-6 flex flex-col items-center gap-4 border-t border-border/20">
+            <div className="flex items-center gap-6 text-muted-foreground/40">
+              <ShieldCheck className="h-4 w-4" />
+              <div className="h-4 w-px bg-border/40" />
+              <Zap className="h-4 w-4" />
+              <div className="h-4 w-px bg-border/40" />
+              <Lock className="h-4 w-4" />
+            </div>
+            <p className="text-[10px] text-muted-foreground/50 uppercase tracking-[0.2em] font-black">
+              Verified Mecha Payment Gateway
+            </p>
+          </div>
+
+        </div>
+      </div>
+
     </main>
   );
-}
-
-function truncateAddress(address: string) {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }

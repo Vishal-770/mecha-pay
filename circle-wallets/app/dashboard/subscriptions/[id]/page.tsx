@@ -1,31 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { formatUnits } from "ethers";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { 
   ArrowLeft, 
-  Bell, 
   ExternalLink, 
-  Clock, 
-  CheckCircle2, 
-  DollarSign, 
+  CheckCircle2,
+  Clock,
   ShieldCheck,
-  Globe,
-  Settings,
-  AlertTriangle,
   Activity,
-  ChevronRight,
-  RefreshCcw
+  AlertCircle,
+  ChevronDown
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SUBSCRIPTION_GATEWAY_ADDRESS } from "@/lib/subscription";
 
 type NotificationEvent = {
@@ -35,9 +30,6 @@ type NotificationEvent = {
   transactionHash: string;
   type: "STATUS_CHANGE" | "PLAN_UPDATE";
   active?: boolean;
-  price?: string;
-  duration?: string;
-  ipfsHash?: string;
 };
 
 type SubscriptionDetail = {
@@ -45,34 +37,38 @@ type SubscriptionDetail = {
   status: "ACTIVE" | "EXPIRED";
   subscriptionCount: number;
   totalSpent: string;
+  totalFeesPaid: string;
+  firstStartTime: string;
   remainingSeconds: number;
   lastStartTime: string;
   lastEndTime: string;
   lastBuyerData: string;
+  lastTierId: string;
   metadata: {
     name?: string;
     brand?: { name?: string; website?: string };
     features?: { title: string; description: string }[];
+    version?: string;
+    tiers?: { label: string; features: { title: string; description: string }[] }[];
   } | null;
   plan: {
     id: string;
-    price: string;
     duration: string;
     active: boolean;
+    subscriptionCount: number;
     tiers?: {
       tierId: string;
       price: string;
       label: string;
     }[];
   };
-  seller: { id: string };
 };
 
 function formatCountdown(totalSeconds: number) {
   const days = Math.floor(totalSeconds / 86400);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
   if (days > 0) return `${days}d ${hours}h`;
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
   return `${hours}h ${minutes}m`;
 }
 
@@ -86,10 +82,6 @@ function timeAgo(timestamp: string) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-function truncateAddress(address: string) {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
-
 export default function SubscriptionDetailPage() {
   const params = useParams<{ id: string }>();
   const { wallet } = useDashboardContext();
@@ -98,6 +90,7 @@ export default function SubscriptionDetailPage() {
   const [notifications, setNotifications] = useState<NotificationEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isActivityOpen, setIsActivityOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -117,12 +110,11 @@ export default function SubscriptionDetailPage() {
 
         if (mounted) {
           setData(subJson.subscription);
-          // Filter notifications for this specific plan
           const planNotifs = (notifJson.notifications ?? []).filter((n: NotificationEvent) => n.planId === params.id);
           setNotifications(planNotifs);
         }
       } catch (err) {
-        if (mounted) setError(err instanceof Error ? err.message : "Unknown error");
+        if (mounted) setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -134,269 +126,292 @@ export default function SubscriptionDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 rounded-3xl border border-slate-100 bg-white p-12">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600" />
-        <p className="animate-pulse text-sm font-medium text-slate-500">Syncing subscription details...</p>
+      <div className="max-w-5xl mx-auto py-10 px-4 space-y-8">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-6 md:grid-cols-3">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="rounded-3xl border border-rose-100 bg-rose-50 p-8 text-center shadow-sm">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-          <Activity size={24} />
+      <div className="max-w-5xl mx-auto py-20 px-4 text-center space-y-6">
+        <div className="h-16 w-16 bg-destructive/10 text-destructive flex items-center justify-center rounded-full mx-auto">
+          <AlertCircle size={32} />
         </div>
-        <h3 className="mt-4 text-lg font-bold text-rose-900">Load Error</h3>
-        <p className="mt-2 text-sm text-rose-600">{error ?? "Subscription data is unavailable"}</p>
-        <Link href="/dashboard/subscriptions" className="mt-6 inline-flex text-sm font-semibold text-rose-700 hover:underline">
-          <ArrowLeft size={16} className="mr-1" /> Back to My Subscriptions
-        </Link>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold tracking-tight">Subscription Not Found</h2>
+          <p className="text-muted-foreground">{error || "This subscription could not be found or is still syncing."}</p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/dashboard/subscriptions">Return to Subscriptions</Link>
+        </Button>
       </div>
     );
   }
 
-  const title = data.metadata?.name ?? `Plan ${data.plan.id.slice(0, 10)}`;
+  const title = data.metadata?.name ?? `Plan ${data.plan.id.slice(0, 8)}`;
   const isActive = data.status === "ACTIVE";
+  const brand = data.metadata?.brand;
+  
+  const activeTier = data.plan.tiers?.find(t => t.tierId === data.lastTierId);
+  const tierLabel = activeTier?.label ?? "Base";
+  const progressPercent = Math.min((data.remainingSeconds / Number(data.plan.duration)) * 100, 100);
+
+  // Filter perks based on tier
+  const isV11 = data.metadata?.version === "1.1";
+  let perks: { title: string; description: string }[] = [];
+  if (isV11) {
+    const tierMeta = data.metadata?.tiers?.find(t => t.label === tierLabel);
+    perks = tierMeta?.features ?? [];
+  } else {
+    perks = data.metadata?.features ?? [];
+  }
+
+  const renderActivityFeed = () => (
+    <>
+      {notifications.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+      ) : (
+        <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+          {notifications.map((notif) => (
+            <div key={notif.id} className="relative flex items-start gap-4">
+              <div className="absolute left-0 h-4 w-4 rounded-full border-2 border-background bg-primary" />
+              <div className="pl-6 space-y-1">
+                <p className="text-sm font-medium">
+                  {notif.type === "STATUS_CHANGE" 
+                    ? (notif.active ? "Plan Activated" : "Plan Paused")
+                    : "Plan Updated"}
+                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>{timeAgo(notif.blockTimestamp)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      <div className="mt-8 pt-4 border-t border-border/40 text-center">
+        <a 
+          href={`https://testnet.arcscan.app/address/${SUBSCRIPTION_GATEWAY_ADDRESS}`} 
+          target="_blank" 
+          rel="noreferrer"
+          className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-1"
+        >
+          <ShieldCheck className="h-3 w-3" />
+          Verified on Arc Protocol
+        </a>
+      </div>
+    </>
+  );
 
   return (
-    <section className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-400 pb-20">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-2">
-          <Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 h-8 text-muted-foreground hover:text-foreground">
-            <Link href="/dashboard/subscriptions" className="flex items-center gap-2">
-              <ArrowLeft size={16} />
-              Back to Subscriptions
+    <div className="relative min-h-screen">
+      {/* Main Content (Left) */}
+      <div className="w-full pt-6 pb-10 px-6 space-y-8 lg:pr-[360px] lg:pl-10">
+        {/* Header section */}
+        <div className="space-y-4 mb-8">
+          <Button variant="ghost" size="sm" className="pl-0 text-muted-foreground hover:text-foreground" asChild>
+            <Link href="/dashboard/subscriptions">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Subscriptions
             </Link>
           </Button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-            <Badge variant={isActive ? "secondary" : "outline"} className={isActive ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10" : ""}>
-              {data.status}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-widest">
-            <span>Provider:</span>
-            <span className="font-mono">{truncateAddress(data.seller.id)}</span>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-           <Button variant="outline" size="sm" asChild>
-             <Link href={`/dashboard/marketplace/${data.plan.id}`} className="flex items-center gap-2">
-               Marketplace Listing
-               <ExternalLink size={14} />
-             </Link>
-           </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Hero Card */}
-          <Card className="border-border bg-card shadow-sm overflow-hidden">
-            <CardContent className="p-6">
-              <div className="grid gap-8 md:grid-cols-2">
-                <div className="space-y-6">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Access State</span>
-                    <div className="mt-4 flex items-center gap-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-muted border border-border">
-                        <Clock size={28} className={isActive ? "text-primary" : "text-muted-foreground"} />
-                      </div>
-                      <div>
-                        <p className="text-3xl font-bold tracking-tight">
-                          {isActive ? formatCountdown(data.remainingSeconds) : "EXPIRED"}
-                        </p>
-                        <p className="text-xs font-medium text-muted-foreground">Remaining access time</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest">
-                      <span className="text-muted-foreground">Usage Period</span>
-                      <span>{Math.round((data.remainingSeconds / Number(data.plan.duration)) * 100)}%</span>
-                    </div>
-                    <Progress 
-                      value={Math.min((data.remainingSeconds / Number(data.plan.duration)) * 100, 100)} 
-                      className="h-2"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-muted/50 p-4 border border-border/50">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Settled</span>
-                    <p className="mt-1 text-xl font-bold tracking-tight">{formatUnits(data.totalSpent, 6)}</p>
-                    <p className="text-[10px] font-medium text-primary uppercase">USDC</p>
-                  </div>
-                  <div className="rounded-xl bg-muted/50 p-4 border border-border/50">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Renewals</span>
-                    <p className="mt-1 text-xl font-bold tracking-tight">{data.subscriptionCount}</p>
-                    <p className="text-[10px] font-medium text-muted-foreground">Total Cycles</p>
-                  </div>
-                  <div className="col-span-2 rounded-xl bg-muted p-4 border border-border">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Vault Manifest Payload</span>
-                    <div className="mt-2 truncate font-mono text-[11px] font-medium text-foreground bg-background border px-3 py-2 rounded-lg">
-                      {data.lastBuyerData || "No data provided"}
-                    </div>
-                  </div>
-                </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight mb-2">{title}</h1>
+              <div className="flex items-center gap-2">
+                <Badge variant={isActive ? "default" : "secondary"}>
+                  {data.status}
+                </Badge>
+                <Badge variant="outline" className="text-primary border-primary/30">
+                  Tier: {tierLabel}
+                </Badge>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Plan Metadata Content */}
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="border-border shadow-none">
-              <CardHeader className="p-6">
-                 <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                      <Globe size={18} />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base font-bold">Brand Hub</CardTitle>
-                      <CardDescription className="text-[10px] uppercase font-bold tracking-widest">Seller Identity</CardDescription>
-                    </div>
-                 </div>
-              </CardHeader>
-              <CardContent className="p-6 pt-0 space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Provider</label>
-                    <p className="text-sm font-semibold mt-0.5">{data.metadata?.brand?.name || "Verified Merchant"}</p>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Checkout Origin</label>
-                    <a 
-                      href={data.metadata?.brand?.website} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="flex items-center gap-2 text-primary hover:underline text-sm font-medium mt-0.5"
-                    >
-                      {data.metadata?.brand?.website || "N/A"}
-                      <ExternalLink size={12} />
-                    </a>
-                  </div>
-                </div>
-                <Separator />
-                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border border-border">
-                  <ShieldCheck size={14} className="text-emerald-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground italic">Settling on Arc Testnet</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border shadow-none">
-              <CardHeader className="p-6">
-                 <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                      <Settings size={18} />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base font-bold">Service Perks</CardTitle>
-                      <CardDescription className="text-[10px] uppercase font-bold tracking-widest">Included Benefits</CardDescription>
-                    </div>
-                 </div>
-              </CardHeader>
-              <CardContent className="p-6 pt-0">
-                <div className="space-y-3">
-                  {(() => {
-                    const isV11 = (data.metadata as any)?.version === "1.1";
-                    const features = isV11 
-                      ? (data.metadata as any)?.tiers?.flatMap((t: any) => t.features ?? []) ?? []
-                      : data.metadata?.features ?? [];
-
-                    return features.map((f: any, i: number) => (
-                      <div key={i} className="flex gap-3 p-3 rounded-lg bg-muted/30 border border-border hover:bg-muted/50 transition-colors">
-                        <CheckCircle2 size={12} className="text-primary mt-1 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs font-bold text-foreground leading-tight">{f.title}</p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{f.description}</p>
-                        </div>
-                      </div>
-                    ));
-                  })()}
-                  {(!data.metadata?.features || data.metadata.features.length === 0) && (
-                    <p className="text-xs text-muted-foreground italic py-8 text-center">No features declared by seller.</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            </div>
+            <Button asChild variant="outline">
+              <Link href={`/dashboard/marketplace/${data.plan.id}`}>
+                View in Marketplace <ExternalLink className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
 
-        {/* Sidebar: Activity & Logs */}
-        <aside className="space-y-6">
-          <Card className="border-border shadow-none">
-            <CardHeader className="p-6">
-               <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                    <Bell size={18} />
-                  </div>
-                  <CardTitle className="text-base font-bold">Registry Audit</CardTitle>
-               </div>
+        {/* Main Stats Grid */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Time Remaining</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="p-6 pt-0">
-              <div className="space-y-6">
-                {notifications.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-muted-foreground">No recent registry updates.</div>
-                ) : (
-                  notifications.map((notif) => (
-                    <div key={notif.id} className="relative pl-5 border-l-2 border-border last:border-l-transparent">
-                      <div className={`absolute -left-1.5 top-0 h-2.5 w-2.5 rounded-full ${notif.type === "STATUS_CHANGE" ? "bg-amber-500" : "bg-primary"}`} />
-                      <div className="space-y-1">
-                         <span className="text-[10px] font-medium text-muted-foreground leading-none">
-                          {timeAgo(notif.blockTimestamp)}
-                        </span>
-                        <p className="text-xs font-semibold leading-relaxed">
-                          {notif.type === "STATUS_CHANGE" 
-                            ? `Status flipped to ${notif.active ? "ACTIVE" : "INACTIVE"}`
-                            : "Registry metadata synchronized"}
-                        </p>
-                        <Badge variant="outline" className="text-[9px] h-4 py-0 font-normal px-1.5 opacity-60">
-                          {notif.type === "STATUS_CHANGE" ? "Protocol State" : "Metadata Sync"}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))
-                )}
+            <CardContent>
+              <div className="text-2xl font-bold mb-2">
+                {isActive ? formatCountdown(data.remainingSeconds) : "Expired"}
               </div>
+              <Progress value={progressPercent} className="h-2" />
             </CardContent>
           </Card>
 
-          <Card className="border-border bg-muted/10">
-            <CardContent className="p-6 space-y-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Protocol Support</span>
-                <p className="text-xs font-medium leading-relaxed">
-                  Verify transaction logs on-chain for precise settlement records.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-between h-9 text-xs font-bold" size="sm">
-                  Provider Support
-                  <ChevronRight size={14} className="opacity-40" />
-                </Button>
-                <Button 
-                  asChild
-                  variant="outline" 
-                  className="w-full justify-between h-9 text-xs font-bold group" 
-                  size="sm"
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+              <p className="text-sm text-muted-foreground">USDC</p>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${formatUnits(data.totalSpent, 6)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {data.subscriptionCount} successful renewal{data.subscriptionCount !== 1 && "s"}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="sm:col-span-2 lg:col-span-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Provider</CardTitle>
+              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-semibold truncate">{brand?.name || "Unknown Provider"}</div>
+              {brand?.website && (
+                <a 
+                  href={brand.website} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-sm text-primary hover:underline flex items-center mt-1"
                 >
-                  <a href={`https://testnet.arcscan.app/address/${SUBSCRIPTION_GATEWAY_ADDRESS}`} target="_blank" rel="noreferrer">
-                    On-chain Explorer
-                    <ExternalLink size={14} className="opacity-40 group-hover:opacity-100 transition-opacity" />
-                  </a>
-                </Button>
+                  Visit Website <ExternalLink className="ml-1 h-3 w-3" />
+                </a>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Secondary Stats Grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="bg-muted/20 shadow-none border-dashed">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Plan Duration</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="font-semibold text-sm">
+                {Number(data.plan.duration) >= 86400 * 30 
+                  ? `${Math.round(Number(data.plan.duration) / (86400 * 30))} Months`
+                  : Number(data.plan.duration) >= 86400 
+                  ? `${Math.round(Number(data.plan.duration) / 86400)} Days`
+                  : `${Math.round(Number(data.plan.duration) / 3600)} Hours`}
               </div>
             </CardContent>
           </Card>
-        </aside>
+          <Card className="bg-muted/20 shadow-none border-dashed">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Network Fees Paid</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="font-semibold text-sm">${formatUnits(data.totalFeesPaid, 6)}</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-muted/20 shadow-none border-dashed">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">First Subscribed</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="font-semibold text-sm">
+                {new Date(Number(data.firstStartTime) * 1000).toLocaleDateString()}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-muted/20 shadow-none border-dashed">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Global Subscribers</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="font-semibold text-sm">{data.plan.subscriptionCount} Users</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Features & Data */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Privileges</CardTitle>
+              <CardDescription>Features included in your {tierLabel} tier</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {perks.length === 0 ? (
+                <div className="text-center py-6 text-sm text-muted-foreground border rounded-lg bg-muted/20">
+                  No features declared for this tier.
+                </div>
+              ) : (
+                <ul className="space-y-4">
+                  {perks.map((feature, i) => (
+                    <li key={i} className="flex gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm leading-none mb-1">{feature.title}</p>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          {data.lastBuyerData && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Subscription Data</CardTitle>
+                <CardDescription>Encrypted payload provided during subscription</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted p-4 rounded-lg font-mono text-sm break-all">
+                  {data.lastBuyerData}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </section>
+
+      {/* Fixed Activity Sidebar (Desktop Only) */}
+      <div className="hidden lg:block fixed right-0 top-20 bottom-0 w-[320px] border-l bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-y-auto z-30">
+        <div className="p-6 space-y-6">
+          <h3 className="font-semibold text-sm flex items-center gap-2 pb-4 border-b">
+            <Activity className="h-4 w-4 text-primary" />
+            Activity History
+          </h3>
+          {renderActivityFeed()}
+        </div>
+      </div>
+
+      {/* Mobile Activity Sidebar */}
+      <div className="lg:hidden px-4 pb-10">
+        <Card>
+          <div 
+            className="p-6 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => setIsActivityOpen(!isActivityOpen)}
+          >
+            <CardTitle className="flex items-center gap-2 m-0">
+              <Activity className="h-5 w-5" />
+              Activity History
+            </CardTitle>
+            <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isActivityOpen ? "rotate-180" : ""}`} />
+          </div>
+          {isActivityOpen && (
+            <CardContent className="pt-0">
+              {renderActivityFeed()}
+            </CardContent>
+          )}
+        </Card>
+      </div>
+    </div>
   );
 }

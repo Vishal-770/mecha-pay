@@ -539,6 +539,7 @@ export function handleSubscribed(event: SubscribedEvent): void {
     state.lastStartTime = event.params.startTime;
     state.lastEndTime = event.params.endTime;
     state.lastBuyerData = event.params.buyerData;
+    state.lastTierId = event.params.tierId;
     state.firstSeenAt = event.block.timestamp;
     state.updatedAt = event.block.timestamp;
     state.lastTxHash = event.transaction.hash;
@@ -570,6 +571,7 @@ export function handleSubscribed(event: SubscribedEvent): void {
   state.lastStartTime = event.params.startTime;
   state.lastEndTime = event.params.endTime;
   state.lastBuyerData = event.params.buyerData;
+  state.lastTierId = event.params.tierId;
   state.updatedAt = event.block.timestamp;
   state.lastTxHash = event.transaction.hash;
   state.save();

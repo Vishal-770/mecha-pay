@@ -16,6 +16,7 @@ type StateRecord = {
   firstStartTime: string;
   lastStartTime: string;
   lastEndTime: string;
+  lastTierId: string;
   updatedAt: string;
   seller: {
     id: string;
@@ -52,6 +53,7 @@ const query = `
       firstStartTime
       lastStartTime
       lastEndTime
+      lastTierId
       updatedAt
       seller {
         id

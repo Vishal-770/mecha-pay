@@ -54,6 +54,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { EditPlanDialog } from "./EditPlanDialog";
 
 type BuyerRow = {
   id: string;
@@ -317,6 +318,12 @@ export default function MyPlanDetailPage() {
         </div>
 
         <div className="flex gap-3">
+          <EditPlanDialog 
+            planId={plan.planId} 
+            durationSeconds={Number(plan.duration)} 
+            metadata={plan.metadata} 
+            onSuccess={() => window.location.reload()} 
+          />
           <Button 
             asChild
             variant="outline"
