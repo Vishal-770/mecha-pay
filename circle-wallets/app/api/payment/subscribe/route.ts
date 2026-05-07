@@ -28,8 +28,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Encode userId + tierId into buyerData string
-    const buyerData = tierId ? `${userId}|tier:${tierId}` : (userId ?? "");
+    // Encode userId into buyerData string
+    const buyerData = userId ?? "";
 
     const client = getCircleClient();
     const response =
@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
         userToken,
         walletId,
         contractAddress: SUBSCRIPTION_GATEWAY_ADDRESS,
-        abiFunctionSignature: "subscribe(bytes32,string)",
-        abiParameters: [planId, buyerData],
+        abiFunctionSignature: "subscribe(bytes32,uint256,string)",
+        abiParameters: [planId, tierId?.toString() ?? "0", buyerData],
         fee: HIGH_FEE,
       });
 

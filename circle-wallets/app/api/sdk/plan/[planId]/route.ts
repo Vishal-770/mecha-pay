@@ -12,7 +12,7 @@ function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-api-key",
   };
 }
 
@@ -49,6 +49,7 @@ const SUB_QUERY = `
     ) {
       status
       lastEndTime
+      lastTierId
     }
   }
 `;
@@ -60,8 +61,17 @@ export async function GET(
   const { planId } = await params;
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId");
+  const apiKey = req.headers.get("x-api-key");
 
   try {
+    // 1. API Key Validation (Mock)
+    // In production, you would verify this against your database
+    if (!apiKey || (!apiKey.startsWith("mp_live_") && !apiKey.startsWith("mp_test_"))) {
+      return NextResponse.json(
+        { error: "Invalid or missing Mecha API Key", code: "UNAUTHORIZED" },
+        { status: 401, headers: corsHeaders() }
+      );
+    }
     // 1. Fetch Plan Data
     const planData = await querySubgraph<{ plan: any }>(PLAN_QUERY, {
       planId: toLowerHex(planId),
@@ -105,6 +115,7 @@ export async function GET(
         subscription = {
           status: isActive ? "ACTIVE" : "EXPIRED",
           remainingSeconds,
+          tierId: entry.lastTierId,
         };
       }
     }

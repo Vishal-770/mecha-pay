@@ -1,31 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { CheckCircle2, Zap, ShieldCheck, Loader2, ExternalLink, Lock, ArrowRight } from "lucide-react";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import React, { createContext, useContext, useEffect, useState, useMemo } from "react";
+import { CheckCircle2, Zap, ShieldCheck, Loader2, Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-/* ── Utility ── */
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-function formatPrice(price: string) {
-  return (Number(price) / 1e6).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function humanDuration(s: string) {
-  const sec = Number(s);
-  const d = Math.floor(sec / 86400);
-  if (d >= 1) return `${d} day${d !== 1 ? "s" : ""}`;
-  const h = Math.floor(sec / 3600);
-  if (h >= 1) return `${h}h`;
-  return `${Math.max(Math.floor(sec / 60), 1)}m`;
-}
 
 /* ── Types ── */
 export interface Tier {
@@ -44,284 +21,378 @@ export interface Plan {
 }
 
 export interface MechaAppearance {
-  /** Customize colors, fonts, and radii */
+  theme?: "light" | "dark";
   variables?: {
     colorPrimary?: string;
+    colorSecondary?: string;
+    colorError?: string;
     borderRadius?: string;
     fontFamily?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    cardPadding?: string;
+    gap?: string;
   };
-  /** CSS class overrides for specific elements */
   elements?: {
-    card?: string;
-    cardActive?: string;
-    button?: string;
-    buttonActive?: string;
-    title?: string;
-    price?: string;
-    featureTitle?: string;
+    container?: React.CSSProperties;
+    card?: React.CSSProperties;
+    button?: React.CSSProperties;
+    price?: React.CSSProperties;
+    tierLabel?: React.CSSProperties;
   };
 }
 
-export interface MechaPricingTableProps {
-  /** The Mecha Protocol Plan ID */
-  planId: string;
-  /** Optional User ID to link the transaction to your internal system */
-  userId?: string;
-  /** Base URL for the Mecha Payment Portal */
+export interface MechaConfig {
+  apiKey: string;
   portalUrl?: string;
-  /** The URL to redirect to after a successful purchase */
+}
+
+/* ── Context ── */
+interface MechaContextType extends MechaConfig {
+  isConfigured: boolean;
+}
+
+const MechaContext = createContext<MechaContextType | null>(null);
+
+export interface MechaProviderProps extends MechaConfig {
+  children: React.ReactNode;
+}
+
+/**
+ * MechaProvider
+ * Wraps your application to provide Mecha configuration to all components and hooks.
+ */
+export const MechaProvider = ({ 
+  apiKey, 
+  portalUrl = "https://mecha-pay.vercel.app", 
+  children 
+}: MechaProviderProps) => {
+  const value = useMemo(() => ({
+    apiKey,
+    portalUrl,
+    isConfigured: !!apiKey
+  }), [apiKey, portalUrl]);
+
+  return <MechaContext.Provider value={value}>{children}</MechaContext.Provider>;
+};
+
+const useMechaConfig = () => {
+  const context = useContext(MechaContext);
+  if (!context) {
+    throw new Error("Mecha components must be used within a MechaProvider");
+  }
+  return context;
+};
+
+/* ── Hooks ── */
+
+export interface MechaSubscription {
+  status: "ACTIVE" | "EXPIRED" | "NONE";
+  remainingSeconds: number;
+  tierId?: string;
+  loading: boolean;
+  error: string | null;
+}
+
+/**
+ * useMecha
+ * The primary hook to check a user's subscription status and remaining time.
+ */
+export const useMecha = (planId: string, userId?: string) => {
+  const { apiKey, portalUrl } = useMechaConfig();
+  const [subscription, setSubscription] = useState<MechaSubscription>({
+    status: "NONE",
+    remainingSeconds: 0,
+    loading: !!userId,
+    error: null,
+  });
+
+  useEffect(() => {
+    if (!planId || !userId) return;
+
+    const fetchStatus = async () => {
+      try {
+        setSubscription(s => ({ ...s, loading: true, error: null }));
+        const url = new URL(`${portalUrl}/api/sdk/plan/${planId}`);
+        url.searchParams.set("userId", userId);
+        
+        const res = await fetch(url.toString(), {
+          headers: { "x-api-key": apiKey }
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || "Failed to fetch subscription status");
+
+        if (data.subscription) {
+          setSubscription({
+            status: data.subscription.status,
+            remainingSeconds: data.subscription.remainingSeconds,
+            tierId: data.subscription.tierId,
+            loading: false,
+            error: null
+          });
+        } else {
+          setSubscription(s => ({ ...s, status: "NONE", loading: false }));
+        }
+      } catch (err: any) {
+        setSubscription(s => ({ ...s, loading: false, error: err.message }));
+      }
+    };
+
+    fetchStatus();
+  }, [planId, userId, apiKey, portalUrl]);
+
+  // Live Countdown
+  useEffect(() => {
+    if (subscription.remainingSeconds <= 0 || subscription.status !== "ACTIVE") return;
+    const timer = setInterval(() => {
+      setSubscription(prev => ({
+        ...prev,
+        remainingSeconds: Math.max(prev.remainingSeconds - 1, 0),
+        status: prev.remainingSeconds - 1 <= 0 ? "EXPIRED" : "ACTIVE"
+      }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [subscription.remainingSeconds, subscription.status]);
+
+  return subscription;
+};
+
+/* ── Utility ── */
+function formatPrice(price: string) {
+  return (Number(price) / 1e6).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function humanDuration(s: string) {
+  const sec = Number(s);
+  const d = Math.floor(sec / 86400);
+  if (d >= 1) return `${d} day${d !== 1 ? "s" : ""}`;
+  const h = Math.floor(sec / 3600);
+  if (h >= 1) return `${h}h`;
+  return `${Math.max(Math.floor(sec / 60), 1)}m`;
+}
+
+function formatCountdown(seconds: number) {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (days > 0) return `${days}d ${hours}h ${mins}m`;
+  return `${hours}h ${mins}m ${secs}s`;
+}
+
+/* ── Components ── */
+
+export interface MechaPricingTableProps {
+  planId: string;
+  userId?: string;
   redirectUrl?: string;
-  /** Theme: 'light' or 'dark' (Default: 'dark') */
-  theme?: "light" | "dark";
-  /** Custom styling and appearance overrides */
   appearance?: MechaAppearance;
-  /** Custom class name for the outer container */
   className?: string;
+  style?: React.CSSProperties;
+  hideBranding?: boolean;
+  recommendedTierId?: string;
 }
 
 /**
  * MechaPricingTable
- * A professional, high-fidelity pricing table that connects to the Mecha Subscription Protocol.
+ * Professional pricing table that consumes configuration from MechaProvider.
  */
 export const MechaPricingTable = ({
   planId,
   userId,
-  portalUrl = "https://mecha-pay.vercel.app",
   redirectUrl,
-  theme = "dark",
   appearance,
   className,
+  style,
+  hideBranding = false,
+  recommendedTierId,
 }: MechaPricingTableProps) => {
+  const { apiKey, portalUrl } = useMechaConfig();
   const [plan, setPlan] = useState<Plan | null>(null);
-  const [subscription, setSubscription] = useState<{ status: string; remainingSeconds: number } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; code?: string } | null>(null);
+  
+  const subscription = useMecha(planId, userId);
+
+  const theme = appearance?.theme || "dark";
+  const isDark = theme === "dark";
+
+  // Design Tokens
+  const tokens = {
+    primary: appearance?.variables?.colorPrimary || (isDark ? "#ffffff" : "#000000"),
+    error: appearance?.variables?.colorError || "#ef4444",
+    background: appearance?.variables?.backgroundColor || (isDark ? "#0a0a0a" : "#ffffff"),
+    text: appearance?.variables?.textColor || (isDark ? "#ffffff" : "#000000"),
+    muted: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
+    border: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+    cardBg: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+    radius: appearance?.variables?.borderRadius || "1.5rem",
+    font: appearance?.variables?.fontFamily || "Inter, sans-serif",
+    padding: appearance?.variables?.cardPadding || "40px",
+    gap: appearance?.variables?.gap || "24px",
+  };
 
   useEffect(() => {
     if (!planId) return;
-
-    const run = async () => {
+    const fetchPlan = async () => {
       try {
         setLoading(true);
-        const url = new URL(`${portalUrl}/api/sdk/plan/${planId}`);
-        if (userId) url.searchParams.set("userId", userId);
-
-        const res = await fetch(url.toString());
-        if (!res.ok) throw new Error("Protocol communication failed");
-        
+        setError(null);
+        const url = `${portalUrl}/api/sdk/plan/${planId}`;
+        const res = await fetch(url, {
+          headers: { "x-api-key": apiKey }
+        });
         const data = await res.json();
+        if (!res.ok) throw { message: data.error || "Plan load failed", code: res.status.toString() };
         setPlan(data.plan);
-        setSubscription(data.subscription);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load protocol");
+      } catch (err: any) {
+        setError({ message: err.message, code: err.code || "FETCH_ERROR" });
       } finally {
         setLoading(false);
       }
     };
-
-    run();
-  }, [planId, userId, portalUrl]);
+    fetchPlan();
+  }, [planId, apiKey, portalUrl]);
 
   const handleSelect = (tierId: string) => {
     const rUrl = encodeURIComponent(redirectUrl || window.location.href);
-    const checkoutUrl = `${portalUrl}/pay/${planId}?userId=${userId || ""}&redirectUrl=${rUrl}`;
+    const checkoutUrl = `${portalUrl}/pay/${planId}?userId=${userId || ""}&redirectUrl=${rUrl}&apiKey=${apiKey || ""}`;
     window.location.href = checkoutUrl;
   };
 
-  const isActiveSub = subscription?.status === "ACTIVE" && (subscription?.remainingSeconds ?? 0) > 0;
+  const isActiveSub = subscription.status === "ACTIVE" && subscription.remainingSeconds > 0;
 
   if (loading) {
     return (
-      <div className={cn("flex items-center justify-center p-32 min-h-[400px]", theme === "dark" ? "dark bg-background text-foreground" : "")}>
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Initializing Protocol</p>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px', fontFamily: tokens.font, color: tokens.text }}>
+        <Loader2 style={{ animation: 'spin 1s linear infinite', opacity: 0.5 }} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={cn("p-12 border border-red-500/10 bg-red-500/[0.02] rounded-3xl text-center max-w-md mx-auto my-20", theme === "dark" ? "dark bg-background" : "")}>
-        <div className="bg-red-500/10 h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-6">
-          <ShieldCheck className="h-6 w-6 text-red-500" />
-        </div>
-        <p className="text-sm text-red-500 font-black uppercase tracking-widest">Protocol Connection Error</p>
-        <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">{error}</p>
+      <div style={{ padding: '40px', border: `1px solid ${tokens.error}30`, borderRadius: tokens.radius, textAlign: 'center', maxWidth: '400px', margin: '40px auto', fontFamily: tokens.font, backgroundColor: `${tokens.error}05` }}>
+        <AlertCircle size={24} style={{ color: tokens.error, margin: '0 auto 16px' }} />
+        <p style={{ fontSize: '12px', fontWeight: 900, color: tokens.error, textTransform: 'uppercase', letterSpacing: '2px' }}>{error.code || "Error"}</p>
+        <p style={{ fontSize: '14px', color: tokens.text, marginTop: '8px', fontWeight: 500 }}>{error.message}</p>
       </div>
     );
   }
 
   return (
-    <div 
-      className={cn(
-        "w-full max-w-7xl mx-auto py-20 px-6", 
-        className, 
-        theme === "dark" ? "dark bg-background text-foreground" : ""
+    <div className={className} style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', fontFamily: tokens.font, color: tokens.text, ...style }}>
+      {!hideBranding && (
+        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+          {isActiveSub && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '6px 12px', borderRadius: '100px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px' }}>
+              <CheckCircle2 size={12} />
+              Subscription Active · {formatCountdown(subscription.remainingSeconds)} Left
+            </div>
+          )}
+          <h2 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-0.04em', marginBottom: '16px', ...appearance?.elements?.tierLabel }}>{plan?.name}</h2>
+          <p style={{ color: tokens.muted, fontSize: '16px', fontWeight: 500 }}>Select a membership tier to access the protocol.</p>
+        </div>
       )}
-      style={{
-        fontFamily: appearance?.variables?.fontFamily,
-      }}
-    >
-      {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-24 space-y-6"
-      >
-        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/5 border border-primary/10 backdrop-blur-sm">
-          <Zap className="h-3.5 w-3.5 text-primary fill-primary animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-primary">Mecha Subscription Gateway</span>
-        </div>
-        
-        <div className="space-y-4">
-          <h2 className={cn("text-5xl md:text-6xl font-black tracking-tighter leading-none", appearance?.elements?.title)}>
-            {plan?.name || "Choose Access"}
-          </h2>
-          <p className="text-muted-foreground/60 max-w-xl mx-auto text-base md:text-lg font-medium leading-relaxed">
-            High-performance digital access with non-custodial settlement. Secure your slot on the Arc network.
-          </p>
-        </div>
-      </motion.div>
 
-      {/* Pricing Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: tokens.gap, justifyContent: 'center', padding: '20px 0' }}>
         {plan?.tiers.map((tier, idx) => {
-          const isPopular = tier.label.toLowerCase().includes("pro") || tier.label.toLowerCase().includes("plus") || idx === 1;
+          const isRecommended = recommendedTierId ? tier.id === recommendedTierId : idx === 1;
+          const isThisTierActive = isActiveSub && subscription.tierId === tier.id;
           
           return (
             <motion.div
               key={tier.id}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1, duration: 0.5 }}
-              whileHover={{ y: -5 }}
-              className={cn(
-                "relative group flex flex-col border border-border/40 rounded-[2.5rem] p-10 transition-all duration-500",
-                isPopular ? "bg-primary/[0.03] border-primary/20 scale-105 z-10 shadow-2xl shadow-primary/5" : "bg-muted/5 hover:border-border",
-                appearance?.elements?.card,
-                isPopular && appearance?.elements?.cardActive
-              )}
-              style={{ borderRadius: appearance?.variables?.borderRadius }}
+              transition={{ delay: idx * 0.1 }}
+              whileHover={{ y: -4 }}
+              style={{
+                flex: '1 1 320px',
+                maxWidth: '400px',
+                display: 'flex',
+                flexDirection: 'column',
+                backgroundColor: tokens.cardBg,
+                border: `1px solid ${isThisTierActive ? '#10b981' : isRecommended ? tokens.primary : tokens.border}`,
+                borderRadius: tokens.radius,
+                padding: tokens.padding,
+                position: 'relative',
+                boxShadow: isThisTierActive ? '0 20px 40px -12px rgba(16, 185, 129, 0.2)' : isRecommended ? `0 20px 40px -12px ${tokens.primary}20` : 'none',
+                opacity: (isActiveSub && !isThisTierActive) ? 0.6 : 1,
+                ...appearance?.elements?.card
+              }}
             >
-              {isPopular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20">
-                  Recommended
-                </div>
+              {isThisTierActive && (
+                <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#10b981', color: '#fff', padding: '4px 16px', borderRadius: '100px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>Current Plan</div>
+              )}
+              {!isThisTierActive && isRecommended && (
+                <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', backgroundColor: tokens.primary, color: isDark ? '#000' : '#fff', padding: '4px 16px', borderRadius: '100px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>Recommended</div>
               )}
 
-              <div className="flex-1 space-y-8">
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-black tracking-tight">{tier.label}</h3>
-                  <div className="flex items-center gap-2 text-muted-foreground/40 text-[10px] font-black uppercase tracking-widest">
-                    <ShieldCheck className="h-3 w-3" />
-                    <span>Tier ID {tier.id}</span>
-                  </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '8px', ...appearance?.elements?.tierLabel }}>{tier.label}</h3>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '32px', ...appearance?.elements?.price }}>
+                  <span style={{ fontSize: '40px', fontWeight: 900 }}>${formatPrice(tier.price)}</span>
+                  <span style={{ fontSize: '14px', color: tokens.muted, fontWeight: 700 }}>/ {humanDuration(plan?.duration || "0")}</span>
                 </div>
-
-                <div className="flex items-baseline gap-1.5">
-                  <span className={cn("text-5xl font-black tracking-tighter", appearance?.elements?.price)}>
-                    ${formatPrice(tier.price)}
-                  </span>
-                  <span className="text-sm text-muted-foreground/50 font-bold uppercase tracking-widest">
-                    / {humanDuration(plan?.duration || "0")}
-                  </span>
-                </div>
-
-                <div className="space-y-5 pt-8 border-t border-border/10">
+                <div style={{ borderTop: `1px solid ${tokens.border}`, paddingTop: '24px' }}>
                   {tier.features.map((f, i) => (
-                    <div key={i} className="flex gap-4 items-start group/feat">
-                      <div className="mt-0.5 bg-primary/10 rounded-full p-1 group-hover/feat:bg-primary/20 transition-colors">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className={cn("text-[13px] font-bold text-foreground/90", appearance?.elements?.featureTitle)}>
-                          {f.title}
-                        </p>
-                        {f.description && (
-                          <p className="text-[11px] text-muted-foreground/60 leading-relaxed font-medium">
-                            {f.description}
-                          </p>
-                        )}
+                    <div key={i} style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'flex-start' }}>
+                      <div style={{ marginTop: '4px' }}><CheckCircle2 size={16} style={{ color: isThisTierActive ? '#10b981' : tokens.primary, flexShrink: 0 }} /></div>
+                      <div>
+                        <p style={{ fontSize: '13px', fontWeight: 700, margin: 0, lineHeight: '1.4' }}>{f.title}</p>
+                        {f.description && <p style={{ fontSize: '11px', color: tokens.muted, marginTop: '2px', lineHeight: '1.4' }}>{f.description}</p>}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <motion.button
-                whileTap={{ scale: 0.98 }}
+              <button
                 onClick={() => !isActiveSub && handleSelect(tier.id)}
                 disabled={isActiveSub}
-                className={cn(
-                  "mt-12 w-full h-14 font-black uppercase tracking-[0.2em] text-[11px] rounded-[1.25rem] transition-all flex items-center justify-center gap-3 border shadow-sm",
-                  isActiveSub 
-                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 cursor-default"
-                    : isPopular
-                      ? "bg-primary text-primary-foreground border-primary hover:shadow-xl hover:shadow-primary/20"
-                      : "bg-background text-foreground border-border/60 hover:bg-muted/10",
-                  appearance?.elements?.button,
-                  isActiveSub && appearance?.elements?.buttonActive
-                )}
-                style={{ 
-                  borderRadius: appearance?.variables?.borderRadius,
-                  backgroundColor: !isActiveSub && isPopular ? appearance?.variables?.colorPrimary : undefined,
-                  borderColor: !isActiveSub && isPopular ? appearance?.variables?.colorPrimary : undefined,
+                style={{
+                  marginTop: '32px',
+                  width: '100%',
+                  height: '52px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  backgroundColor: isThisTierActive ? 'rgba(16, 185, 129, 0.1)' : (isActiveSub ? tokens.border : tokens.primary),
+                  color: isThisTierActive ? '#10b981' : (isActiveSub ? tokens.muted : (isDark ? '#000' : '#fff')),
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.5px',
+                  fontSize: '11px',
+                  cursor: isActiveSub ? 'default' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s',
+                  ...appearance?.elements?.button
                 }}
               >
-                <AnimatePresence mode="wait">
-                  {isActiveSub ? (
-                    <motion.span 
-                      key="active" 
-                      initial={{ opacity: 0 }} 
-                      animate={{ opacity: 1 }} 
-                      className="flex items-center gap-2"
-                    >
-                      Member Active <CheckCircle2 className="h-4 w-4" />
-                    </motion.span>
-                  ) : (
-                    <motion.span 
-                      key="idle" 
-                      initial={{ opacity: 0 }} 
-                      animate={{ opacity: 1 }}
-                      className="flex items-center gap-2"
-                    >
-                      Get {tier.label} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            </div>
+                {isThisTierActive ? "Active Subscription" : (isActiveSub ? "Plan Locked" : `Get ${tier.label}`)}
+                {!isActiveSub && <ArrowRight size={14} />}
+                {isThisTierActive && <CheckCircle2 size={14} />}
+              </button>
+            </motion.div>
           );
         })}
       </div>
 
-      {/* Footer Branding */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        transition={{ delay: 0.8 }}
-        className="mt-24 pt-12 border-t border-border/10 flex flex-col md:flex-row items-center justify-between gap-8 grayscale"
-      >
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
-            Secured by Mecha Pay Protocol
-          </p>
+      {!hideBranding && (
+        <div style={{ marginTop: '60px', textAlign: 'center', opacity: 0.3, display: 'flex', justifyContent: 'center', gap: '20px', alignItems: 'center' }}>
+          <p style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>Powered by Mecha Pay</p>
+          <Lock size={12} /><Zap size={12} />
         </div>
-        
-        <div className="flex items-center gap-10">
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            <Lock className="h-3.5 w-3.5" /> 256-bit AES
-          </div>
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5" /> Non-Custodial
-          </div>
-        </div>
-      </motion.div>
+      )}
+
+      <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }` }} />
     </div>
   );
 };

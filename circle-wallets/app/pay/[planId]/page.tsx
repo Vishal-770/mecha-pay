@@ -210,19 +210,32 @@ export default function PaymentPage() {
     setTierStatus(p => ({ ...p, [tid]: "approving" }));
 
     try {
-      // 1. Approve USDC
-      const approveRes = await fetch("/api/payment/approve-usdc", {
+      // 0. Check Allowance
+      const allowanceRes = await fetch("/api/subscription/allowance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userToken: session.userToken,
-          walletId: wallet.id,
-          amount: formatUnits(tier.price, 6),
-        }),
+        body: JSON.stringify({ owner: wallet.address }),
       });
-      if (approveRes.ok) {
-        const { challengeId } = await approveRes.json();
-        await executeChallenge(challengeId);
+      const allowanceData = await allowanceRes.json();
+      const currentAllowance = BigInt(allowanceData.allowance ?? "0");
+      const requiredAmount = BigInt(tier.price);
+
+      // 1. Approve USDC (only if needed)
+      if (currentAllowance < requiredAmount) {
+        setTierStatus(p => ({ ...p, [tid]: "approving" }));
+        const approveRes = await fetch("/api/payment/approve-usdc", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userToken: session.userToken,
+            walletId: wallet.id,
+            amount: formatUnits(tier.price, 6),
+          }),
+        });
+        if (approveRes.ok) {
+          const { challengeId } = await approveRes.json();
+          await executeChallenge(challengeId);
+        }
       }
 
       // 2. Subscribe
@@ -240,12 +253,34 @@ export default function PaymentPage() {
       });
 
       if (!subRes.ok) throw new Error("Subscription execution failed");
-
       const { challengeId: subChallenge } = await subRes.json();
       await executeChallenge(subChallenge);
 
+      // Aggressive Polling for Indexer Sync
       setTierStatus(p => ({ ...p, [tid]: "success" }));
-      setSucceededTier(tier);
+      
+      let attempts = 0;
+      const poll = setInterval(async () => {
+        attempts++;
+        try {
+          const res = await fetch(`/api/subscription/my-subscriptions/${planId}?subscriber=${wallet.address}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.subscription?.status === "ACTIVE") {
+              clearInterval(poll);
+              setSucceededTier(tier);
+              setSubscription(data.subscription);
+            }
+          }
+        } catch { /* continue */ }
+        
+        if (attempts > 30) { // 60 seconds max
+          clearInterval(poll);
+          // If still not found, we'll just let the success screen show anyway
+          setSucceededTier(tier);
+        }
+      }, 2000);
+
     } catch (err) {
       setTierStatus(p => ({ ...p, [tid]: "error" }));
       setTierError(p => ({

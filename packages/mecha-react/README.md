@@ -1,100 +1,70 @@
-# @mecha-pay/sdk-react
+# mechapay-sdk
 
-The official React SDK for **Mecha Pay**, the high-performance subscription protocol built on Circle and Arc Testnet.
+The professional, high-fidelity React SDK for the **Mecha Protocol**. Build stunning, production-ready subscription interfaces with zero-config styling and real-time blockchain synchronization.
 
-## Installation
+## 🚀 Features
+
+- **Provider Pattern**: Centralized API key management with `MechaProvider`.
+- **Live Hooks**: Real-time membership tracking and feature gating with `useMecha`.
+- **Zero-Config UI**: Beautiful, premium pricing tables out of the box.
+- **Auto-Sync**: Real-time countdowns and membership status updates via the Mecha Indexer.
+- **Deep Customization**: Full control over themes, variables, and CSS overrides.
+
+## 📦 Installation
 
 ```bash
-npm install @mecha-pay/sdk-react
-# or
-pnpm add @mecha-pay/sdk-react
+npm install mechapay-sdk
 ```
 
-## Features
+## 🛠️ Quick Start
 
-- **Clerk-Level Quality**: High-fidelity, engineering-grade pricing table with professional aesthetics.
-- **Premium Animations**: Powered by `framer-motion` for smooth, responsive transitions and entry effects.
-- **Deep Customization**: Use the `appearance` prop to match your brand exactly—override colors, fonts, and CSS classes.
-- **Protocol Native**: Directly connects to Mecha's on-chain plans and IPFS metadata.
-- **Intelligent Highlighting**: Automatically identifies and scales "Recommended" tiers (e.g. Pro, Plus).
-
-## Quick Start
+### 1. Wrap your Application
 
 ```tsx
-import { MechaPricingTable } from "@mecha-pay/sdk-react";
+import { MechaProvider } from 'mechapay-sdk';
 
-export default function Pricing() {
+function App() {
   return (
-    <MechaPricingTable
-      planId="0xb074b082..." 
-      userId="user_123"
-      theme="dark"
-      appearance={{
-        variables: {
-          colorPrimary: "#00D1FF",
-          borderRadius: "2rem",
-        },
-        elements: {
-          button: "hover:scale-105 transition-transform",
-          card: "backdrop-blur-md bg-white/5",
-        }
-      }}
+    <MechaProvider 
+      apiKey="mp_live_..." 
+      portalUrl="https://mecha-pay.vercel.app"
+    >
+      <MyRoutes />
+    </MechaProvider>
+  );
+}
+```
+
+### 2. Add the Pricing Table
+
+```tsx
+import { MechaPricingTable } from 'mechapay-sdk';
+
+function PricingPage() {
+  return (
+    <MechaPricingTable 
+      planId="0x..." 
+      userId="user_123" 
     />
   );
 }
 ```
 
-## Props
-
-| Prop | Type | Description |
-| :--- | :--- | :--- |
-| `planId` | `string` | **Required**. The Mecha Protocol Plan ID. |
-| `userId` | `string` | Optional. Your internal user ID to link the payment. |
-| `appearance`| `MechaAppearance`| Optional. Deep styling overrides for elements and variables. |
-| `portalUrl` | `string` | Optional. The URL of the Mecha Payment Portal. |
-| `theme` | `'light' \| 'dark'`| Optional. The visual theme (default: `dark`). |
-
-### Appearance Object
+## 🛡️ Feature Gating with `useMecha`
 
 ```tsx
-interface MechaAppearance {
-  variables?: {
-    colorPrimary?: string;
-    borderRadius?: string;
-    fontFamily?: string;
-  };
-  elements?: {
-    card?: string;
-    cardActive?: string;
-    button?: string;
-    title?: string;
-    // ... and more
-  };
+import { useMecha } from 'mechapay-sdk';
+
+function PremiumFeature() {
+  const { status, remainingSeconds, loading } = useMecha(PLAN_ID, USER_ID);
+
+  if (loading) return <div>Checking access...</div>;
+  if (status !== 'ACTIVE') return <div>Access Denied</div>;
+
+  return <div>Premium Content</div>;
 }
 ```
 
-## Requirements
+## 📄 License
 
-This SDK uses Tailwind CSS utility classes. Ensure your project has Tailwind CSS installed and the Mecha colors configured in your `tailwind.config.js`.
-
-```js
-// tailwind.config.js
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        primary: {
-          DEFAULT: "#00D1FF", // Mecha Neon Blue
-          foreground: "#000000",
-        },
-        border: "hsl(var(--border))",
-        muted: "hsl(var(--muted))",
-      },
-    },
-  },
-};
-```
-
-## License
-
-MIT © [Mecha Protocol](https://mecha.xyz)
+MIT © [Mecha Pay](https://mecha-pay.vercel.app)
