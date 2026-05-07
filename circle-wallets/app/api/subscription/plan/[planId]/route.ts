@@ -10,7 +10,6 @@ import {
 
 type PlanDetail = {
   id: string;
-  price: string;
   duration: string;
   ipfsHash: string;
   active: boolean;
@@ -20,6 +19,12 @@ type PlanDetail = {
   totalGrossVolume: string;
   totalFeesCollected: string;
   lastSubscriptionAt: string | null;
+  tiers: {
+    id: string;
+    tierId: string;
+    price: string;
+    label: string;
+  }[];
   seller: {
     id: string;
     planCount: number;
@@ -66,7 +71,6 @@ const query = `
   ) {
     plan(id: $planId) {
       id
-      price
       duration
       ipfsHash
       active
@@ -76,6 +80,12 @@ const query = `
       totalGrossVolume
       totalFeesCollected
       lastSubscriptionAt
+      tiers {
+        id
+        tierId
+        price
+        label
+      }
       seller {
         id
         planCount

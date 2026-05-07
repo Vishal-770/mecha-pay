@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { SUBSCRIPTION_GATEWAY_ADDRESS } from "@/lib/subscription";
 
 type NotificationEvent = {
   id: string;
@@ -58,6 +59,11 @@ type SubscriptionDetail = {
     price: string;
     duration: string;
     active: boolean;
+    tiers?: {
+      tierId: string;
+      price: string;
+      label: string;
+    }[];
   };
   seller: { id: string };
 };
@@ -298,15 +304,22 @@ export default function SubscriptionDetailPage() {
               </CardHeader>
               <CardContent className="p-6 pt-0">
                 <div className="space-y-3">
-                  {data.metadata?.features?.map((f, i) => (
-                    <div key={i} className="flex gap-3 p-3 rounded-lg bg-muted/30 border border-border hover:bg-muted/50 transition-colors">
-                      <CheckCircle2 size={12} className="text-primary mt-1 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-bold text-foreground leading-tight">{f.title}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{f.description}</p>
+                  {(() => {
+                    const isV11 = (data.metadata as any)?.version === "1.1";
+                    const features = isV11 
+                      ? (data.metadata as any)?.tiers?.flatMap((t: any) => t.features ?? []) ?? []
+                      : data.metadata?.features ?? [];
+
+                    return features.map((f: any, i: number) => (
+                      <div key={i} className="flex gap-3 p-3 rounded-lg bg-muted/30 border border-border hover:bg-muted/50 transition-colors">
+                        <CheckCircle2 size={12} className="text-primary mt-1 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-foreground leading-tight">{f.title}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{f.description}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                   {(!data.metadata?.features || data.metadata.features.length === 0) && (
                     <p className="text-xs text-muted-foreground italic py-8 text-center">No features declared by seller.</p>
                   )}
@@ -368,9 +381,16 @@ export default function SubscriptionDetailPage() {
                   Provider Support
                   <ChevronRight size={14} className="opacity-40" />
                 </Button>
-                <Button variant="outline" className="w-full justify-between h-9 text-xs font-bold" size="sm">
-                  On-chain Explorer
-                  <ExternalLink size={14} className="opacity-40" />
+                <Button 
+                  asChild
+                  variant="outline" 
+                  className="w-full justify-between h-9 text-xs font-bold group" 
+                  size="sm"
+                >
+                  <a href={`https://testnet.arcscan.app/address/${SUBSCRIPTION_GATEWAY_ADDRESS}`} target="_blank" rel="noreferrer">
+                    On-chain Explorer
+                    <ExternalLink size={14} className="opacity-40 group-hover:opacity-100 transition-opacity" />
+                  </a>
                 </Button>
               </div>
             </CardContent>

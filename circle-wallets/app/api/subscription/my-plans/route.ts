@@ -9,7 +9,6 @@ import {
 
 type SellerPlan = {
   id: string;
-  price: string;
   duration: string;
   ipfsHash: string;
   active: boolean;
@@ -17,6 +16,12 @@ type SellerPlan = {
   totalGrossVolume: string;
   totalFeesCollected: string;
   lastSubscriptionAt: string | null;
+  tiers: {
+    tierId: string;
+    price: string;
+    label: string;
+    active: boolean;
+  }[];
 };
 
 type PlanState = {
@@ -45,7 +50,6 @@ const sellerPlansQuery = `
       orderDirection: desc
     ) {
       id
-      price
       duration
       ipfsHash
       active
@@ -53,6 +57,12 @@ const sellerPlansQuery = `
       totalGrossVolume
       totalFeesCollected
       lastSubscriptionAt
+      tiers {
+        tierId
+        price
+        label
+        active
+      }
     }
   }
 `;

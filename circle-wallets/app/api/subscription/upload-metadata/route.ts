@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
 
     const validation = validateSubscriptionMetadata(metadata);
     if (!validation.valid) {
+      console.error("[upload-metadata] Validation failed:", validation.errors);
+      console.log("[upload-metadata] Received metadata:", JSON.stringify(metadata, null, 2));
       return NextResponse.json(
         {
           error: "Invalid subscription metadata",

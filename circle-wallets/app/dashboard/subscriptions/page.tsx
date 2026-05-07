@@ -38,10 +38,16 @@ type SubscriptionRow = {
   canRenew: boolean;
   plan: {
     id: string;
-    price: string;
     duration: string;
+    tiers: {
+      price: string;
+      label: string;
+    }[];
   };
-  metadata: { name?: string } | null;
+  metadata: { 
+    name?: string;
+    brand?: { name?: string; website?: string };
+  } | null;
 };
 
 type NotificationEvent = {
@@ -163,9 +169,16 @@ export default function MySubscriptionsPage() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2">
               {items.map((item) => {
-                const title = item.metadata?.name ?? `Plan ${item.plan.id.slice(0, 10)}`;
+                const title = item.metadata?.name ?? item.metadata?.brand?.name ?? `Plan ${item.plan.id.slice(0, 10)}`;
                 const planNotifs = notifications.filter(n => n.planId === item.plan.id);
                 const latestNotif = planNotifs[0];
+                const prices = item.plan.tiers?.map(t => BigInt(t.price)) ?? [];
+                const minPrice = prices.length > 0 ? prices.reduce((a, b) => a < b ? a : b) : 0n;
+                const maxPrice = prices.length > 0 ? prices.reduce((a, b) => a > b ? a : b) : 0n;
+                const priceDisplay = minPrice === maxPrice 
+                  ? `${formatUnits(minPrice, 6)} USDC`
+                  : `${formatUnits(minPrice, 6)} - ${formatUnits(maxPrice, 6)} USDC`;
+
                 const progress = item.status === "ACTIVE" 
                   ? Math.min((item.remainingSeconds / Number(item.plan.duration)) * 100, 100) 
                   : 0;
@@ -184,7 +197,7 @@ export default function MySubscriptionsPage() {
                       <div className="flex flex-col gap-1">
                         <CardTitle className="text-lg group-hover:text-primary transition-colors">{title}</CardTitle>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                          {formatUnits(item.plan.price, 6)} USDC &middot; {Math.floor(Number(item.plan.duration) / 86400)} Day Cycle
+                          {priceDisplay} &middot; {Math.floor(Number(item.plan.duration) / 86400)} Day Cycle
                         </p>
                       </div>
                     </CardHeader>

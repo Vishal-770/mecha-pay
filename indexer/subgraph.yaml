@@ -8,9 +8,9 @@ dataSources:
     name: SubscriptionGateway
     network: arc-testnet
     source:
-      address: "0x2BC2f391fca4144f708eEa918d94348684Bdb544"
+      address: "0x47d2b46680B3A1dE1bC7B96D02B752cA28b9B72D"
       abi: SubscriptionGateway
-      startBlock: 33756576
+      startBlock: 33845000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -20,15 +20,20 @@ dataSources:
         - Seller
         - Subscriber
         - Plan
+        - Tier
         - SubscriptionState
         - DailyStats
+        - MonthlyStats
         - FeeUpdated
         - FeesWithdrawn
         - OwnerUpdated
         - PlanCreated
+        - TierAdded
         - PlanStatusUpdated
         - PlanUpdated
         - Subscribed
+        - Transaction
+        - PlanUpdate
       abis:
         - name: SubscriptionGateway
           file: ./abis/SubscriptionGateway.json
@@ -39,12 +44,14 @@ dataSources:
           handler: handleFeesWithdrawn
         - event: OwnerUpdated(indexed address)
           handler: handleOwnerUpdated
-        - event: PlanCreated(indexed bytes32,indexed address,uint256,uint32,string)
+        - event: PlanCreated(indexed bytes32,indexed address,uint32,string)
           handler: handlePlanCreated
+        - event: TierAdded(indexed bytes32,uint256,uint256,string)
+          handler: handleTierAdded
         - event: PlanStatusUpdated(indexed bytes32,bool)
           handler: handlePlanStatusUpdated
-        - event: PlanUpdated(indexed bytes32,uint256,uint32,string)
+        - event: PlanUpdated(indexed bytes32,uint32,string)
           handler: handlePlanUpdated
-        - event: Subscribed(indexed address,indexed address,indexed bytes32,uint256,uint256,string,uint32,uint32)
+        - event: Subscribed(indexed address,indexed address,indexed bytes32,uint256,uint256,uint256,string,uint32,uint32)
           handler: handleSubscribed
       file: ./src/subscription-gateway.ts

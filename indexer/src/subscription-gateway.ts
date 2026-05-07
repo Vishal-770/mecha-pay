@@ -7,25 +7,33 @@ import {
   PlanStatusUpdated as PlanStatusUpdatedEvent,
   PlanUpdated as PlanUpdatedEvent,
   Subscribed as SubscribedEvent,
+  TierAdded as TierAddedEvent,
 } from "../generated/SubscriptionGateway/SubscriptionGateway";
 import {
   FeeUpdated,
   FeesWithdrawn,
   OwnerUpdated,
   PlanCreated,
+  TierAdded,
   PlanStatusUpdated,
   PlanUpdated,
   Subscribed,
+  Tier,
   DailyStats,
   GlobalConfig,
   Plan,
   Seller,
   Subscriber,
   SubscriptionState,
+  MonthlyStats,
+  Transaction,
+  PlanUpdate,
 } from "../generated/schema";
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts";
 
 let SECONDS_PER_DAY = BigInt.fromI32(86400);
+let SECONDS_PER_MONTH = BigInt.fromI32(2592000); // 30 days approximation
+
 
 function getLegacyEventId(txHash: Bytes, logIndex: BigInt): Bytes {
   return txHash.concatI32(logIndex.toI32());
@@ -97,6 +105,25 @@ function getOrCreateDailyStats(blockTimestamp: BigInt): DailyStats {
   return entity;
 }
 
+function getOrCreateMonthlyStats(blockTimestamp: BigInt): MonthlyStats {
+  let monthBucket = blockTimestamp.div(SECONDS_PER_MONTH);
+  let id = monthBucket.toString();
+  let entity = MonthlyStats.load(id);
+  if (entity == null) {
+    entity = new MonthlyStats(id);
+    entity.monthStartTimestamp = monthBucket.times(SECONDS_PER_MONTH);
+    entity.plansCreated = 0;
+    entity.subscriptionsCreated = 0;
+    entity.totalGrossVolume = BigInt.zero();
+    entity.totalFeesCollected = BigInt.zero();
+    entity.totalFeeWithdrawals = BigInt.zero();
+    entity.updatedAt = blockTimestamp;
+    entity.save();
+  }
+  return entity;
+}
+
+
 function ensurePlan(
   planId: Bytes,
   sellerAddress: Address,
@@ -110,7 +137,6 @@ function ensurePlan(
 
     entity = new Plan(planId);
     entity.seller = seller.id;
-    entity.price = BigInt.zero();
     entity.duration = BigInt.zero();
     entity.ipfsHash = "";
     entity.active = true;
@@ -119,6 +145,31 @@ function ensurePlan(
     entity.subscriptionCount = 0;
     entity.totalGrossVolume = BigInt.zero();
     entity.totalFeesCollected = BigInt.zero();
+    entity.save();
+  }
+  return entity;
+}
+
+function tierId(planId: Bytes, tierId: BigInt): string {
+  return planId.toHexString() + "-" + tierId.toString();
+}
+
+function getOrCreateTier(
+  planId: Bytes,
+  id: BigInt,
+  blockTimestamp: BigInt,
+): Tier {
+  let tid = tierId(planId, id);
+  let entity = Tier.load(tid);
+  if (entity == null) {
+    entity = new Tier(tid);
+    entity.plan = planId;
+    entity.tierId = id;
+    entity.price = BigInt.zero();
+    entity.label = "";
+    entity.active = true;
+    entity.createdAt = blockTimestamp;
+    entity.updatedAt = blockTimestamp;
     entity.save();
   }
   return entity;
@@ -148,7 +199,19 @@ export function handleFeeUpdated(event: FeeUpdatedEvent): void {
   config.updatedAt = event.block.timestamp;
   config.updatedBlock = event.block.number;
   config.save();
+
+  let tx = new Transaction(
+    getLegacyEventId(event.transaction.hash, event.logIndex),
+  );
+  tx.type = "SET_FEE";
+  tx.from = event.transaction.from;
+  tx.amount = event.params.newFeeBps;
+  tx.blockNumber = event.block.number;
+  tx.blockTimestamp = event.block.timestamp;
+  tx.transactionHash = event.transaction.hash;
+  tx.save();
 }
+
 
 export function handleFeesWithdrawn(event: FeesWithdrawnEvent): void {
   let entity = new FeesWithdrawn(
@@ -174,7 +237,28 @@ export function handleFeesWithdrawn(event: FeesWithdrawnEvent): void {
   );
   daily.updatedAt = event.block.timestamp;
   daily.save();
+
+  let monthly = getOrCreateMonthlyStats(event.block.timestamp);
+  monthly.totalFeeWithdrawals = monthly.totalFeeWithdrawals.plus(
+    event.params.amount,
+  );
+  monthly.updatedAt = event.block.timestamp;
+  monthly.save();
+
+  let tx = new Transaction(
+    getLegacyEventId(event.transaction.hash, event.logIndex),
+  );
+  tx.type = "WITHDRAW";
+  tx.from = event.transaction.from;
+  tx.to = event.params.to;
+  tx.amount = event.params.amount;
+  tx.seller = seller.id;
+  tx.blockNumber = event.block.number;
+  tx.blockTimestamp = event.block.timestamp;
+  tx.transactionHash = event.transaction.hash;
+  tx.save();
 }
+
 
 export function handleOwnerUpdated(event: OwnerUpdatedEvent): void {
   let entity = new OwnerUpdated(
@@ -204,7 +288,6 @@ export function handlePlanCreated(event: PlanCreatedEvent): void {
   );
   entity.planId = event.params.planId;
   entity.seller = event.params.seller;
-  entity.price = event.params.price;
   entity.duration = event.params.duration;
   entity.ipfsHash = event.params.ipfsHash;
 
@@ -226,7 +309,6 @@ export function handlePlanCreated(event: PlanCreatedEvent): void {
     event.block.timestamp,
   );
   plan.seller = seller.id;
-  plan.price = event.params.price;
   plan.duration = event.params.duration;
   plan.ipfsHash = event.params.ipfsHash;
   plan.active = true;
@@ -237,7 +319,50 @@ export function handlePlanCreated(event: PlanCreatedEvent): void {
   daily.plansCreated = daily.plansCreated + 1;
   daily.updatedAt = event.block.timestamp;
   daily.save();
+
+  let monthly = getOrCreateMonthlyStats(event.block.timestamp);
+  monthly.plansCreated = monthly.plansCreated + 1;
+  monthly.updatedAt = event.block.timestamp;
+  monthly.save();
+
+  let tx = new Transaction(
+    getLegacyEventId(event.transaction.hash, event.logIndex),
+  );
+  tx.type = "CREATE_PLAN";
+  tx.from = event.transaction.from;
+  tx.plan = plan.id;
+  tx.seller = seller.id;
+  tx.blockNumber = event.block.number;
+  tx.blockTimestamp = event.block.timestamp;
+  tx.transactionHash = event.transaction.hash;
+  tx.save();
 }
+
+export function handleTierAdded(event: TierAddedEvent): void {
+  let entity = new TierAdded(
+    getLegacyEventId(event.transaction.hash, event.logIndex),
+  );
+  entity.planId = event.params.planId;
+  entity.tierId = event.params.tierId;
+  entity.price = event.params.price;
+  entity.label = event.params.label;
+
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+
+  let tier = getOrCreateTier(
+    event.params.planId,
+    event.params.tierId,
+    event.block.timestamp,
+  );
+  tier.price = event.params.price;
+  tier.label = event.params.label;
+  tier.updatedAt = event.block.timestamp;
+  tier.save();
+}
+
 
 export function handlePlanStatusUpdated(event: PlanStatusUpdatedEvent): void {
   let entity = new PlanStatusUpdated(
@@ -282,7 +407,6 @@ export function handlePlanUpdated(event: PlanUpdatedEvent): void {
     getLegacyEventId(event.transaction.hash, event.logIndex),
   );
   entity.planId = event.params.planId;
-  entity.price = event.params.price;
   entity.duration = event.params.duration;
   entity.ipfsHash = event.params.ipfsHash;
 
@@ -294,11 +418,38 @@ export function handlePlanUpdated(event: PlanUpdatedEvent): void {
 
   let plan = Plan.load(event.params.planId);
   if (plan != null) {
-    plan.price = event.params.price;
+    let oldDuration = plan.duration;
+    let oldIpfsHash = plan.ipfsHash;
+
     plan.duration = event.params.duration;
     plan.ipfsHash = event.params.ipfsHash;
     plan.updatedAt = event.block.timestamp;
     plan.save();
+
+    let update = new PlanUpdate(
+      getLegacyEventId(event.transaction.hash, event.logIndex),
+    );
+    update.plan = plan.id;
+    update.oldDuration = oldDuration;
+    update.newDuration = event.params.duration;
+    update.oldIpfsHash = oldIpfsHash;
+    update.newIpfsHash = event.params.ipfsHash;
+    update.blockNumber = event.block.number;
+    update.blockTimestamp = event.block.timestamp;
+    update.transactionHash = event.transaction.hash;
+    update.save();
+
+    let tx = new Transaction(
+      getLegacyEventId(event.transaction.hash, event.logIndex),
+    );
+    tx.type = "UPDATE_PLAN";
+    tx.from = event.transaction.from;
+    tx.plan = plan.id;
+    tx.seller = plan.seller;
+    tx.blockNumber = event.block.number;
+    tx.blockTimestamp = event.block.timestamp;
+    tx.transactionHash = event.transaction.hash;
+    tx.save();
   }
 }
 
@@ -309,6 +460,8 @@ export function handleSubscribed(event: SubscribedEvent): void {
   entity.subscriber = event.params.subscriber;
   entity.seller = event.params.seller;
   entity.planId = event.params.planId;
+  entity.plan = event.params.planId;
+  entity.tierId = event.params.tierId;
   entity.totalAmount = event.params.totalAmount;
   entity.feeAmount = event.params.feeAmount;
   entity.buyerData = event.params.buyerData;
@@ -318,6 +471,9 @@ export function handleSubscribed(event: SubscribedEvent): void {
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
+
+  let tid = tierId(event.params.planId, event.params.tierId);
+  entity.tier = tid;
 
   entity.save();
 
@@ -428,4 +584,31 @@ export function handleSubscribed(event: SubscribedEvent): void {
   );
   daily.updatedAt = event.block.timestamp;
   daily.save();
+
+  let monthly = getOrCreateMonthlyStats(event.block.timestamp);
+  monthly.subscriptionsCreated = monthly.subscriptionsCreated + 1;
+  monthly.totalGrossVolume = monthly.totalGrossVolume.plus(
+    event.params.totalAmount,
+  );
+  monthly.totalFeesCollected = monthly.totalFeesCollected.plus(
+    event.params.feeAmount,
+  );
+  monthly.updatedAt = event.block.timestamp;
+  monthly.save();
+
+  let tx = new Transaction(
+    getLegacyEventId(event.transaction.hash, event.logIndex),
+  );
+  tx.type = "SUBSCRIBE";
+  tx.from = event.transaction.from;
+  tx.to = event.params.seller;
+  tx.amount = event.params.totalAmount;
+  tx.fee = event.params.feeAmount;
+  tx.plan = plan.id;
+  tx.seller = seller.id;
+  tx.subscriber = subscriber.id;
+  tx.blockNumber = event.block.number;
+  tx.blockTimestamp = event.block.timestamp;
+  tx.transactionHash = event.transaction.hash;
+  tx.save();
 }

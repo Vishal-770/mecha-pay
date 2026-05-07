@@ -12,18 +12,25 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as {
       userToken?: string;
       walletId?: string;
-      price?: string;
       durationSeconds?: number;
       ipfsHash?: string;
+      tiers?: { price: string; label: string }[];
     };
 
-    const { userToken, walletId, price, durationSeconds, ipfsHash } = body;
+    const { userToken, walletId, durationSeconds, ipfsHash, tiers } = body;
 
-    if (!userToken || !walletId || !price || !durationSeconds || !ipfsHash) {
+    if (
+      !userToken ||
+      !walletId ||
+      !durationSeconds ||
+      !ipfsHash ||
+      !tiers ||
+      tiers.length === 0
+    ) {
       return NextResponse.json(
         {
           error:
-            "userToken, walletId, price, durationSeconds, ipfsHash are required",
+            "userToken, walletId, durationSeconds, ipfsHash, and at least one tier are required",
         },
         { status: 400 },
       );
@@ -36,15 +43,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const parsedPrice = parseFloat(price);
-    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-      return NextResponse.json(
-        { error: "price must be a positive number" },
-        { status: 400 },
-      );
-    }
-
-    const amountIn6 = parseUnits(price, 6).toString();
+    // Format tiers for contract: prices[] and labels[]
+    const prices = tiers.map((t) => parseUnits(t.price, 6).toString());
+    const labels = tiers.map((t) => t.label);
 
     const client = getCircleClient();
     const response =
@@ -52,8 +53,13 @@ export async function POST(req: NextRequest) {
         userToken,
         walletId,
         contractAddress: SUBSCRIPTION_GATEWAY_ADDRESS,
-        abiFunctionSignature: "createPlan(uint256,uint32,string)",
-        abiParameters: [amountIn6, durationSeconds, normalizeIpfsUri(ipfsHash)],
+        abiFunctionSignature: "createPlan(uint32,string,uint256[],string[])",
+        abiParameters: [
+          durationSeconds,
+          normalizeIpfsUri(ipfsHash),
+          prices,
+          labels,
+        ],
         fee: HIGH_FEE,
       });
 

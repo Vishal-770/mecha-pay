@@ -47,7 +47,6 @@ const eventsQuery = `
     ) {
       id
       planId
-      price
       duration
       ipfsHash
       blockTimestamp

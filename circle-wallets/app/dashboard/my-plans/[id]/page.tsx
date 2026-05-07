@@ -7,16 +7,13 @@ import { formatUnits } from "ethers";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { useCircleSDK } from "@/context/CircleSDKContext";
 import { 
-  normalizeIpfsUri,
-  type SubscriptionUiMetadata 
-} from "@/lib/subscription";
-import { 
   Card, 
   CardContent, 
   CardDescription, 
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import { SUBSCRIPTION_GATEWAY_ADDRESS } from "@/lib/subscription";
 import {
   Table,
   TableBody,
@@ -45,11 +42,18 @@ import {
   AlertCircle,
   FileText,
   UserCheck,
-  CreditCard,
   Target,
-  CheckCircle2
+  CheckCircle2,
+  Globe,
+  Tag,
+  ShieldCheck,
+  ArrowUpRight,
+  Layers,
+  Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 type BuyerRow = {
   id: string;
@@ -81,10 +85,22 @@ type PlanResponse = {
     totalFeesCollected: string;
     lastSubscriptionAt: string | null;
     seller: { id: string };
+    tiers?: {
+      tierId: string;
+      price: string;
+      label: string;
+    }[];
     metadata: {
+      version?: string;
       name?: string;
       brand?: { name?: string; website?: string };
       features?: { title: string; description: string }[];
+      tiers?: {
+        tierId?: string;
+        label: string;
+        price: string;
+        features: { title: string; description: string }[];
+      }[];
     } | null;
   };
   isOwnerView: boolean;
@@ -133,6 +149,22 @@ function truncateAddress(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+const SectionHeader = ({ title, subtitle, icon: Icon }: any) => (
+  <div className="flex items-center gap-3 mb-6">
+    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+      <Icon size={20} strokeWidth={2.5} />
+    </div>
+    <div>
+      <h2 className="text-sm font-black uppercase tracking-widest text-foreground leading-none mb-1">
+        {title}
+      </h2>
+      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+        {subtitle}
+      </p>
+    </div>
+  </div>
+);
+
 export default function MyPlanDetailPage() {
   const params = useParams<{ id: string }>();
   const { wallet } = useDashboardContext();
@@ -141,7 +173,6 @@ export default function MyPlanDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-
   const [toggling, setToggling] = useState(false);
   
   const { executeChallenge } = useCircleSDK();
@@ -149,7 +180,6 @@ export default function MyPlanDetailPage() {
 
   const handleToggleStatus = async () => {
     if (!data?.plan || !wallet?.id || !sessionUserToken) return;
-    
     setToggling(true);
     setError(null);
 
@@ -170,11 +200,7 @@ export default function MyPlanDetailPage() {
       if (!res.ok) throw new Error(json.error ?? "Failed to update status");
 
       await executeChallenge(json.challengeId);
-      
-      setData({
-        ...data,
-        plan: { ...data.plan, active }
-      });
+      setData({ ...data, plan: { ...data.plan, active } });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -201,8 +227,7 @@ export default function MyPlanDetailPage() {
         if (mounted) setLoading(false);
       }
     };
-
-    void run();
+    run();
     return () => { mounted = false; };
   }, [params.id, wallet?.address]);
 
@@ -226,345 +251,352 @@ export default function MyPlanDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-8 p-4 md:p-8">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-10 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-32" />
-          </div>
+      <div className="flex flex-col gap-10 p-8">
+        <Skeleton className="h-20 w-1/3 rounded-2xl" />
+        <div className="grid gap-6 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
         </div>
-        <div className="grid gap-4 md:grid-cols-4">
-          <Skeleton className="h-32 rounded-xl" />
-          <Skeleton className="h-32 rounded-xl" />
-          <Skeleton className="h-32 rounded-xl" />
-          <Skeleton className="h-32 rounded-xl" />
-        </div>
-        <Skeleton className="h-[400px] rounded-xl" />
+        <Skeleton className="h-[500px] rounded-3xl" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center gap-4">
-        <AlertCircle className="h-12 w-12 text-destructive" />
-        <h2 className="text-xl font-bold">{error ?? "Plan not found"}</h2>
-        <Button  variant="outline">
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center gap-6">
+        <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive">
+          <AlertCircle size={32} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-black uppercase tracking-tight">{error ?? "Protocol Not Found"}</h2>
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Unable to synchronize with indexing node</p>
+        </div>
+        <Button variant="outline" className="rounded-xl px-8 h-12 font-black uppercase tracking-widest text-[10px]" asChild>
           <Link href="/dashboard/my-plans">Back to my plans</Link>
         </Button>
       </div>
     );
   }
 
-  const { plan, analytics, buyers, metrics } = data;
-  const title = plan.metadata?.name ?? `Plan ${plan.planId.slice(0, 10)}`;
+  const { plan, analytics, metrics } = data;
+  const brand = plan.metadata?.brand;
+  const title = plan.metadata?.name ?? brand?.name ?? `Protocol ${plan.planId.slice(0, 10)}`;
+  const isV11 = plan.metadata?.version === "1.1";
 
   return (
-    <div className="flex flex-col gap-8 p-4 md:p-8 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-1">
+    <div className="max-w-7xl mx-auto py-12 px-6 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      
+      {/* Header Section */}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b border-border/40 pb-10">
+        <div className="space-y-3">
           <Link
             href="/dashboard/my-plans"
-            className="group inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 hover:text-primary transition-colors"
           >
-            <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-            Back to my plans
+            <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform stroke-[3px]" />
+            Back to Registry
           </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-              plan.active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
-            }`}>
-              {plan.active ? "Active" : "Disabled"}
-            </span>
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl font-black uppercase tracking-tight text-foreground">
+              {title}
+            </h1>
+            <Badge variant={plan.active ? "secondary" : "outline"} className={cn(
+              "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border-none shadow-sm",
+              plan.active ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground/50"
+            )}>
+              {plan.active ? "Live" : "Inactive"}
+            </Badge>
           </div>
-          <p className="text-sm font-mono text-muted-foreground">{plan.planId}</p>
+          <div className="flex flex-wrap items-center gap-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <span className="flex items-center gap-1.5"><Tag size={12} className="text-primary" /> PID: <span className="font-mono text-foreground/80">{truncateAddress(plan.planId)}</span></span>
+            <span className="h-1 w-1 rounded-full bg-border" />
+            <span className="flex items-center gap-1.5"><Globe size={12} className="text-primary" /> Network: <span className="text-foreground/80">ARC Testnet</span></span>
+            <span className="h-1 w-1 rounded-full bg-border" />
+            <span className="flex items-center gap-1.5"><Clock size={12} className="text-primary" /> Cycle: <span className="text-foreground/80">{humanDuration(plan.duration)}</span></span>
+          </div>
         </div>
 
-        <div className="flex gap-2">
-           <Button 
+        <div className="flex gap-3">
+          <Button 
+            asChild
+            variant="outline"
+            className="h-11 px-6 rounded-xl border-border/80 font-black uppercase tracking-widest text-[10px]"
+          >
+            <a href={`https://testnet.arcscan.app/address/${SUBSCRIPTION_GATEWAY_ADDRESS}`} target="_blank" rel="noreferrer">
+              On-Chain Ledger <ArrowUpRight size={14} className="ml-2 opacity-40" />
+            </a>
+          </Button>
+          <Button 
             onClick={() => void handleToggleStatus()}
             disabled={toggling || !wallet}
             variant={plan.active ? "destructive" : "default"}
-            size="sm"
-            className="font-bold"
+            className={cn(
+              "h-11 px-6 rounded-xl font-black uppercase tracking-widest text-[10px] border-none shadow-lg transition-all",
+              plan.active ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white" : "bg-primary text-primary-foreground shadow-primary/20"
+            )}
           >
-            {toggling ? "Processing..." : plan.active ? "Deactivate Plan" : "Reactivate Plan"}
+            {toggling ? "Processing..." : plan.active ? "Deactivate Protocol" : "Restore Protocol"}
           </Button>
         </div>
       </div>
 
-      {/* Hero Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Pricing</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${Number(formatUnits(plan.price, 6)).toFixed(2)}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase">Cycle: {humanDuration(plan.duration)}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Active Members</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.activeBuyerCount}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase">Total: {metrics.totalBuyers}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Growth (30d)</CardTitle>
-            <TrendingUp className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.windows.thirtyDays.subscriptionCount}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase">New Subscriptions</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Net Earnings</CardTitle>
-            <Target className="h-4 w-4 text-sky-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${Number(formatUnits(analytics.netEarnings, 6)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase">After protocol fees</p>
-          </CardContent>
-        </Card>
+      {/* Analytics Matrix */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "Gross Volume", value: `$${Number(formatUnits(plan.totalGrossVolume, 6)).toLocaleString()}`, sub: `${plan.subscriptionCount} Total Subs`, icon: Activity, color: "text-primary" },
+          { label: "Active Members", value: metrics.activeBuyerCount, sub: `Renewals: ${analytics.activeRate.toFixed(1)}%`, icon: Users, color: "text-sky-500" },
+          { label: "Net Earnings", value: `$${Number(formatUnits(analytics.netEarnings, 6)).toLocaleString()}`, sub: `After 5% Fee`, icon: Target, color: "text-emerald-500" },
+          { label: "Avg. Ticket", value: `$${Number(formatUnits(analytics.avgRevenuePerSubscriber, 6)).toFixed(2)}`, sub: "Per Active Cycle", icon: TrendingUp, color: "text-amber-500" },
+        ].map((stat, i) => (
+          <Card key={i} className="bg-card border-border/80 shadow-none rounded-2xl group hover:bg-muted/5 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{stat.label}</CardTitle>
+              <stat.icon size={14} className={cn(stat.color, "stroke-[3px]")} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black italic text-foreground leading-none">{stat.value}</div>
+              <p className="text-[9px] font-bold text-muted-foreground/60 mt-2 uppercase tracking-widest">{stat.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Revenue Visualization */}
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <CardTitle>Revenue Scaling</CardTitle>
-              <CardDescription>Visualizing your plan's growth through subscription cycles</CardDescription>
-            </CardHeader>
-            <CardContent className="pl-0">
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                    <XAxis 
-                       dataKey="date" 
-                       stroke="var(--muted-foreground)" 
-                       fontSize={11} 
-                       tickLine={false} 
-                       axisLine={false} 
-                       tickFormatter={(v) => v.split("-").slice(1).join("/")}
-                    />
-                    <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-                    <Tooltip 
-                       contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
-                       labelStyle={{ fontWeight: 'bold' }}
-                    />
-                    <Area type="monotone" dataKey="revenueNum" name="Revenue" stroke="var(--primary)" fillOpacity={1} fill="url(#colorRev)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Members Table */}
-          <Card className="border-border bg-card overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Member Directory</CardTitle>
-                <CardDescription>Full history of active and past subscribers</CardDescription>
-              </div>
-              <div className="relative w-full max-w-xs">
-                <input 
-                  type="text" 
-                  placeholder="Filter members..." 
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="pl-6">Subscriber</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Lifetime Spent</TableHead>
-                    <TableHead className="text-right pr-6">Metadata</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredBuyers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-12 text-muted-foreground italic">
-                        No subscribers found matching filters
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredBuyers.map((buyer) => (
-                    <TableRow key={buyer.id} className="group hover:bg-muted/30 transition-colors">
-                      <TableCell className="pl-6">
-                        <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-                            {buyer.subscriber.slice(2, 4).toUpperCase()}
-                          </div>
+      {/* Tier Architecture section (Full Width) */}
+      <section className="space-y-6">
+        <SectionHeader title="Tier Architecture" subtitle="Offering & Entitlement Matrix" icon={Layers} />
+        <div className="grid gap-6 md:grid-cols-3">
+          {isV11 ? (
+            plan.metadata?.tiers?.map((tier: any, i: number) => (
+              <Card key={i} className="relative bg-card border-border/80 rounded-2xl overflow-hidden shadow-none group hover:border-primary/30 transition-all">
+                <div className="absolute top-0 right-0 h-24 w-24 bg-primary/5 rounded-full -mr-12 -mt-12 transition-all group-hover:bg-primary/10" />
+                <CardHeader className="p-6 pb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/10 text-[9px] font-black uppercase tracking-widest px-2.5 py-1">
+                      Tier 0{i + 1}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-xl font-black uppercase tracking-tight mb-1">{tier.label}</CardTitle>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black italic">${tier.price}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">USDC / Cycle</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 pt-0 space-y-6">
+                  <div className="h-[1px] w-full bg-border/10" />
+                  <div className="space-y-4">
+                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Tier Entitlements</p>
+                    <div className="space-y-3">
+                      {tier.features?.map((f: any, fi: number) => (
+                        <div key={fi} className="flex gap-3">
+                          <CheckCircle2 size={12} className="text-emerald-500 mt-1 flex-shrink-0 stroke-[3px]" />
                           <div>
-                            <p className="font-semibold text-sm">{truncateAddress(buyer.subscriber)}</p>
-                            <p className="text-[10px] text-muted-foreground">{buyer.subscriptionCount} cycles</p>
+                            <p className="text-[11px] font-bold text-foreground leading-tight">{f.title}</p>
+                            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-2">{f.description}</p>
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset ${
-                          buyer.status === "ACTIVE" 
-                            ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20" 
-                            : "bg-muted text-muted-foreground ring-border"
-                        }`}>
-                          {buyer.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm font-bold">
-                        ${Number(formatUnits(buyer.totalSpent, 6)).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right pr-6">
-                         <span className="text-[10px] bg-muted px-2 py-1 rounded-md text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors cursor-default max-w-[120px] truncate block ml-auto">
-                          {buyer.buyerData || "No Data"}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card className="md:col-span-3 bg-muted/5 border-dashed border-border border-2 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-4">
+               <Layers size={24} className="text-muted-foreground/30" />
+               <div className="space-y-1">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Legacy v1.0 Plan</p>
+                 <p className="text-sm font-bold text-foreground/60">This protocol was deployed using a single-tier configuration.</p>
+               </div>
+            </Card>
+          )}
+        </div>
+      </section>
+
+      {/* Middle Grid: Revenue vs Brand Info */}
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Main Chart Column (2/3) */}
+        <div className="lg:col-span-2">
+          <section className="space-y-6">
+            <SectionHeader title="Revenue Scaling" subtitle="Historical Settlement Performance" icon={TrendingUp} />
+            <Card className="bg-card border-border/80 shadow-none rounded-3xl overflow-hidden h-full">
+              <CardContent className="p-8 pl-2">
+                <div className="h-[400px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.15}/>
+                          <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="var(--border)" opacity={0.5} />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="var(--muted-foreground)" 
+                        fontSize={10} 
+                        fontWeight="bold"
+                        tickLine={false} 
+                        axisLine={false} 
+                        tickFormatter={(v) => v.split("-").slice(1).join("/")}
+                        dy={10}
+                      />
+                      <YAxis stroke="var(--muted-foreground)" fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} dx={-10} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', border: '1px solid var(--border)' }}
+                        labelStyle={{ fontWeight: 'black', textTransform: 'uppercase', fontSize: '10px', marginBottom: '4px' }}
+                        itemStyle={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--foreground)' }}
+                      />
+                      <Area type="monotone" dataKey="revenueNum" name="Revenue" stroke="var(--primary)" fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
         </div>
 
-        {/* Sidebar */}
-        <div className="flex flex-col gap-6">
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Plan Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Settlement Target</p>
-                <p className="font-mono text-xs text-foreground uppercase break-all">{truncateAddress(plan.seller.id)}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground">BPS Fee</p>
-                  <p className="text-xs font-bold text-foreground">500 (5%)</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Last Sub</p>
-                  <p className="text-[10px] font-semibold text-foreground">
-                    {plan.lastSubscriptionAt ? new Date(Number(plan.lastSubscriptionAt) * 1000).toLocaleDateString() : "Never"}
-                  </p>
-                </div>
-              </div>
-              {plan.metadata?.brand?.website && (
-                 <div className="pt-2">
-                   <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Brand Website</p>
-                   <a 
-                    href={plan.metadata.brand.website} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="text-xs text-sky-500 hover:underline flex items-center gap-1"
-                   >
-                     {plan.metadata.brand.website.replace(/^https?:\/\//, "")} <ExternalLink className="h-2 w-2" />
-                   </a>
+        {/* Sidebar Column (1/3) */}
+        <div className="space-y-8">
+           {/* Brand Identity Card */}
+           <section className="space-y-6">
+            <SectionHeader title="Provider" subtitle="Identity Verification Hub" icon={ShieldCheck} />
+            <Card className="bg-card border-border/80 shadow-none rounded-3xl p-8 space-y-6">
+              <div className="flex items-center gap-4">
+                 <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20">
+                   <Globe size={24} strokeWidth={2.5} />
                  </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {plan.metadata?.features && plan.metadata.features.length > 0 && (
-             <Card className="border-border bg-card bg-primary/5 border-primary/10">
-               <CardHeader className="pb-2">
-                 <CardTitle className="text-xs font-bold uppercase tracking-widest text-primary">Key Features</CardTitle>
-               </CardHeader>
-               <CardContent className="space-y-3">
-                 {plan.metadata.features.map((feature: any, i: number) => (
-                    <div key={i} className="space-y-0.5">
-                      <p className="text-[11px] font-bold text-foreground">{feature.title}</p>
-                      <p className="text-[10px] text-muted-foreground leading-tight line-clamp-2">{feature.description}</p>
-                    </div>
-                 ))}
-               </CardContent>
-             </Card>
-          )}
-
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <UserCheck className="h-4 w-4" />
-                Retention Health
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Repeat Buyer Base</p>
-                <div className="flex flex-col items-end">
-                  <span className="text-sm font-bold">{analytics.repeatBuyerCount} Users</span>
-                  <span className="text-[10px] text-emerald-600">+{analytics.repeatBuyerRate.toFixed(1)}% Rate</span>
+                 <div>
+                   <p className="text-xl font-black uppercase tracking-tight leading-none mb-1">{brand?.name || "Verified Merchant"}</p>
+                   <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Global Provider</p>
+                 </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Gateway Resolution</p>
+                  <a href={brand?.website} target="_blank" rel="noreferrer" className="text-xs font-bold text-foreground flex items-center gap-1.5 hover:text-primary transition-colors truncate">
+                    {brand?.website || "N/A"} <ExternalLink size={10} />
+                  </a>
+                </div>
+                <div className="h-[1px] w-full bg-border/10" />
+                <div className="flex items-center justify-between">
+                   <div className="space-y-1">
+                     <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Settlement Fee</p>
+                     <p className="text-xs font-black italic">500 BPS (5%)</p>
+                   </div>
+                   <div className="text-right space-y-1">
+                     <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Protocol Version</p>
+                     <p className="text-xs font-black italic">v1.1.0 Multi-Tier</p>
+                   </div>
                 </div>
               </div>
-              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+            </Card>
+          </section>
+
+          {/* Loyalty Metrics Card */}
+          <section className="space-y-6">
+            <SectionHeader title="Loyalty" subtitle="Returning Member Performance" icon={UserCheck} />
+            <Card className="bg-card border-border/80 shadow-none rounded-3xl p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                 <div className="space-y-1">
+                    <p className="text-2xl font-black italic leading-none">{analytics.repeatBuyerCount}</p>
+                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Returning Members</p>
+                 </div>
+                 <div className="text-right space-y-1">
+                    <p className="text-2xl font-black italic text-emerald-500 leading-none">{analytics.repeatBuyerRate.toFixed(1)}%</p>
+                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Renewal Rate</p>
+                 </div>
+              </div>
+              <div className="h-2.5 w-full bg-muted/20 rounded-full overflow-hidden border border-border/10">
                 <div 
-                  className="h-full bg-primary transition-all duration-1000" 
+                  className="h-full bg-gradient-to-r from-primary to-emerald-500 transition-all duration-1000 shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]" 
                   style={{ width: `${analytics.repeatBuyerRate}%` }} 
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed italic">
-                Users with at least one renewal cycle. High repeat rates correlate with high long-term LTV.
+              <p className="text-[10px] font-bold text-muted-foreground leading-relaxed uppercase tracking-wide opacity-60 italic">
+                A high renewal rate means your members are staying subscribed over multiple cycles.
               </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border bg-card">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                Registry Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">On-Chain Active</span>
-                <span className={plan.active ? "text-emerald-500" : "text-muted-foreground"}>{plan.active ? "YES" : "NO"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Indexed History</span>
-                <span className="text-sky-500">COMPLETE</span>
-              </div>
-              <Button variant="outline" size="sm" className="w-full mt-2" >
-                <a href={`https://explorer.circle.com/address/${plan.planId}`} target="_blank" rel="noreferrer">
-                  View on Explorer <ExternalLink className="ml-2 h-3 w-3" />
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
+            </Card>
+          </section>
         </div>
       </div>
+
+      {/* Member Registry (Full Width Bottom) */}
+      <section className="space-y-6">
+         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <SectionHeader title="Member Registry" subtitle="Participant Access Hub" icon={Users} />
+            <div className="relative w-full sm:w-80 mb-6">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 stroke-[3px]" />
+              <input 
+                type="text" 
+                placeholder="Search Identity or Metadata..." 
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full h-12 bg-muted/20 border border-border/80 rounded-2xl pl-10 pr-4 text-[11px] font-bold outline-none focus:border-primary/50 transition-all placeholder:text-muted-foreground/30 uppercase tracking-widest"
+              />
+            </div>
+         </div>
+         <Card className="bg-card border-border/80 shadow-none rounded-3xl overflow-hidden">
+            <Table>
+              <TableHeader className="bg-muted/10">
+                <TableRow className="border-border/40 hover:bg-transparent">
+                  <TableHead className="pl-8 py-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subscriber Wallet</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cycles</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Paid</TableHead>
+                  <TableHead className="text-right pr-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground">User Info</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredBuyers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-20 text-[10px] font-black uppercase tracking-widest text-muted-foreground/30 italic">
+                      No protocol participants discovered in ledger
+                    </TableCell>
+                  </TableRow>
+                ) : filteredBuyers.map((buyer) => (
+                  <TableRow key={buyer.id} className="group border-border/20 hover:bg-muted/5 transition-colors">
+                    <TableCell className="pl-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20">
+                          {buyer.subscriber.slice(2, 4).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-black italic text-sm">{truncateAddress(buyer.subscriber)}</p>
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest break-all opacity-40">{buyer.subscriber}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={cn(
+                        "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border-none shadow-sm",
+                        buyer.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground/50"
+                      )}>
+                        {buyer.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs font-bold text-muted-foreground">
+                      {buyer.subscriptionCount} Cycles
+                    </TableCell>
+                    <TableCell className="text-sm font-black italic">
+                      ${Number(formatUnits(buyer.totalSpent, 6)).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right pr-8">
+                       <span className="inline-block max-w-[180px] truncate bg-muted/40 px-4 py-2 rounded-xl text-[10px] font-bold text-muted-foreground font-mono group-hover:bg-primary/10 group-hover:text-primary transition-all">
+                        {buyer.buyerData || "NULL_DATA"}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+         </Card>
+      </section>
+
+      <div className="pt-20 text-center opacity-20">
+        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em]">Mecha Pay Merchant OS v1.1.0 • Settlement Infrastructure</p>
+      </div>
+
     </div>
   );
 }

@@ -18,8 +18,14 @@ import {
   Activity, 
   Calendar,
   ChevronRight,
-  Plus
+  Plus,
+  Zap,
+  Target,
+  ArrowUpRight,
+  Layers,
+  Globe
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type PlanAnalytics = {
   totalSubscribers: number;
@@ -48,12 +54,20 @@ type PlanAnalytics = {
   };
 };
 
+type Tier = {
+  tierId: string;
+  price: string;
+  label: string;
+  active: boolean;
+};
+
 type MyPlanRow = {
   id: string;
   planId: string;
   price: string;
   duration: string;
   active: boolean;
+  tiers: Tier[];
   metadata: {
     name?: string;
     brand?: { name?: string };
@@ -123,20 +137,14 @@ export default function MyPlansPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-8">
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-4 w-96" />
+      <div className="p-8 space-y-10">
+        <Skeleton className="h-12 w-1/3 rounded-xl" />
+        <div className="grid gap-6 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
         </div>
-        <div className="grid gap-4 md:grid-cols-4">
-          <Skeleton className="h-24 rounded-xl" />
-          <Skeleton className="h-24 rounded-xl" />
-          <Skeleton className="h-24 rounded-xl" />
-          <Skeleton className="h-24 rounded-xl" />
-        </div>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Skeleton className="h-64 rounded-2xl" />
-          <Skeleton className="h-64 rounded-2xl" />
+        <div className="grid gap-8 lg:grid-cols-2">
+          <Skeleton className="h-80 rounded-3xl" />
+          <Skeleton className="h-80 rounded-3xl" />
         </div>
       </div>
     );
@@ -144,150 +152,152 @@ export default function MyPlansPage() {
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-destructive bg-destructive/10 p-6 text-sm text-destructive font-bold flex items-center gap-3">
-        <Activity className="h-5 w-5" />
-        {error}
+      <div className="p-8">
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center space-y-4">
+          <Activity className="h-12 w-12 text-destructive mx-auto" />
+          <div className="space-y-1">
+            <h3 className="text-lg font-black uppercase tracking-tight">Sync Failure</h3>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{error}</p>
+          </div>
+          <Button variant="outline" onClick={() => window.location.reload()} className="h-10 rounded-xl px-8 text-[10px] font-black uppercase tracking-widest">
+            Retry Sync
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (!data || data.plans.length === 0) {
     return (
-      <Card className="border-dashed flex flex-col items-center justify-center p-20 text-center gap-4">
-        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-          <CreditCard className="h-6 w-6" />
-        </div>
-        <div>
-          <CardTitle className="text-2xl">No Plans Found</CardTitle>
-          <CardDescription className="mt-2 max-w-sm">
-            You haven't created any subscription plans yet. Launch your first plan to start earning USDC.
-          </CardDescription>
-        </div>
-        <Link 
-          href="/dashboard/plans/create" 
-          className={cn(buttonVariants({ variant: "default" }), "mt-4 shadow-lg shadow-primary/20")}
-        >
-          <Plus className="mr-2 h-4 w-4" /> Create New Plan
-        </Link>
-      </Card>
+      <div className="p-8">
+        <Card className="border-dashed border-2 bg-muted/5 flex flex-col items-center justify-center p-24 text-center gap-6 rounded-[3rem]">
+          <div className="h-20 w-20 rounded-3xl bg-muted flex items-center justify-center text-muted-foreground/30 shadow-inner">
+            <Zap size={40} strokeWidth={2.5} />
+          </div>
+          <div className="space-y-2">
+            <CardTitle className="text-3xl font-black uppercase tracking-tight">No Protocols Deployed</CardTitle>
+            <CardDescription className="max-w-xs mx-auto text-xs font-bold uppercase tracking-widest leading-relaxed">
+              Launch your first subscription gateway to start receiving settled payments on ARC.
+            </CardDescription>
+          </div>
+          <Link 
+            href="/dashboard/plans/create" 
+            className={cn(buttonVariants({ variant: "default" }), "h-12 px-8 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-primary/40")}
+          >
+            <Plus className="mr-2 h-4 w-4 stroke-[3px]" /> Deploy Protocol
+          </Link>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Creator Console</h2>
-        <p className="text-muted-foreground mt-1">Manage your subscription offerings and view performance analytics.</p>
+    <div className="max-w-7xl mx-auto py-12 px-6 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      {/* Header Matrix */}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b border-border/40 pb-10">
+        <div className="space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Settlement Hub</p>
+          <h2 className="text-4xl font-black uppercase tracking-tight text-foreground">Creator Console</h2>
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Global Protocol Management & Settlement Liquidity</p>
+        </div>
+        <Link 
+          href="/dashboard/plans/create" 
+          className={cn(buttonVariants({ variant: "default" }), "h-12 px-8 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-primary/40")}
+        >
+          <Plus className="mr-2 h-4 w-4 stroke-[3px]" /> New Offering
+        </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Active Plans</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.summary.activePlans}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase">Of {data.summary.totalPlans} Total</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Total Gross</CardTitle>
-            <TrendingUp className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${Number(formatUnits(data.summary.totalGross, 6)).toFixed(2)}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase">Cumulative Volume</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Net Settled</CardTitle>
-            <Activity className="h-4 w-4 text-sky-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${Number(formatUnits(data.summary.totalNet, 6)).toFixed(2)}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase">After protocol fees</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-primary text-primary-foreground shadow-xl shadow-primary/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-widest opacity-80">New Offering</CardTitle>
-            <Plus className="h-4 w-4 opacity-80" />
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <p className="text-[10px] opacity-80 uppercase font-black">Ready for more?</p>
-            <Link href="/dashboard/plans/create" className="text-sm font-bold flex items-center gap-1 hover:underline">
-               Launch New Plan <ChevronRight className="h-3 w-3" />
-            </Link>
-          </CardContent>
-        </Card>
+      {/* Global Metrics */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "Active Gateways", value: data.summary.activePlans, sub: `Of ${data.summary.totalPlans} Total`, icon: Globe, color: "text-primary" },
+          { label: "Total Volume", value: `$${Number(formatUnits(BigInt(data.summary.totalGross), 6)).toLocaleString()}`, sub: "Cumulative Settled", icon: TrendingUp, color: "text-emerald-500" },
+          { label: "Net Settled", value: `$${Number(formatUnits(BigInt(data.summary.totalNet), 6)).toLocaleString()}`, sub: "After Registry Fees", icon: Activity, color: "text-sky-500" },
+          { label: "Loyalty Status", value: "High", sub: "Based on Renewals", icon: Target, color: "text-amber-500" },
+        ].map((stat, i) => (
+          <Card key={i} className="bg-card border-border/80 shadow-none rounded-2xl group hover:bg-muted/5 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{stat.label}</CardTitle>
+              <stat.icon size={14} className={cn(stat.color, "stroke-[3px]")} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black italic text-foreground leading-none">{stat.value}</div>
+              <p className="text-[9px] font-bold text-muted-foreground/60 mt-2 uppercase tracking-widest">{stat.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Protocol Grid */}
+      <div className="grid gap-8 lg:grid-cols-2">
         {sortedPlans.map((plan) => {
-          const title = plan.metadata?.name ?? `Plan ${plan.planId.slice(0, 10)}`;
+          const title = plan.metadata?.name ?? plan.metadata?.brand?.name ?? `Protocol ${plan.planId.slice(0, 10)}`;
+          const prices = plan.tiers?.map(t => BigInt(t.price)) ?? [];
+          const minPrice = prices.length > 0 ? prices.reduce((a, b) => a < b ? a : b) : BigInt(0);
+          const maxPrice = prices.length > 0 ? prices.reduce((a, b) => a > b ? a : b) : BigInt(0);
+          const priceDisplay = minPrice === maxPrice 
+            ? `${formatUnits(minPrice, 6)} USDC`
+            : `${formatUnits(minPrice, 6)} - ${formatUnits(maxPrice, 6)} USDC`;
+
           return (
-            <Card key={plan.planId} className="group overflow-hidden transition-all hover:shadow-md border-border bg-card">
-              <CardHeader className="flex flex-row items-start justify-between pb-2">
-                <div>
-                  <CardTitle className="group-hover:text-primary transition-colors">{title}</CardTitle>
-                  <CardDescription className="mt-1">
-                    {plan.metadata?.brand?.name ?? "Self-Hosted"} · {humanDuration(plan.duration)} Cycle
-                  </CardDescription>
-                </div>
-                <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                  plan.active ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
-                }`}>
-                  {plan.active ? "Active" : "Inactive"}
+            <Card key={plan.planId} className="group relative overflow-hidden bg-card border-border/80 rounded-[2rem] shadow-none hover:border-primary/30 transition-all duration-500">
+              <div className="absolute top-0 right-0 h-40 w-40 bg-primary/5 rounded-full -mr-20 -mt-20 group-hover:bg-primary/10 transition-all duration-700" />
+              
+              <CardHeader className="p-8 pb-4">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-2xl font-black uppercase tracking-tight text-foreground group-hover:text-primary transition-colors">{title}</h3>
+                      <ArrowUpRight size={16} className="text-muted-foreground/20 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+                    </div>
+                    <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                      <span className="flex items-center gap-1"><Layers size={10} /> {plan.tiers?.length || 1} Tiers</span>
+                      <span className="h-1 w-1 rounded-full bg-border" />
+                      <span className="flex items-center gap-1"><Calendar size={10} /> {humanDuration(plan.duration)} Cycle</span>
+                    </div>
+                  </div>
+                  <Badge variant={plan.active ? "secondary" : "outline"} className={cn(
+                    "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border-none shadow-sm",
+                    plan.active ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground/40"
+                  )}>
+                    {plan.active ? "Live" : "Inactive"}
+                  </Badge>
                 </div>
               </CardHeader>
 
-              <CardContent className="pt-4 flex flex-col gap-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-lg bg-muted/50 p-3 flex flex-col gap-1">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground">Total Members</p>
-                    <p className="text-lg font-bold flex items-center gap-2">
-                      <Users className="h-4 w-4 text-sky-500" />
-                      {plan.analysis.totalSubscribers}
-                    </p>
+              <CardContent className="p-8 pt-6 space-y-8">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Settlement Volume</p>
+                    <p className="text-2xl font-black italic text-foreground leading-none">${Number(formatUnits(BigInt(plan.analysis.grossEarnings), 6)).toLocaleString()}</p>
                   </div>
-                  <div className="rounded-lg bg-muted/50 p-3 flex flex-col gap-1">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground">Active Now</p>
-                    <p className="text-lg font-bold flex items-center gap-2 text-emerald-600">
-                      <Activity className="h-4 w-4" />
-                      {plan.analysis.activeSubscribers}
-                    </p>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Active Now</p>
+                    <p className="text-2xl font-black italic text-emerald-500 leading-none">{plan.analysis.activeSubscribers}</p>
                   </div>
-                  <div className="rounded-lg bg-muted/50 p-3 flex flex-col gap-1">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground">Retention</p>
-                    <p className="text-lg font-bold text-sky-600">
-                      {plan.analysis.repeatBuyerRate.toFixed(1)}%
-                    </p>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Renewal Rate</p>
+                    <p className="text-2xl font-black italic text-sky-500 leading-none">{plan.analysis.repeatBuyerRate.toFixed(1)}%</p>
                   </div>
-                   <div className="rounded-lg bg-muted/50 p-3 flex flex-col gap-1">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground">Net Profit</p>
-                    <p className="text-lg font-bold">
-                      ${Number(formatUnits(plan.analysis.netEarnings, 6)).toFixed(2)}
-                    </p>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Registry Pricing</p>
+                    <p className="text-sm font-black text-primary leading-none uppercase tracking-tight">{priceDisplay}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-border pt-4">
-                  <p className="text-[10px] text-muted-foreground font-medium italic">
+                <div className="flex items-center justify-between pt-6 border-t border-border/40">
+                  <p className="text-[9px] text-muted-foreground/40 font-black uppercase tracking-widest">
                     {plan.analysis.lastSubscriptionAgeDays == null
-                      ? "Empty roster"
-                      : `Last signup ${plan.analysis.lastSubscriptionAgeDays}d ago`}
+                      ? "Zero Registry Activity"
+                      : `Last Activity: ${plan.analysis.lastSubscriptionAgeDays}D Ago`}
                   </p>
                   <Link 
                     href={`/dashboard/my-plans/${plan.planId}`} 
-                    className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-10 rounded-xl px-6 border-border/80 font-black uppercase tracking-widest text-[9px] shadow-sm hover:bg-primary hover:text-white hover:border-primary transition-all")}
                   >
-                    Detailed Insights <ChevronRight className="ml-1 h-3 w-3" />
+                    View Protocol Insights <ChevronRight className="ml-1 h-3 w-3 stroke-[3px]" />
                   </Link>
                 </div>
               </CardContent>
@@ -295,6 +305,11 @@ export default function MyPlansPage() {
           );
         })}
       </div>
+
+      <div className="pt-10 text-center opacity-20">
+        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em]">Mecha Pay Merchant OS • Institutional Subscription Infrastructure</p>
+      </div>
+
     </div>
   );
 }

@@ -8,11 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 /**
  * @title SubscriptionGateway
  * @dev High-scalability subscription gateway optimized for the Arc network.
- * 
- * 1. Hybrid Storage: Plans are on-chain, Subscriptions are Event-based.
- * 2. Monotonic Timestamps: Hardened against non-increasing block.timestamp.
- * 3. Arc Compatible: Use 0x3600000000000000000000000000000000000000 for USDC.
- * 4. Payouts: Direct to seller, minus the protocol fee.
+ * Supports multiple pricing tiers per plan.
  */
 contract SubscriptionGateway {
     using SafeERC20 for IERC20;
@@ -28,15 +24,21 @@ contract SubscriptionGateway {
 
     // -------------------- STRUCTS & STORAGE --------------------
 
-    struct Plan {
-        address seller;
+    struct Tier {
         uint256 price;
-        uint32 duration; // In seconds
-        string ipfsHash; // Metadata: plan name, logo, description, etc.
+        string label; // "Basic", "Plus", "Pro"
         bool active;
     }
 
-    // Plans are stored on-chain for secure discovery and price validation
+    struct Plan {
+        address seller;
+        uint32 duration; // In seconds
+        string ipfsHash; // Metadata for the entire plan suite
+        bool active;
+        uint256 tierCount;
+        mapping(uint256 => Tier) tiers;
+    }
+
     mapping(bytes32 => Plan) public plans;
 
     // -------------------- EVENTS --------------------
@@ -44,15 +46,21 @@ contract SubscriptionGateway {
     event PlanCreated(
         bytes32 indexed planId,
         address indexed seller,
-        uint256 price,
         uint32 duration,
         string ipfsHash
     );
 
+    event TierAdded(
+        bytes32 indexed planId,
+        uint256 tierId,
+        uint256 price,
+        string label
+    );
+
     event PlanStatusUpdated(bytes32 indexed planId, bool active);
+    
     event PlanUpdated(
         bytes32 indexed planId,
-        uint256 price,
         uint32 duration,
         string ipfsHash
     );
@@ -61,6 +69,7 @@ contract SubscriptionGateway {
         address indexed subscriber,
         address indexed seller,
         bytes32 indexed planId,
+        uint256 tierId,
         uint256 totalAmount,
         uint256 feeAmount,
         string buyerData,
@@ -74,43 +83,54 @@ contract SubscriptionGateway {
 
     // -------------------- CONSTRUCTOR --------------------
 
-    /**
-     * @param _usdc Arc Testnet USDC: 0x3600000000000000000000000000000000000000
-     */
     constructor(address _usdc) {
         require(_usdc != address(0), "Invalid USDC");
-
-        // Enforce 6 decimals check for USDC
-        try IERC20Metadata(_usdc).decimals() returns (uint8 dec) {
-            require(dec == 6, "Must be 6-decimal token");
-        } catch {}
-
         USDC = IERC20(_usdc);
         owner = msg.sender;
     }
 
     // -------------------- PLAN MANAGEMENT --------------------
 
+    /**
+     * @notice Create a plan with initial tiers
+     */
     function createPlan(
-        uint256 price,
         uint32 duration,
-        string calldata ipfsHash
+        string calldata ipfsHash,
+        uint256[] calldata prices,
+        string[] calldata labels
     ) external returns (bytes32 planId) {
-        require(price > 0, "Price must be > 0");
         require(duration > 0, "Duration must be > 0");
+        require(prices.length == labels.length, "Mismatched tiers");
+        require(prices.length > 0, "At least one tier required");
 
         planNonce++;
         planId = keccak256(abi.encode(msg.sender, planNonce));
 
-        plans[planId] = Plan({
-            seller: msg.sender,
-            price: price,
-            duration: duration,
-            ipfsHash: ipfsHash,
-            active: true
-        });
+        Plan storage newPlan = plans[planId];
+        newPlan.seller = msg.sender;
+        newPlan.duration = duration;
+        newPlan.ipfsHash = ipfsHash;
+        newPlan.active = true;
 
-        emit PlanCreated(planId, msg.sender, price, duration, ipfsHash);
+        emit PlanCreated(planId, msg.sender, duration, ipfsHash);
+
+        for (uint256 i = 0; i < prices.length; i++) {
+            _addTier(planId, prices[i], labels[i]);
+        }
+    }
+
+    function addTierToPlan(bytes32 planId, uint256 price, string calldata label) external {
+        require(plans[planId].seller == msg.sender, "Not the seller");
+        _addTier(planId, price, label);
+    }
+
+    function _addTier(bytes32 planId, uint256 price, string memory label) internal {
+        require(price > 0, "Price must be > 0");
+        Plan storage plan = plans[planId];
+        uint256 tierId = plan.tierCount++;
+        plan.tiers[tierId] = Tier(price, label, true);
+        emit TierAdded(planId, tierId, price, label);
     }
 
     function setPlanStatus(bytes32 planId, bool active) external {
@@ -120,45 +140,39 @@ contract SubscriptionGateway {
         emit PlanStatusUpdated(planId, active);
     }
 
-    function updatePlan(
+    function updatePlanMetadata(
         bytes32 planId,
-        uint256 price,
         uint32 duration,
         string calldata ipfsHash
     ) external {
         Plan storage plan = plans[planId];
         require(plan.seller == msg.sender, "Not the seller");
         
-        plan.price = price;
         plan.duration = duration;
         plan.ipfsHash = ipfsHash;
         
-        emit PlanUpdated(planId, price, duration, ipfsHash);
+        emit PlanUpdated(planId, duration, ipfsHash);
     }
 
     // -------------------- CORE LOGIC --------------------
 
-    /**
-     * @notice Subscribe to a plan. Monotonicity guard ensures non-decreasing startTime.
-     * @param planId The unique identifier for the plan.
-     * @param buyerData Off-chain buyer identifier.
-     */
-    function subscribe(bytes32 planId, string calldata buyerData) external {
+    function subscribe(bytes32 planId, uint256 tierId, string calldata buyerData) external {
         Plan storage plan = plans[planId];
         require(plan.active, "Plan is inactive");
+        
+        require(tierId < plan.tierCount, "Invalid tier");
+        Tier storage tier = plan.tiers[tierId];
+        require(tier.active, "Tier is inactive");
 
-        uint256 totalAmount = plan.price;
+        uint256 totalAmount = tier.price;
         uint256 feeAmount = (totalAmount * feeBps) / 10000;
         uint256 sellerAmount = totalAmount - feeAmount;
 
-        // Routing funds (Direct Payout to Seller)
         if (feeAmount > 0) {
             USDC.safeTransferFrom(msg.sender, address(this), feeAmount);
         }
         USDC.safeTransferFrom(msg.sender, plan.seller, sellerAmount);
 
-        // --- Arc Timestamps Monotonicity Guard ---
-        // Ensures that startTime is never smaller than the last subscription's startTime
         uint32 startTime = uint32(block.timestamp) > lastSubTimestamp 
             ? uint32(block.timestamp) 
             : lastSubTimestamp;
@@ -170,6 +184,7 @@ contract SubscriptionGateway {
             msg.sender,
             plan.seller,
             planId,
+            tierId,
             totalAmount,
             feeAmount,
             buyerData,
@@ -202,5 +217,13 @@ contract SubscriptionGateway {
         require(amount <= balance, "Insufficient balance");
         USDC.safeTransfer(to, amount);
         emit FeesWithdrawn(to, amount);
+    }
+
+    /**
+     * @notice View function to get tier details (since mapping is not automatically public with getters in all cases)
+     */
+    function getTier(bytes32 planId, uint256 tierId) external view returns (uint256 price, string memory label, bool active) {
+        Tier storage tier = plans[planId].tiers[tierId];
+        return (tier.price, tier.label, tier.active);
     }
 }

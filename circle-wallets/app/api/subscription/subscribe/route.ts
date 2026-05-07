@@ -8,14 +8,15 @@ export async function POST(req: NextRequest) {
       userToken?: string;
       walletId?: string;
       planId?: string;
+      tierId?: string;
       buyerData?: string;
     };
 
-    const { userToken, walletId, planId, buyerData } = body;
+    const { userToken, walletId, planId, tierId, buyerData } = body;
 
-    if (!userToken || !walletId || !planId || !buyerData) {
+    if (!userToken || !walletId || !planId || tierId === undefined || !buyerData) {
       return NextResponse.json(
-        { error: "userToken, walletId, planId, buyerData are required" },
+        { error: "userToken, walletId, planId, tierId, buyerData are required" },
         { status: 400 },
       );
     }
@@ -33,8 +34,8 @@ export async function POST(req: NextRequest) {
         userToken,
         walletId,
         contractAddress: SUBSCRIPTION_GATEWAY_ADDRESS,
-        abiFunctionSignature: "subscribe(bytes32,string)",
-        abiParameters: [planId, buyerData],
+        abiFunctionSignature: "subscribe(bytes32,uint256,string)",
+        abiParameters: [planId, tierId.toString(), buyerData],
         fee: HIGH_FEE,
       });
 

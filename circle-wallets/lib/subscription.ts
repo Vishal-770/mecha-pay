@@ -3,7 +3,7 @@ export const ARC_BLOCKCHAIN = "ARC-TESTNET";
 
 export const SUBSCRIPTION_GATEWAY_ADDRESS =
   process.env.NEXT_PUBLIC_SUBSCRIPTION_GATEWAY_ADDRESS ??
-  "0x2BC2f391fca4144f708eEa918d94348684Bdb544";
+  "0x47d2b46680B3A1dE1bC7B96D02B752cA28b9B72D";
 
 export const ARC_USDC_ADDRESS =
   process.env.NEXT_PUBLIC_ARC_USDC_ADDRESS ??
@@ -14,7 +14,7 @@ export const ARC_RPC_URL =
 
 export const SUBGRAPH_URL =
   process.env.NEXT_PUBLIC_SUBGRAPH_URL ??
-  `https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.3`;
+  `https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.7`;
 
 export const IPFS_GATEWAY_BASE =
   process.env.NEXT_PUBLIC_IPFS_GATEWAY_BASE ?? "https://ipfs.filebase.io/ipfs/";
@@ -33,13 +33,16 @@ export interface SubscriptionFeature {
 
 export interface SubscriptionUiMetadata {
   type: "subscription-ui";
-  version: "1.0";
-  name: string;
+  version: "1.1";
   brand: {
     name: string;
     website: string;
   };
-  features: SubscriptionFeature[];
+  tiers: {
+    label: string;
+    price: string;
+    features: SubscriptionFeature[];
+  }[];
 }
 
 export function normalizeIpfsUri(ipfsHash: string) {
@@ -66,78 +69,61 @@ export function validateSubscriptionMetadata(input: unknown): {
   }
 
   const value = input as Record<string, unknown>;
-  const topLevelKeys = Object.keys(value);
-  const allowedTopLevel = ["type", "version", "name", "brand", "features"];
-
-  if (topLevelKeys.length !== allowedTopLevel.length) {
-    errors.push(
-      "metadata must contain exactly: type, version, name, brand, features",
-    );
-  }
-
-  for (const key of topLevelKeys) {
-    if (!allowedTopLevel.includes(key)) {
-      errors.push(`unknown key: ${key}`);
-    }
-  }
-
+  
   if (value.type !== "subscription-ui") {
     errors.push("type must be 'subscription-ui'");
   }
 
-  if (value.version !== "1.0") {
-    errors.push("version must be '1.0'");
+  if (value.version !== "1.1" && value.version !== "1.0") {
+    errors.push("version must be '1.0' or '1.1'");
   }
 
-  if (!isNonEmptyString(value.name)) {
-    errors.push("name is required");
+  // Handle Legacy 1.0
+  if (value.version === "1.0") {
+     if (!isNonEmptyString(value.name)) errors.push("name is required for v1.0");
+     if (!Array.isArray(value.features)) errors.push("features array is required for v1.0");
   }
 
-  if (!value.brand || typeof value.brand !== "object") {
-    errors.push("brand object is required");
-  } else {
-    const brand = value.brand as Record<string, unknown>;
-    const brandKeys = Object.keys(brand);
-    if (
-      brandKeys.length !== 2 ||
-      !brandKeys.includes("name") ||
-      !brandKeys.includes("website")
-    ) {
-      errors.push("brand must contain exactly: name, website");
-    }
-    if (!isNonEmptyString(brand.name)) {
-      errors.push("brand.name is required");
-    }
-    if (!isNonEmptyString(brand.website)) {
-      errors.push("brand.website is required");
+  // Brand is required for v1.1
+  if (value.version === "1.1") {
+    if (!value.brand || typeof value.brand !== "object") {
+      errors.push("brand object is required for v1.1");
+    } else {
+      const brand = value.brand as Record<string, unknown>;
+      if (!isNonEmptyString(brand.name)) {
+        errors.push("brand.name is required");
+      }
+      if (!isNonEmptyString(brand.website)) {
+        errors.push("brand.website is required");
+      }
     }
   }
 
-  if (!Array.isArray(value.features)) {
-    errors.push("features must be an array");
-  } else if (value.features.length === 0) {
-    errors.push("features must have at least one item");
-  } else {
-    for (let i = 0; i < value.features.length; i += 1) {
-      const feature = value.features[i];
-      if (!feature || typeof feature !== "object") {
-        errors.push(`features[${i}] must be an object`);
-        continue;
-      }
-      const featureRecord = feature as Record<string, unknown>;
-      const featureKeys = Object.keys(featureRecord);
-      if (
-        featureKeys.length !== 2 ||
-        !featureKeys.includes("title") ||
-        !featureKeys.includes("description")
-      ) {
-        errors.push(`features[${i}] must contain exactly: title, description`);
-      }
-      if (!isNonEmptyString(featureRecord.title)) {
-        errors.push(`features[${i}].title is required`);
-      }
-      if (!isNonEmptyString(featureRecord.description)) {
-        errors.push(`features[${i}].description is required`);
+  if (value.version === "1.1") {
+    if (!Array.isArray(value.tiers)) {
+      errors.push("tiers must be an array for v1.1");
+    } else if (value.tiers.length === 0) {
+      errors.push("tiers must have at least one item");
+    } else {
+      for (let i = 0; i < value.tiers.length; i++) {
+        const tier = value.tiers[i] as any;
+        if (!tier || typeof tier !== "object") {
+          errors.push(`tiers[${i}] must be an object`);
+          continue;
+        }
+        if (!isNonEmptyString(tier.label)) errors.push(`tiers[${i}].label is required`);
+        if (!isNonEmptyString(tier.price)) errors.push(`tiers[${i}].price is required`);
+        
+        if (!Array.isArray(tier.features)) {
+          errors.push(`tiers[${i}].features must be an array`);
+        } else {
+          for (let j = 0; j < tier.features.length; j++) {
+            const feature = tier.features[j];
+            if (!feature || typeof feature !== "object" || !isNonEmptyString(feature.title) || !isNonEmptyString(feature.description)) {
+              errors.push(`tiers[${i}].features[${j}] must have title and description`);
+            }
+          }
+        }
       }
     }
   }

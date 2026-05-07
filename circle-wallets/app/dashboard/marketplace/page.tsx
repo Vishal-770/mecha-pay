@@ -20,16 +20,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type Tier = {
+  tierId: string;
+  price: string;
+  label: string;
+  active: boolean;
+};
+
 type PlanRecord = {
   id: string;
   planId: string;
   seller: { id: string };
-  price: string;
   duration: string;
   active: boolean;
   subscriptionCount: number;
   totalGrossVolume: string;
   lastSubscriptionAt: string | null;
+  tiers: Tier[];
   metadata: {
     name?: string;
     brand?: { name?: string; website?: string };
@@ -67,8 +74,22 @@ const CompactHeader = ({ title, subtitle }: { title: string; subtitle: string })
 );
 
 function ProtocolCard({ plan, isSubscribed }: { plan: PlanRecord; isSubscribed?: boolean }) {
-  const title = plan.metadata?.name ?? `Plan ${plan.planId.slice(0, 10)}`;
   const brand = plan.metadata?.brand;
+  const title = plan.metadata?.name ?? brand?.name ?? `Protocol ${plan.planId.slice(0, 8)}`;
+
+  const minPrice = useMemo(() => {
+    if (!plan.tiers || plan.tiers.length === 0) return "0";
+    return plan.tiers.reduce((min, t) => (BigInt(t.price) < BigInt(min) ? t.price : min), plan.tiers[0].price);
+  }, [plan.tiers]);
+
+  const maxPrice = useMemo(() => {
+    if (!plan.tiers || plan.tiers.length === 0) return "0";
+    return plan.tiers.reduce((max, t) => (BigInt(t.price) > BigInt(max) ? t.price : max), plan.tiers[0].price);
+  }, [plan.tiers]);
+
+  const priceDisplay = minPrice === maxPrice 
+    ? `${formatUnits(minPrice, 6)}` 
+    : `${formatUnits(minPrice, 6)} - ${formatUnits(maxPrice, 6)}`;
 
   return (
     <Card className="group relative bg-background border-border/80 rounded-2xl p-0 overflow-hidden transition-all hover:bg-muted/5 hover:border-primary/30 flex flex-col gap-0 shadow-none">
@@ -77,9 +98,14 @@ function ProtocolCard({ plan, isSubscribed }: { plan: PlanRecord; isSubscribed?:
           <h3 className="text-sm font-black uppercase tracking-widest text-foreground truncate max-w-[180px]">
             {title}
           </h3>
-          {brand?.name && (
+          {brand?.name && plan.metadata?.name && (
             <p className="text-[10px] font-bold text-primary italic uppercase tracking-wider">
               {brand.name}
+            </p>
+          )}
+          {brand?.name && !plan.metadata?.name && (
+            <p className="text-[10px] font-bold text-primary italic uppercase tracking-wider">
+              Merchant Gateway
             </p>
           )}
         </div>
@@ -114,11 +140,14 @@ function ProtocolCard({ plan, isSubscribed }: { plan: PlanRecord; isSubscribed?:
           <div className="space-y-3">
             <span className="text-[8px] font-black text-muted-foreground/90 uppercase tracking-[0.2em] flex items-center gap-1.5">
               <DollarSign size={10} strokeWidth={3} />
-              Price Layer
+              {plan.tiers?.length > 1 ? "Price Range" : "Tier Price"}
             </span>
             <p className="text-xl font-black italic text-foreground leading-none">
-              {formatUnits(plan.price, 6)} <span className="text-[10px] uppercase font-black not-italic text-muted-foreground/50 ml-1">USDC</span>
+              {priceDisplay} <span className="text-[10px] uppercase font-black not-italic text-muted-foreground/50 ml-1">USDC</span>
             </p>
+            {plan.tiers?.length > 1 && (
+              <p className="text-[9px] font-bold text-primary uppercase tracking-widest">{plan.tiers.length} Tiers Available</p>
+            )}
           </div>
 
           {isSubscribed ? (
@@ -211,8 +240,13 @@ export default function MarketplacePage() {
 
     const sorted = [...filtered];
     sorted.sort((a, b) => {
-      if (sortBy === "priceLow") return Number(a.price) - Number(b.price);
-      if (sortBy === "priceHigh") return Number(b.price) - Number(a.price);
+      const getMinPrice = (p: PlanRecord) => {
+        if (!p.tiers || p.tiers.length === 0) return 0n;
+        return p.tiers.reduce((min, t) => (BigInt(t.price) < min ? BigInt(t.price) : min), BigInt(p.tiers[0].price));
+      };
+      
+      if (sortBy === "priceLow") return Number(getMinPrice(a) - getMinPrice(b));
+      if (sortBy === "priceHigh") return Number(getMinPrice(b) - getMinPrice(a));
       if (sortBy === "subscribers")
         return b.subscriptionCount - a.subscriptionCount;
       return (

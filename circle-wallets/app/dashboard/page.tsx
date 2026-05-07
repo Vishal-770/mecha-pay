@@ -70,7 +70,10 @@ type AnalyticsResponse = {
     subscriptionCount: number;
     totalGrossVolume: string;
     netRevenue: string;
-    metadata: { name?: string } | null;
+    metadata: { 
+      name?: string;
+      brand?: { name?: string };
+    } | null;
   }>;
   recentSubscriptions: Array<{
     id: string;
@@ -84,7 +87,27 @@ type AnalyticsResponse = {
     date: string;
     revenue: string;
   }>;
+  monthlyStats?: Array<{
+    id: string;
+    monthStartTimestamp: string;
+    plansCreated: number;
+    subscriptionsCreated: number;
+    totalGrossVolume: string;
+    totalFeesCollected: string;
+    totalFeeWithdrawals: string;
+  }>;
+  transactions?: Array<{
+    id: string;
+    type: string;
+    from: string;
+    to: string | null;
+    amount: string | null;
+    fee: string | null;
+    plan: { id: string } | null;
+    blockTimestamp: string;
+  }>;
 };
+
 
 function truncate(value: string) {
   return `${value.slice(0, 6)}…${value.slice(-4)}`;
@@ -158,6 +181,17 @@ export default function DashboardOverviewPage() {
       value: Number(formatUnits(entry.revenue, 6))
     }));
   }, [analytics?.revenueHistory]);
+
+  const monthlyChartData = useMemo(() => {
+    if (!analytics?.monthlyStats) return [];
+    
+    return [...analytics.monthlyStats].reverse().map((entry) => ({
+      name: new Date(Number(entry.monthStartTimestamp) * 1000).toLocaleDateString(undefined, { month: 'short' }),
+      volume: Number(formatUnits(entry.totalGrossVolume, 6)),
+      subs: entry.subscriptionsCreated
+    }));
+  }, [analytics?.monthlyStats]);
+
 
   return (
     <div className="flex flex-col gap-8 p-4 md:p-8 animate-in fade-in duration-500">
@@ -384,7 +418,7 @@ export default function DashboardOverviewPage() {
                   <TableRow key={plan.id}>
                     <TableCell className="pl-6 font-medium">
                       <Link className="hover:text-primary transition-colors" href={`/dashboard/marketplace/${plan.id}`}>
-                        {plan.metadata?.name ?? truncate(plan.id)}
+                        {plan.metadata?.name ?? plan.metadata?.brand?.name ?? truncate(plan.id)}
                       </Link>
                     </TableCell>
                     <TableCell className="text-right">{plan.subscriptionCount}</TableCell>
@@ -416,42 +450,65 @@ export default function DashboardOverviewPage() {
                     </div>
                   </div>
                 ))
-              ) : (analytics?.recentSubscriptions ?? []).length === 0 ? (
-                  <p className="text-center py-10 text-muted-foreground italic text-sm">No recent activity on your dashboard</p>
-              ) : (analytics?.recentSubscriptions ?? []).slice(0, 5).map((entry) => {
-                const isIncome = entry.seller.toLowerCase() === wallet?.address?.toLowerCase();
+                            ) : (analytics?.transactions ?? []).length === 0 ? (
+                  <p className="text-center py-10 text-muted-foreground italic text-sm">No transactions recorded yet</p>
+              ) : (analytics?.transactions ?? []).slice(0, 10).map((tx) => {
+                const isFromMe = tx.from.toLowerCase() === wallet?.address?.toLowerCase();
+                const isToMe = tx.to?.toLowerCase() === wallet?.address?.toLowerCase();
+                
+                let icon = <Activity className="h-5 w-5" />;
+                let colorClass = "bg-muted text-muted-foreground";
+                let label = tx.type.replace("_", " ");
+                
+                if (tx.type === "SUBSCRIBE") {
+                  icon = isToMe ? <ArrowUpRight className="h-5 w-5" /> : <CreditCard className="h-5 w-5" />;
+                  colorClass = isToMe ? "bg-emerald-50 text-emerald-600" : "bg-sky-50 text-sky-600";
+                  label = isToMe ? "Payment Received" : "Subscription Paid";
+                } else if (tx.type === "CREATE_PLAN") {
+                  icon = <Plus className="h-5 w-5" />;
+                  colorClass = "bg-indigo-50 text-indigo-600";
+                  label = "Plan Created";
+                } else if (tx.type === "WITHDRAW") {
+                  icon = <Wallet className="h-5 w-5" />;
+                  colorClass = "bg-amber-50 text-amber-600";
+                  label = "Revenue Withdrawn";
+                }
+
                 return (
-                  <div key={entry.id} className="flex items-center gap-4 relative">
+                  <div key={tx.id} className="flex items-center gap-4 relative">
                     <div className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border",
-                      isIncome ? "bg-emerald-50 text-emerald-600" : "bg-sky-50 text-sky-600"
+                      colorClass
                     )}>
-                      {isIncome ? <ArrowUpRight className="h-5 w-5" /> : <CreditCard className="h-5 w-5" />}
+                      {icon}
                     </div>
                     <div className="flex flex-1 flex-col gap-0.5 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold truncate text-foreground">
-                          {isIncome ? "Payment Received" : `Subscription to ${truncate(entry.planId)}`}
+                        <p className="text-sm font-semibold truncate text-foreground capitalize">
+                          {label}
                         </p>
-                        <p className={cn(
-                          "text-sm font-bold",
-                          isIncome ? "text-emerald-600" : "text-foreground"
-                        )}>
-                          {isIncome ? "+" : "-"}${Number(formatUnits(entry.totalAmount, 6)).toFixed(2)}
-                        </p>
+                        {tx.amount && (
+                          <p className={cn(
+                            "text-sm font-bold",
+                            isToMe ? "text-emerald-600" : tx.type === "WITHDRAW" ? "text-amber-600" : "text-foreground"
+                          )}>
+                            {isToMe ? "+" : tx.type === "WITHDRAW" ? "" : "-"}${Number(formatUnits(tx.amount, 6)).toFixed(2)}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center justify-between">
                         <p className="text-xs text-muted-foreground truncate font-medium">
-                          {isIncome ? `from ${truncate(entry.subscriber)}` : `via ${truncate(entry.seller)}`}
+                          {tx.plan ? `Plan ${truncate(tx.plan.id)}` : tx.type}
                         </p>
                         <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">
-                          {new Date(Number(entry.blockTimestamp) * 1000).toLocaleDateString()}
+                          {new Date(Number(tx.blockTimestamp) * 1000).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                   </div>
                 );
               })}
+
             </div>
           </CardContent>
           { (analytics?.recentSubscriptions ?? []).length > 5 && (

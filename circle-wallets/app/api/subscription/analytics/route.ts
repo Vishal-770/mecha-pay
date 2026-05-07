@@ -2,10 +2,17 @@ import { NextResponse } from "next/server";
 import { ipfsHashToHttpUrl } from "@/lib/subscription";
 import { querySubgraph, toLowerHex } from "@/lib/subgraph";
 
+type Tier = {
+  id: string;
+  tierId: string;
+  price: string;
+  label: string;
+  active: boolean;
+};
+
 type Plan = {
   id: string;
   seller: { id: string };
-  price: string;
   duration: string;
   ipfsHash: string;
   active: boolean;
@@ -13,6 +20,7 @@ type Plan = {
   totalGrossVolume: string;
   totalFeesCollected: string;
   lastSubscriptionAt: string | null;
+  tiers: Tier[];
 };
 
 type SubscriptionState = {
@@ -29,6 +37,11 @@ type SubscribedEvent = {
   subscriber: string;
   seller: string;
   planId: string;
+  tierId: string;
+  tier: {
+    label: string;
+    price: string;
+  } | null;
   totalAmount: string;
   feeAmount: string;
   blockTimestamp: string;
@@ -52,12 +65,33 @@ type Subscriber = {
   totalFeesPaid: string;
 };
 
+type MonthlyStats = {
+  id: string;
+  monthStartTimestamp: string;
+  plansCreated: number;
+  subscriptionsCreated: number;
+  totalGrossVolume: string;
+  totalFeesCollected: string;
+  totalFeeWithdrawals: string;
+};
+
+type Transaction = {
+  id: string;
+  type: string;
+  from: string;
+  to: string | null;
+  amount: string | null;
+  fee: string | null;
+  plan: { id: string } | null;
+  blockTimestamp: string;
+};
+
+
 const sellerPlansQuery = `
   query SellerPlans($seller: Bytes!) {
     plans(where: { seller: $seller }, orderBy: createdAt, orderDirection: desc) {
       id
       seller { id }
-      price
       duration
       ipfsHash
       active
@@ -65,6 +99,13 @@ const sellerPlansQuery = `
       totalGrossVolume
       totalFeesCollected
       lastSubscriptionAt
+      tiers {
+        id
+        tierId
+        price
+        label
+        active
+      }
     }
   }
 `;
@@ -99,6 +140,11 @@ const recentSubscriptionsQuery = `
       subscriber
       seller
       planId
+      tierId
+      tier {
+        label
+        price
+      }
       totalAmount
       feeAmount
       blockTimestamp
@@ -132,6 +178,41 @@ const subscriberQuery = `
   }
 `;
 
+const monthlyStatsQuery = `
+  query MonthlyStats {
+    monthlyStats(orderBy: monthStartTimestamp, orderDirection: desc, first: 12) {
+      id
+      monthStartTimestamp
+      plansCreated
+      subscriptionsCreated
+      totalGrossVolume
+      totalFeesCollected
+      totalFeeWithdrawals
+    }
+  }
+`;
+
+const transactionsQuery = `
+  query Transactions($user: Bytes!, $first: Int!) {
+    transactions(
+      first: $first,
+      orderBy: blockTimestamp,
+      orderDirection: desc,
+      where: { or: [{ from: $user }, { to: $user }, { seller: $user }, { subscriber: $user }] }
+    ) {
+      id
+      type
+      from
+      to
+      amount
+      fee
+      plan { id }
+      blockTimestamp
+    }
+  }
+`;
+
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -147,7 +228,10 @@ export async function GET(req: Request) {
       recentEventsData,
       sellerPlansData,
       buyerStatesData,
+      monthlyStatsData,
+      transactionsData,
     ] = await Promise.all([
+
       seller
         ? querySubgraph<{ seller: Seller | null }>(sellerQuery, {
             id: toLowerHex(seller),
@@ -179,7 +263,15 @@ export async function GET(req: Request) {
             },
           )
         : Promise.resolve({ subscriptionStates: [] }),
+      querySubgraph<{ monthlyStats: MonthlyStats[] }>(monthlyStatsQuery),
+      (seller || subscriber)
+        ? querySubgraph<{ transactions: Transaction[] }>(transactionsQuery, {
+            user: toLowerHex(seller || subscriber!),
+            first: 20,
+          })
+        : Promise.resolve({ transactions: [] }),
     ]);
+
 
     const recentSubscriptions = recentEventsData.subscribeds ?? [];
     const sellerPlans = sellerPlansData.plans ?? [];
@@ -260,7 +352,10 @@ export async function GET(req: Request) {
       topPlans: topPlansWithMetadata,
       recentSubscriptions,
       revenueHistory,
+      monthlyStats: monthlyStatsData.monthlyStats ?? [],
+      transactions: transactionsData.transactions ?? [],
     });
+
   } catch (err) {
     console.error("[/api/subscription/analytics]", err);
     const message = err instanceof Error ? err.message : "Unknown error";

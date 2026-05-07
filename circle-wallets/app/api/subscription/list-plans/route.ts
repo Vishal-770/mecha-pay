@@ -13,7 +13,6 @@ interface SubgraphPlan {
     totalNetRevenue: string;
     totalFeeContributed: string;
   };
-  price: string;
   duration: string;
   ipfsHash: string;
   active: boolean;
@@ -23,6 +22,12 @@ interface SubgraphPlan {
   totalGrossVolume: string;
   totalFeesCollected: string;
   lastSubscriptionAt: string | null;
+  tiers: {
+    tierId: string;
+    price: string;
+    label: string;
+    active: boolean;
+  }[];
 }
 
 const query = `
@@ -38,7 +43,6 @@ const query = `
         totalNetRevenue
         totalFeeContributed
       }
-      price
       duration
       ipfsHash
       active
@@ -48,6 +52,12 @@ const query = `
       totalGrossVolume
       totalFeesCollected
       lastSubscriptionAt
+      tiers {
+        tierId
+        price
+        label
+        active
+      }
     }
   }
 `;

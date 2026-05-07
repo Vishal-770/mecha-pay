@@ -23,11 +23,16 @@ type SubscriptionState = {
   };
   plan: {
     id: string;
-    price: string;
     duration: string;
     ipfsHash: string;
     active: boolean;
     subscriptionCount: number;
+    tiers: {
+      tierId: string;
+      price: string;
+      label: string;
+      active: boolean;
+    }[];
   };
 };
 
@@ -49,11 +54,16 @@ const query = `
       }
       plan {
         id
-        price
         duration
         ipfsHash
         active
         subscriptionCount
+        tiers {
+          tierId
+          price
+          label
+          active
+        }
       }
     }
   }
