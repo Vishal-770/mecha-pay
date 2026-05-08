@@ -1,25 +1,25 @@
 # Mecha Pay Protocol ⚡
 
-The production-grade, USDC-native subscription infrastructure for Web3.
+The production-grade, USDC-native membership infrastructure for Web3.
 
-Mecha Pay allows developers to integrate high-performance, predictable recurring payments into their applications with just a few lines of code. By combining Circle's Programmable Wallets, CCTP, and the Arc blockchain, we've built a subscription experience that feels like Web2 but is powered by Web3.
+Mecha Pay allows developers to integrate high-performance, predictable subscription payments into their applications with just a few lines of code. By combining Circle's Programmable Wallets, CCTP, and the Arc blockchain, we've built a membership experience that feels like Web2 but is powered by Web3.
 
 ## 🔴 The Problem
 
-Traditional Web3 payments are fragmented and manual. For businesses, managing subscriptions on-chain is a nightmare:
-- **High Friction**: Users must sign every single recurring transaction manually.
+Traditional Web3 payments are fragmented and manual. For businesses, managing memberships on-chain is a nightmare:
 - **Gas Complexity**: Users need native tokens (ETH, MATIC) just to pay for a USDC subscription.
-- **Liquidity Fragmentation**: User funds are often stuck on disparate testnets while the subscription contract lives on Arc.
+- **Liquidity Fragmentation**: User funds are often stuck on disparate networks while the subscription contract lives on Arc.
 - **Data Silos**: Tracking subscription state (active/expired) requires complex, custom indexing logic.
+- **High Friction**: Bridging and paying across different chains takes multiple steps and minutes of waiting.
 
 ## 🟢 The Mecha Solution
 
-Mecha Pay provides a unified "Subscribe & Forget" experience by leveraging cutting-edge infrastructure:
+Mecha Pay provides a unified "One-Click Access" experience by leveraging cutting-edge infrastructure:
 
-1.  **USDC-as-Gas (Arc Blockchain)**: Users pay for subscriptions and network fees entirely in USDC. No more worrying about native gas tokens.
-2.  **Cross-Chain Liquidity (Circle CCTP)**: Native integration with **Circle's Cross-Chain Transfer Protocol (CCTP)** allows users to bridge USDC directly into their Mecha subscription wallet with zero slippage.
-3.  **Programmable Wallets (Circle SDK)**: Deep integration with Circle’s Developer-Controlled and User-Controlled wallets for secure, automated transaction signing.
-4.  **High-Fidelity Indexing**: A custom Subgraph-based indexer that provides millisecond-accurate subscription status.
+1.  **USDC-as-Gas (Arc Blockchain)**: Users pay for memberships and network fees entirely in USDC. No more worrying about native gas tokens.
+2.  **Cross-Chain Liquidity (Circle CCTP)**: Native integration with **Circle's Cross-Chain Transfer Protocol (CCTP)** allows users to bridge USDC directly into their Mecha membership wallet with zero slippage.
+3.  **Programmable Wallets (Circle SDK)**: Deep integration with Circle’s Developer-Controlled and User-Controlled wallets for secure, automated transaction execution.
+4.  **High-Fidelity Indexing**: A custom Subgraph-based indexer that provides millisecond-accurate membership status.
 
 ## 🏗️ System Architecture
 
@@ -46,7 +46,7 @@ Arc is the primary execution engine for Mecha Pay. Unlike traditional blockchain
 
 ## 🌐 Supported Ecosystems (v0.1.12)
 
-Mecha Pay is integrated with a wide array of high-performance testnets to provide a robust staging environment for developers.
+Mecha Pay leverages Circle CCTP to enable seamless USDC bridging from major ecosystem testnets to the Arc execution layer.
 
 ### **Bridging Sources & Execution Chains**
 - **Arc Testnet** (Primary Execution Layer)
@@ -68,8 +68,8 @@ Mecha Pay is integrated with a wide array of high-performance testnets to provid
 ## 🛠️ Technology Stack
 
 - **Core Protocol**: [Arc Testnet](https://circle.com) (Sub-second finality, USDC native gas).
-- **Bridging**: [Circle CCTP](https://www.circle.com/en/cross-chain-transfer-protocol) (V2 Testnet Messenger).
-- **Wallets**: [Circle Programmable Wallets](https://www.circle.com/en/programmable-wallets) + [Privy Auth](https://privy.io).
+- **Bridging**: [Circle CCTP](https://www.circle.com/en/cross-chain-transfer-protocol) (Native Cross-Chain Transfer Protocol).
+- **Wallets**: [Circle Programmable Wallets](https://www.circle.com/en/programmable-wallets) + [Privy Auth](https://privy.io) (Hybrid EOA/MPC Flow).
 - **Frontend**: Next.js 15, Tailwind CSS, Framer Motion.
 - **SDK**: React + tsup (CJS/ESM support).
 - **Indexing**: Custom GraphQL Subgraph.
