@@ -7,9 +7,9 @@ import { Mulish } from "next/font/google"; // Still need it for the className if
 import BounceCards from "@/components/BounceCards";
 import CardSwap, { Card } from "@/components/CardSwap";
 import { Terminal, AnimatedSpan, TypingAnimation } from "@/components/ui/terminal";
+
 import AppPreview from "@/components/AppPreview";
 import ApiShowcase from "@/components/ApiShowcase";
-import GraphShowcase from "@/components/GraphShowcase";
 
 
 
@@ -40,7 +40,7 @@ const featureItems = [
       <Activity className="h-5 w-5 text-[#b6f09c]" />
     </div>
     <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Fast Indexing</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Millisecond-accurate membership status powered by our custom high-fidelity GraphQL indexer.</p>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Millisecond-accurate membership status powered by our custom high-fidelity indexing engine.</p>
   </div>,
   <div key="5" className="flex flex-col gap-3 pointer-events-auto">
     <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
@@ -298,8 +298,6 @@ export default function LandingPage() {
 
       <ApiShowcase />
 
-      <GraphShowcase />
-
       {/* Multi-Chain Bridge Showcase Section */}
 
       <section id="bridge" className="relative w-full bg-[#000000] py-32 px-12 lg:px-20 z-20 border-t border-[#ffffff]/5 overflow-hidden">
@@ -449,7 +447,7 @@ export default function LandingPage() {
               <Link href="https://mecha-pay.vercel.app/docs" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Documentation</Link>
 
               <Link href="https://github.com/Vishal-770/mecha-pay" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GitHub</Link>
-              <Link href="https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.8" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GraphQL API</Link>
+              <Link href="https://testnet.arcscan.net" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">ArcScan</Link>
               <Link href="https://testnet.arcscan.net/address/0x2BC2f391fca4144f708eEa918d94348684Bdb544" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Contract Explorer</Link>
             </div>
           </div>

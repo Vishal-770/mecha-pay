@@ -356,11 +356,11 @@ export default function AdminDashboardPage() {
             <div className="rounded-2xl bg-emerald-500/10 text-emerald-500 p-2.5">
               <TrendingUp size={24} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Treasury Yield</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Protocol Revenue</span>
           </div>
           <div className="mt-6">
             <p className="text-4xl font-black text-foreground">{formatUnits(accumulatedFees, 6)} USDC</p>
-            <p className="mt-2 text-xs text-muted-foreground font-medium">Total fees accumulated in contract.</p>
+            <p className="mt-2 text-xs text-muted-foreground font-medium">Total fees accumulated in protocol treasury.</p>
           </div>
         </article>
 

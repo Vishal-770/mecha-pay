@@ -19,7 +19,7 @@ Mecha Pay provides a unified "One-Click Access" experience by leveraging cutting
 1.  **USDC-as-Gas (Arc Blockchain)**: Users pay for memberships and network fees entirely in USDC. No more worrying about native gas tokens.
 2.  **Cross-Chain Liquidity (Circle CCTP)**: Native integration with **Circle's Cross-Chain Transfer Protocol (CCTP)** allows users to bridge USDC directly into their Mecha membership wallet with zero slippage.
 3.  **Programmable Wallets (Circle SDK)**: Deep integration with Circle’s Developer-Controlled and User-Controlled wallets for secure, automated transaction execution.
-4.  **High-Fidelity Indexing**: A custom Subgraph-based indexer that provides millisecond-accurate membership status.
+4.  **High-Fidelity Indexing**: A custom indexing engine that provides millisecond-accurate membership status.
 
 ## 🏗️ System Architecture
 
@@ -72,7 +72,7 @@ Mecha Pay leverages Circle CCTP to enable seamless USDC bridging from major ecos
 - **Wallets**: [Circle Programmable Wallets](https://www.circle.com/en/programmable-wallets) + [Privy Auth](https://privy.io) (Hybrid EOA/MPC Flow).
 - **Frontend**: Next.js 15, Tailwind CSS, Framer Motion.
 - **SDK**: React + tsup (CJS/ESM support).
-- **Indexing**: Custom GraphQL Subgraph.
+- **Indexing**: Custom High-Performance Indexer.
 
 ## 🔄 The Protocol Workflow
 

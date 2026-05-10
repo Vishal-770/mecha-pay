@@ -44,7 +44,7 @@ export default function AppPreview() {
           viewport={{ once: true }}
           className="text-[#71717a] font-medium text-lg md:text-xl max-w-2xl mb-14 leading-relaxed"
         >
-          A unified stack for USDC bridging, smart analytics, and automated yield. 
+          A unified stack for USDC bridging, smart analytics, and automated membership lifecycles. 
           Built for scale, secured by MPC, and optimized for sub-second finality.
         </motion.p>
 

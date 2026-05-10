@@ -140,7 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 1. Update frontend dependencies: `pnpm install`
 2. Add new environment variables:
    ```
-   NEXT_PUBLIC_SUBGRAPH_URL=https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.2
+   NEXT_PUBLIC_SUBGRAPH_URL=your_subgraph_url
    FILEBASE_ACCESS_KEY=your_key
    FILEBASE_SECRET_KEY=your_secret
    ```

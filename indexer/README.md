@@ -6,7 +6,7 @@ This directory contains The Graph protocol subgraph for indexing Mecha Pay's sub
 
 **Network**: Arc Testnet (Chain ID: 5042002)  
 **Studio URL**: [https://thegraph.com/studio/subgraph/mecha-pay](https://thegraph.com/studio/subgraph/mecha-pay)  
-**Query Endpoint**: `https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.2`  
+**Query Endpoint**: `[HIDDEN]` (Use `NEXT_PUBLIC_SUBGRAPH_URL` environment variable)  
 **Contract**: [`0x2BC2f391fca4144f708eEa918d94348684Bdb544`](https://testnet.arcscan.app/address/0x2BC2f391fca4144f708eEa918d94348684Bdb544)
 
 ---
@@ -225,7 +225,7 @@ graph deploy --studio mecha-pay
 ```
 Build completed: QmPzZBXPbRPLi64G2YkZGkaGtD4Mv9EHKH3kuEYrNj8CEx
 Deployed to: https://thegraph.com/studio/subgraph/mecha-pay
-Queries (HTTP): https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.2
+Queries (HTTP): [HIDDEN]
 ```
 
 ### Update Deployment
@@ -364,7 +364,7 @@ query SellerStats($seller: Bytes!) {
 ### Using JavaScript/TypeScript
 
 ```typescript
-const SUBGRAPH_URL = 'https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.2';
+const SUBGRAPH_URL = process.env.NEXT_PUBLIC_SUBGRAPH_URL;
 
 async function fetchPlans(seller: string) {
   const query = `

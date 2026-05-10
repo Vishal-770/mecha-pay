@@ -1,0 +1,104 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "Mecha Pay",
+  "logo": {
+    "dark": "/logo/logo.png",
+    "light": "/logo/logo.png"
+  },
+  "favicon": "/logo/logo.png",
+  "colors": {
+    "primary": "#00FFC2",
+    "light": "#5EEAD4",
+    "dark": "#0D9488"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:support@mecha-pay.com"
+      },
+      {
+        "label": "Example App",
+        "href": "https://github.com/Vishal-770/mecha-pay/tree/master/test-mecha-app"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Launch App",
+      "href": "https://mecha-pay.vercel.app/dashboard"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Vishal-770/mecha-pay"
+    }
+  },
+  "api": {
+    "mdx": {
+      "server": "https://mecha-pay.vercel.app"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "pricing"
+            ]
+          },
+          {
+            "group": "React SDK",
+            "pages": [
+              "sdk/introduction",
+              "sdk/setup",
+              {
+                "group": "Components",
+                "pages": [
+                  "sdk/components/mecha-provider",
+                  "sdk/components/mecha-pricing-table"
+                ]
+              },
+              "sdk/hooks/use-mecha",
+              "sdk/theming",
+              "sdk/types",
+              "sdk/example-app"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/authentication",
+              "api-reference/wallet",
+              "api-reference/analytics"
+            ]
+          },
+          {
+            "group": "Plans",
+            "pages": [
+              "api-reference/list-plans",
+              "api-reference/get-plan",
+              "api-reference/plan-analytics"
+            ]
+          },
+          {
+            "group": "Subscribers",
+            "pages": [
+              "api-reference/subscribers"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
