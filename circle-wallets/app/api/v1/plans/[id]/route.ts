@@ -21,9 +21,10 @@ const planQuery = `
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const apiKey = req.headers.get("x-api-key");
 
     if (!apiKey) {
@@ -37,7 +38,7 @@ export async function GET(
     }
 
     const seller = toLowerHex(merchantAddress);
-    const planId = toLowerHex(params.id);
+    const planId = toLowerHex(id);
 
     const data = await querySubgraph<{ plan: PlanMetadataResponse | null }>(planQuery, {
       id: planId,
