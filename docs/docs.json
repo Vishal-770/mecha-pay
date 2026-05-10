@@ -1,12 +1,15 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "maple",
   "name": "Mecha Pay",
   "logo": {
     "dark": "/logo/logo.png",
     "light": "/logo/logo.png"
   },
   "favicon": "/logo/logo.png",
+  "theme": "maple",
+  "appearance": {
+    "default": "dark"
+  },
   "colors": {
     "primary": "#00FFC2",
     "light": "#5EEAD4",
