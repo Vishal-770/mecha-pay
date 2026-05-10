@@ -18,7 +18,7 @@
   ],
   "topbarCtaButton": {
     "name": "Dashboard",
-    "url": "http://localhost:3000/dashboard"
+    "url": "https://mecha-pay.vercel.app/dashboard"
   },
   "tabs": [
     {
