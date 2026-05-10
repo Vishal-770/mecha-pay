@@ -1,0 +1,45 @@
+---
+title: "Hooks & Feature Gating"
+description: "Protect your content and features with simple React hooks."
+---
+
+## useMecha
+
+The `useMecha` hook is the primary way to check a user's subscription status programmatically. It connects to the Mecha Indexer to provide real-time status updates.
+
+### Usage
+
+```tsx
+import { useMecha } from 'mechapay-sdk';
+
+function PremiumFeature() {
+  const { status, remainingSeconds, loading, error } = useMecha(PLAN_ID, USER_ID);
+
+  if (loading) return <div>Synchronizing with blockchain...</div>;
+  
+  if (status !== 'ACTIVE') {
+    return (
+      <div className="locked-state">
+        <h3>This feature is locked</h3>
+        <p>You need an active subscription to access this content.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="premium-content">
+      <h2>Welcome to the Inner Circle</h2>
+      <p>Time remaining: {Math.floor(remainingSeconds / 3600)} hours</p>
+    </div>
+  );
+}
+```
+
+### Returns
+
+| Value | Type | Description |
+| :--- | :--- | :--- |
+| `status` | `'ACTIVE' | 'EXPIRED' | 'NONE'` | The current subscription status. |
+| `remainingSeconds` | `number` | Time left until the subscription expires. |
+| `loading` | `boolean` | Whether the SDK is currently fetching data. |
+| `error` | `any` | Any error encountered during the sync. |

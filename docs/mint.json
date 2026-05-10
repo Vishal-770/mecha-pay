@@ -31,7 +31,8 @@
       "group": "Get Started",
       "pages": [
         "introduction",
-        "quickstart"
+        "quickstart",
+        "pricing"
       ]
     },
     {
@@ -49,6 +50,15 @@
           ]
         },
         "api-reference/subscribers"
+      ]
+    },
+    {
+      "group": "React SDK",
+      "pages": [
+        "sdk/introduction",
+        "sdk/installation",
+        "sdk/components",
+        "sdk/hooks"
       ]
     }
   ],

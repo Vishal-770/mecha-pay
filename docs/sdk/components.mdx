@@ -1,0 +1,49 @@
+---
+title: "UI Components"
+description: "Premium, zero-config components for your subscription flow."
+---
+
+## MechaPricingTable
+
+The `MechaPricingTable` is a high-fidelity component that automatically fetches your plan data and displays a stunning, interactive pricing interface. It handles currency conversion, tier selection, and the entire checkout flow.
+
+### Usage
+
+```tsx
+import { MechaPricingTable } from 'mechapay-sdk';
+
+function PricingPage() {
+  return (
+    <MechaPricingTable 
+      planId="0x..." 
+      userId="user_123" 
+    />
+  );
+}
+```
+
+### Props
+
+| Prop | Type | Description |
+| :--- | :--- | :--- |
+| `planId` | `string` | The on-chain ID of the plan to display. |
+| `userId` | `string` | Your internal user ID (will be passed as `buyerData` to the contract). |
+| `onSuccess` | `function` | Callback triggered after a successful subscription. |
+| `variant` | `'minimal' | 'flat' | 'elevated'` | The visual style of the pricing table. |
+
+## MechaMembershipCard
+
+Displays the current subscription status of a user, including time remaining and tier details.
+
+```tsx
+import { MechaMembershipCard } from 'mechapay-sdk';
+
+function ProfilePage() {
+  return (
+    <MechaMembershipCard 
+      planId="0x..." 
+      userId="user_123" 
+    />
+  );
+}
+```
