@@ -18,36 +18,36 @@ const featureItems = [
     <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
       <Zap className="h-5 w-5 text-[#b6f09c]" />
     </div>
-    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Gas Subsidized</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Enjoy seamless transactions with subsidized gas fee on Arc Testnet.</p>
+    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">USDC-as-Gas</h3>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Eliminate native gas tokens. Pay for memberships and network fees entirely in USDC on Arc.</p>
   </div>,
   <div key="2" className="flex flex-col gap-3 pointer-events-auto">
     <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
       <Shield className="h-5 w-5 text-[#b6f09c]" />
     </div>
     <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Secure MPC</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Enterprise-grade MPC security with non-custodial Circle Wallets.</p>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Non-custodial infrastructure powered by Circle's Programmable Wallets and MPC technology.</p>
   </div>,
   <div key="3" className="flex flex-col gap-3 pointer-events-auto">
     <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
       <Globe className="h-5 w-5 text-[#b6f09c]" />
     </div>
-    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Native USDC</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Bridge canonical USDC across 15+ chains via Circle CCTP protocol.</p>
+    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">CCTP Native</h3>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Bridge canonical USDC directly from 15+ testnet chains via Circle's native CCTP protocol.</p>
   </div>,
   <div key="4" className="flex flex-col gap-3 pointer-events-auto">
     <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
-      <Coins className="h-5 w-5 text-[#b6f09c]" />
+      <Activity className="h-5 w-5 text-[#b6f09c]" />
     </div>
-    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Zero Fees</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Standard transaction fees are $0.00 for users paying via Arc.</p>
+    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Fast Indexing</h3>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Millisecond-accurate membership status powered by our custom high-fidelity GraphQL indexer.</p>
   </div>,
   <div key="5" className="flex flex-col gap-3 pointer-events-auto">
     <div className="h-10 w-10 rounded-xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
-      <Activity className="h-5 w-5 text-[#b6f09c]" />
+      <LayoutGrid className="h-5 w-5 text-[#b6f09c]" />
     </div>
-    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">Instant Finality</h3>
-    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Sub-second transaction times on Arc Testnet for instant confirmation.</p>
+    <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#ffffff]">React SDK</h3>
+    <p className="text-xs text-[#a1a1aa] leading-relaxed font-medium">Ready-to-use pricing tables and membership hooks for instant protocol integration.</p>
   </div>
 ];
 
@@ -94,7 +94,7 @@ export default function LandingPage() {
           </Link>
           <Link href="#features" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Features</Link>
           <Link href="#bridge" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Bridge</Link>
-          <Link href="https://mecha-pay.vercel.app/docs" target="_blank" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Docs</Link>
+          <Link href="/docs" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Docs</Link>
 
           <Link href="/dashboard/marketplace" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Marketplace</Link>
         </nav>
@@ -116,20 +116,20 @@ export default function LandingPage() {
         <div className="flex flex-col items-start text-left pointer-events-auto max-w-3xl">
           <div className="flex flex-col mb-10">
             <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-[0.9] uppercase italic text-[#ffffff]">
-              Revolutionizing <br/>
+              USDC-Native <br/>
               <span className="flex items-center gap-6">
-                Unified 
+                Membership
                 <span className="text-[11px] font-bold uppercase tracking-widest text-[#a1a1aa] not-italic max-w-[220px] leading-tight block normal-case">
-                   A new standard of trust, built for payments who value speed, clarity, and control.
+                   Scale your business with USDC gas, cross-chain liquidity, and millisecond finality.
                 </span>
               </span>
-              Subscriptions
+              Infrastructure
             </h1>
           </div>
           
           <div className="flex items-center gap-4">
              <Link href="/login" className="h-12 px-10 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-xs uppercase shadow-xl shadow-[#b6f09c]/20 transition-all hover:opacity-90">
-                Connect Wallet <ArrowUpRight className="ml-2 h-4 w-4 stroke-[3px]" />
+                Get Started <ArrowUpRight className="ml-2 h-4 w-4 stroke-[3px]" />
              </Link>
              <Link href="/dashboard/marketplace" className="h-12 px-10 flex items-center justify-center rounded-xl border border-[#ffffff]/20 bg-[#ffffff]/5 backdrop-blur-md text-[#ffffff] font-extrabold text-xs uppercase transition-all hover:bg-[#ffffff]/10">
                 Browse Marketplace
@@ -172,19 +172,19 @@ export default function LandingPage() {
             <span className="text-[#b6f09c] text-[10px] font-bold uppercase tracking-widest">Protocol Architecture</span>
           </div>
           <h2 className="text-4xl lg:text-6xl font-black uppercase italic tracking-tighter text-[#ffffff]">
-            Trustless. <br/><span className="text-[#b6f09c]">Borderless.</span>
+            USDC-Native. <br/><span className="text-[#b6f09c]">Arc-Powered.</span>
           </h2>
           <p className="text-[#a1a1aa] font-medium leading-relaxed text-lg mt-4">
-            Mecha Pay is a Web3 subscription platform built on Arc Testnet with Circle CCTP integration. Create and manage recurring subscription plans with direct USDC payouts, MPC security, and cross-chain bridging across 15+ testnets.
+            Mecha Pay is the membership infrastructure for the Arc network. By combining Circle's Programmable Wallets with CCTP bridging, we've eliminated gas complexity, allowing users to pay entirely in USDC while developers enjoy sub-second finality.
           </p>
           <div className="grid grid-cols-2 gap-6 mt-8">
              <div className="flex flex-col gap-2">
-                <span className="text-3xl font-black italic text-[#ffffff]">Arc</span>
-                <span className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest">Testnet Live</span>
+                <span className="text-3xl font-black italic text-[#ffffff]">USDC Gas</span>
+                <span className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest">Native Execution</span>
              </div>
              <div className="flex flex-col gap-2">
-                <span className="text-3xl font-black italic text-[#ffffff]">Circle</span>
-                <span className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest">MPC Wallets</span>
+                <span className="text-3xl font-black italic text-[#ffffff]">CCTP Native</span>
+                <span className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest">Unified Liquidity</span>
              </div>
           </div>
         </div>
@@ -198,39 +198,39 @@ export default function LandingPage() {
                 <div className="flex justify-between items-center text-[#ffffff]">
                   <div className="flex items-center gap-2">
                     <Globe className="w-5 h-5 text-[#b6f09c]"/> 
-                    <span className="text-xs font-black uppercase tracking-widest italic">Global Swap</span>
+                    <span className="text-xs font-black uppercase tracking-widest italic">CCTP Bridge</span>
                   </div>
-                  <span className="text-xs font-bold text-[#b6f09c] bg-[#b6f09c]/10 px-2 py-1 rounded-md">ETH/USDC</span>
+                  <span className="text-xs font-bold text-[#b6f09c] bg-[#b6f09c]/10 px-2 py-1 rounded-md">15+ Chains</span>
                 </div>
                 <div>
-                  <div className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest mb-1">Latency</div>
-                  <div className="text-4xl font-black italic tracking-tighter text-[#ffffff]">150<span className="text-xl text-[#b6f09c]">ms</span></div>
+                  <div className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest mb-1">Bridging Fee</div>
+                  <div className="text-4xl font-black italic tracking-tighter text-[#ffffff]">0.<span className="text-xl text-[#b6f09c]">00</span><span className="text-xl text-[#ffffff]">USDC</span></div>
                 </div>
               </Card>
               <Card className="bg-[#000000]/80 border border-[#b6f09c]/30 backdrop-blur-xl shadow-2xl shadow-[#b6f09c]/10 rounded-2xl flex flex-col justify-between p-6">
                 <div className="flex justify-between items-center text-[#ffffff]">
                   <div className="flex items-center gap-2">
                     <Shield className="w-5 h-5 text-[#b6f09c]"/> 
-                    <span className="text-xs font-black uppercase tracking-widest italic">MPC Security</span>
+                    <span className="text-xs font-black uppercase tracking-widest italic">MPC Wallets</span>
                   </div>
-                  <span className="text-xs font-bold text-[#b6f09c] bg-[#b6f09c]/10 px-2 py-1 rounded-md">Audited</span>
+                  <span className="text-xs font-bold text-[#b6f09c] bg-[#b6f09c]/10 px-2 py-1 rounded-md">Non-Custodial</span>
                 </div>
                 <div>
-                  <div className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest mb-1">Protection</div>
-                  <div className="text-4xl font-black italic tracking-tighter text-[#ffffff]">100<span className="text-xl text-[#b6f09c]">%</span></div>
+                  <div className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest mb-1">Key Management</div>
+                  <div className="text-4xl font-black italic tracking-tighter text-[#ffffff]">Circle<span className="text-xl text-[#b6f09c]">SDK</span></div>
                 </div>
               </Card>
               <Card className="bg-[#000000]/80 border border-[#b6f09c]/30 backdrop-blur-xl shadow-2xl shadow-[#b6f09c]/10 rounded-2xl flex flex-col justify-between p-6">
                 <div className="flex justify-between items-center text-[#ffffff]">
                   <div className="flex items-center gap-2">
                     <Zap className="w-5 h-5 text-[#b6f09c]"/> 
-                    <span className="text-xs font-black uppercase tracking-widest italic tracking-tight">Gas Subsidized</span>
+                    <span className="text-xs font-black uppercase tracking-widest italic tracking-tight">Execution</span>
                   </div>
-                  <span className="text-xs font-bold text-[#b6f09c] bg-[#b6f09c]/10 px-2 py-1 rounded-md">Native USDC</span>
+                  <span className="text-xs font-bold text-[#b6f09c] bg-[#b6f09c]/10 px-2 py-1 rounded-md">Arc Network</span>
                 </div>
                 <div>
-                  <div className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest mb-1">Transaction Fee</div>
-                  <div className="text-4xl font-black italic tracking-tighter text-[#ffffff] animate-pulse">$0.<span className="text-xl text-[#b6f09c]">00</span></div>
+                  <div className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-widest mb-1">Finality</div>
+                  <div className="text-4xl font-black italic tracking-tighter text-[#ffffff] animate-pulse">&lt; 1.<span className="text-xl text-[#b6f09c]">0s</span></div>
                 </div>
               </Card>
             </CardSwap>
@@ -243,28 +243,28 @@ export default function LandingPage() {
         <div className="flex-1 w-full max-w-lg mx-auto flex items-center justify-center relative">
           <Terminal className="bg-[#0b0b0f] border-[#ffffff]/10 shadow-2xl h-[420px] w-full max-w-lg">
             <TypingAnimation delay={500} duration={30} className="text-[#a1a1aa] font-mono">
-              &gt; npm install mecha-pay
+              &gt; npm install mechapay-sdk
             </TypingAnimation>
             <AnimatedSpan delay={1500} className="text-[#b6f09c] font-mono mt-2 block">
               ✔ Package installed successfully
             </AnimatedSpan>
             
             <TypingAnimation delay={2500} duration={30} className="text-[#a1a1aa] font-mono mt-6 block">
-              &gt; cat components/Subscription.tsx
+              &gt; cat components/Pricing.tsx
             </TypingAnimation>
             
             <AnimatedSpan delay={3500} className="text-[#ffffff] font-mono mt-2 block whitespace-pre-wrap leading-relaxed">
-              <span className="text-[#b6f09c]">import</span> {'{'} PricingTable {'}'} <span className="text-[#b6f09c]">from</span> <span className="text-[#b6f09c]">'mecha-pay'</span>;
+              <span className="text-[#b6f09c]">import</span> {'{'} MechaPricingTable {'}'} <span className="text-[#b6f09c]">from</span> <span className="text-[#b6f09c]">'mechapay-sdk'</span>;
               <br/><br/>
               <span className="text-[#f59e0b]">export default function</span> <span className="text-[#b6f09c]">Page</span>() {'{'}
               <br/>
               {'  '}<span className="text-[#f59e0b]">return</span> (
               <br/>
-              {'    '}&lt;<span className="text-[#b6f09c]">PricingTable</span> 
+              {'    '}&lt;<span className="text-[#b6f09c]">MechaPricingTable</span> 
               <br/>
               {'      '}planId=<span className="text-[#b6f09c]">"0x123..."</span> 
               <br/>
-              {'      '}theme=<span className="text-[#b6f09c]">"dark"</span> 
+              {'      '}userId=<span className="text-[#b6f09c]">"user_1"</span> 
               <br/>
               {'    '}/&gt;
               <br/>
@@ -277,19 +277,19 @@ export default function LandingPage() {
 
         <div className="flex-1 flex flex-col gap-6 max-w-2xl px-4">
           <div className="px-4 py-2 bg-[#b6f09c]/10 border border-[#b6f09c]/20 rounded-full w-fit">
-            <span className="text-[#b6f09c] text-[10px] font-bold uppercase tracking-widest">Developer API</span>
+            <span className="text-[#b6f09c] text-[10px] font-bold uppercase tracking-widest">Developer SDK</span>
           </div>
           <h2 className="text-4xl lg:text-6xl font-black uppercase italic tracking-tighter text-[#ffffff]">
             Integrate with <br/><span className="text-[#b6f09c]">Mecha SDK.</span>
           </h2>
           <p className="text-[#a1a1aa] font-medium leading-relaxed text-lg mt-4">
-            Mecha Pay provides a powerful <span className="text-[#ffffff] font-bold">React SDK</span> and npm package for seamless on-chain subscription management. Import pre-built UI components like <span className="text-[#ffffff] font-bold">PricingTable</span> or use our hooks to interact with the protocol.
+            Mecha Pay provides a powerful <span className="text-[#ffffff] font-bold">React SDK</span> (`mechapay-sdk`) for seamless on-chain subscription management. Import pre-built UI components like <span className="text-[#ffffff] font-bold">MechaPricingTable</span> or use the <span className="text-[#ffffff] font-bold">useMecha</span> hook for real-time feature gating.
           </p>
           <p className="text-[#a1a1aa] font-medium leading-relaxed text-lg mt-2">
-            Get started by installing the <span className="font-mono text-[#b6f09c] text-sm bg-[#b6f09c]/10 px-2 py-1 rounded">mecha-pay</span> package and connecting your merchant account in minutes.
+            Get started by installing the <span className="font-mono text-[#b6f09c] text-sm bg-[#b6f09c]/10 px-2 py-1 rounded">mechapay-sdk</span> package and connecting your merchant account in minutes.
           </p>
           <div className="flex gap-4 mt-6">
-            <Link href="https://mecha-pay.vercel.app/docs" target="_blank" className="h-12 px-8 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-xs uppercase shadow-xl shadow-[#b6f09c]/20 transition-all hover:opacity-90">
+            <Link href="/docs" className="h-12 px-8 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-xs uppercase shadow-xl shadow-[#b6f09c]/20 transition-all hover:opacity-90">
               Explore SDK Docs <ArrowUpRight className="ml-2 h-4 w-4 stroke-[3px]" />
             </Link>
           </div>
@@ -379,14 +379,14 @@ export default function LandingPage() {
           <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
             <div className="p-8 rounded-3xl bg-[#ffffff]/5 border border-[#ffffff]/10 backdrop-blur-sm hover:border-[#b6f09c]/30 transition-all group">
               <div className="text-5xl font-black italic text-[#ffffff] mb-4 group-hover:text-[#b6f09c] transition-colors">$0.00</div>
-              <h4 className="text-lg font-black uppercase italic text-[#ffffff] mb-2 tracking-tighter">Transaction fee</h4>
-              <p className="text-sm text-[#71717a] font-medium leading-relaxed">Pay subscriptions without the heavy overhead. Zero hidden fees on Arc Testnet.</p>
+              <h4 className="text-lg font-black uppercase italic text-[#ffffff] mb-2 tracking-tighter">Native Fee</h4>
+              <p className="text-sm text-[#71717a] font-medium leading-relaxed">Eliminate secondary gas tokens. Arc uses USDC as native gas for predictable, low-cost execution.</p>
             </div>
             
             <div className="p-8 rounded-3xl bg-[#ffffff]/5 border border-[#ffffff]/10 backdrop-blur-sm hover:border-[#b6f09c]/30 transition-all group">
-              <div className="text-5xl font-black italic text-[#ffffff] mb-4 group-hover:text-[#b6f09c] transition-colors">Gasless</div>
-              <h4 className="text-lg font-black uppercase italic text-[#ffffff] mb-2 tracking-tighter">Subsidized Fees</h4>
-              <p className="text-sm text-[#71717a] font-medium leading-relaxed">Focus on your payments, not the platform costs. Subsidized gas infrastructure for all users.</p>
+              <div className="text-5xl font-black italic text-[#ffffff] mb-4 group-hover:text-[#b6f09c] transition-colors">Instant</div>
+              <h4 className="text-lg font-black uppercase italic text-[#ffffff] mb-2 tracking-tighter">Sub-Second Finality</h4>
+              <p className="text-sm text-[#71717a] font-medium leading-relaxed">Subscriptions and bridges confirm in under 1 second, providing a true Web2-like experience.</p>
             </div>
             
             <div className="p-8 rounded-3xl bg-[#ffffff]/5 border border-[#ffffff]/10 backdrop-blur-sm hover:border-[#b6f09c]/30 transition-all group md:col-span-2">
@@ -394,10 +394,10 @@ export default function LandingPage() {
                 <div className="h-12 w-12 rounded-2xl bg-[#b6f09c]/10 flex items-center justify-center border border-[#b6f09c]/20">
                    <Globe className="h-6 w-6 text-[#b6f09c]" />
                 </div>
-                <div className="text-4xl font-black italic text-[#ffffff] group-hover:text-[#b6f09c] transition-colors">15+ Chains</div>
+                <div className="text-4xl font-black italic text-[#ffffff] group-hover:text-[#b6f09c] transition-colors">Unified Liquidity</div>
               </div>
-              <h4 className="text-lg font-black uppercase italic text-[#ffffff] mb-2 tracking-tighter">Native CCTP Integration</h4>
-              <p className="text-sm text-[#71717a] font-medium leading-relaxed">No wrapped assets. Move canonical USDC seamlessly between Ethereum, Base, Polygon, and more with 100% asset security.</p>
+              <h4 className="text-lg font-black uppercase italic text-[#ffffff] mb-2 tracking-tighter">Native Circle CCTP Integration</h4>
+              <p className="text-sm text-[#71717a] font-medium leading-relaxed">No wrapped assets. Move canonical USDC seamlessly between Ethereum, Base, Polygon, and 15+ others via official burn-and-mint logic.</p>
             </div>
           </div>
         </div>
@@ -412,7 +412,7 @@ export default function LandingPage() {
               <span className="text-2xl font-black tracking-tight text-[#ffffff] uppercase italic">Mecha Pay</span>
             </div>
             <p className="text-[#a1a1aa] font-medium leading-relaxed text-sm">
-              Web3 subscription platform on Arc Testnet with Circle CCTP bridging and MPC wallets. Currently in testnet phase.
+              The production-grade, USDC-native membership infrastructure for Web3. Built on Arc Testnet with Circle CCTP.
             </p>
             <div className="flex items-center gap-4">
              
@@ -448,7 +448,7 @@ export default function LandingPage() {
             <div className="flex flex-col gap-3">
               <Link href="https://mecha-pay.vercel.app/docs" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Documentation</Link>
 
-              <Link href="https://github.com/yourusername/mecha-pay" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GitHub</Link>
+              <Link href="https://github.com/Vishal-770/mecha-pay" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GitHub</Link>
               <Link href="https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.8" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GraphQL API</Link>
               <Link href="https://testnet.arcscan.net/address/0x2BC2f391fca4144f708eEa918d94348684Bdb544" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Contract Explorer</Link>
             </div>

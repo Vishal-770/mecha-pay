@@ -10,6 +10,9 @@
     "light": "#5EEAD4",
     "dark": "#0D9488"
   },
+  "api": {
+    "baseUrl": "https://mecha-pay.vercel.app"
+  },
   "topbarLinks": [
     {
       "name": "Support",
