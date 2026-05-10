@@ -1,0 +1,97 @@
+---
+title: "Plans"
+description: "List all your plan IDs and retrieve individual plan metadata or analytics."
+---
+
+## List Plans
+
+<Note>Returns an array of `planId`s that belong to your merchant wallet.</Note>
+
+**`GET /api/v1/plans`**
+
+<ParamField header="x-api-key" type="string" required>
+  Your API Key.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "http://localhost:3000/api/v1/plans" \
+  -H "x-api-key: your_api_key_here"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "success": true,
+  "plans": [
+    "0x0000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000002"
+  ]
+}
+```
+</ResponseExample>
+
+---
+
+## Get Plan Metadata
+
+<Note>Returns the raw JSON metadata fetched from IPFS for a specific plan.</Note>
+
+**`GET /api/v1/plans/{id}`**
+
+<ParamField path="id" type="string" required>
+  The ID of the plan.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "http://localhost:3000/api/v1/plans/0x123..." \
+  -H "x-api-key: your_api_key_here"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "success": true,
+  "planId": "0x123...",
+  "metadata": {
+    "brand": { "name": "Mecha Service" }
+  }
+}
+```
+</ResponseExample>
+
+---
+
+## Get Plan Analytics
+
+<Note>Returns detailed on-chain stats for a specific plan.</Note>
+
+**`GET /api/v1/plans/{id}/analytics`**
+
+<ParamField path="id" type="string" required>
+  The ID of the plan.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "http://localhost:3000/api/v1/plans/0x123.../analytics" \
+  -H "x-api-key: your_api_key_here"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "success": true,
+  "analytics": {
+    "planId": "0x123...",
+    "active": true,
+    "subscriptionCount": 42,
+    "totalGrossVolume": "42000000"
+  }
+}
+```
+</ResponseExample>

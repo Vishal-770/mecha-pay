@@ -1,0 +1,64 @@
+---
+title: "Subscribers"
+api: "GET /api/v1/plans/{id}/subscribers"
+description: "Get a list of all buyers who subscribed to a specific plan."
+---
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The ID of the plan.
+</ParamField>
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your Mecha Pay Developer API Key.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="subscribers" type="array">
+  An array of subscriber objects.
+  <Expandable title="properties">
+    <ResponseField name="subscriptionId" type="string">The unique on-chain ID for this subscription.</ResponseField>
+    <ResponseField name="buyerAddress" type="string">The user's wallet address.</ResponseField>
+    <ResponseField name="buyerData" type="string">The off-chain user ID passed during checkout.</ResponseField>
+    <ResponseField name="status" type="string">Either `ACTIVE` or `EXPIRED`.</ResponseField>
+    <ResponseField name="lastEndTime" type="string">Unix timestamp when the subscription expires.</ResponseField>
+    <ResponseField name="totalSpent" type="string">Total USDC spent by this user on this plan.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl -X GET "http://localhost:3000/api/v1/plans/0x123.../subscribers" \
+  -H "x-api-key: your_api_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "success": true,
+  "subscribers": [
+    {
+      "subscriptionId": "0xabc...",
+      "buyerAddress": "0x123...",
+      "buyerData": "user_mongo_507f1f77",
+      "status": "ACTIVE",
+      "lastEndTime": "1715426189",
+      "totalSpent": "50000000"
+    }
+  ]
+}
+```
+
+</ResponseExample>

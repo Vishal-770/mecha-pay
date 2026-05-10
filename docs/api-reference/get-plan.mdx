@@ -1,0 +1,61 @@
+---
+title: "Get Plan Metadata"
+api: "GET /api/v1/plans/{id}"
+description: "Retrieve the full metadata for a specific plan."
+---
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique ID of the plan.
+</ParamField>
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your Mecha Pay Developer API Key.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="planId" type="string">
+  The ID of the plan.
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  The JSON metadata object stored on IPFS.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "http://localhost:3000/api/v1/plans/0x123..." \
+  -H "x-api-key: your_api_key_here"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "success": true,
+  "planId": "0x123...",
+  "metadata": {
+    "type": "subscription-ui",
+    "version": "1.1",
+    "brand": {
+      "name": "Mecha Service",
+      "website": "https://example.com"
+    },
+    "tiers": [
+      {
+        "label": "Pro",
+        "price": "10.00"
+      }
+    ]
+  }
+}
+```
+</ResponseExample>

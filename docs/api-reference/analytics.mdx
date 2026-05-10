@@ -1,0 +1,56 @@
+---
+title: "Global Analytics"
+api: "GET /api/v1/analytics"
+description: "Retrieve aggregate analytics across all your plans."
+---
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your Mecha Pay Developer API Key.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="analytics" type="object">
+  <Expandable title="properties">
+    <ResponseField name="sellerId" type="string">Your wallet address.</ResponseField>
+    <ResponseField name="planCount" type="number">Total number of plans created.</ResponseField>
+    <ResponseField name="activePlanCount" type="number">Number of currently active plans.</ResponseField>
+    <ResponseField name="subscriptionCount" type="number">Total subscriptions across all plans.</ResponseField>
+    <ResponseField name="totalGrossRevenue" type="string">Total raw revenue.</ResponseField>
+    <ResponseField name="totalNetRevenue" type="string">Revenue after protocol fees.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl -X GET "http://localhost:3000/api/v1/analytics" \
+  -H "x-api-key: your_api_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "success": true,
+  "analytics": {
+    "sellerId": "0x123abc",
+    "planCount": 3,
+    "activePlanCount": 3,
+    "subscriptionCount": 150,
+    "totalGrossRevenue": "1500000000",
+    "totalNetRevenue": "1470000000",
+    "totalFeeContributed": "30000000"
+  }
+}
+```
+
+</ResponseExample>

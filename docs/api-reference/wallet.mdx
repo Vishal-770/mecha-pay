@@ -1,0 +1,41 @@
+---
+title: "Get Wallet"
+api: "GET /api/v1/wallet"
+description: "Retrieve the merchant wallet address associated with your API key."
+---
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your Mecha Pay Developer API Key.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="walletAddress" type="string">
+  The EVM-compatible wallet address of the merchant.
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl -X GET "http://localhost:3000/api/v1/wallet" \
+  -H "x-api-key: your_api_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "success": true,
+  "walletAddress": "0x123abc456def7890"
+}
+```
+
+</ResponseExample>

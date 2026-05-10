@@ -3,44 +3,29 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useDashboardContext } from "../_components/DashboardShell";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import { 
-  Key, 
-  Plus, 
-  Trash2, 
-  Copy, 
-  Check, 
-  Terminal, 
-  Clock, 
+import {
+  Key,
+  Plus,
+  Trash2,
+  Copy,
+  Check,
+  Clock,
   AlertTriangle,
-  Info
+  ArrowUpRight,
+  ShieldCheck,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -62,6 +47,7 @@ export default function DeveloperPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const fetchKeys = async () => {
     try {
@@ -86,10 +72,10 @@ export default function DeveloperPage() {
       const res = await fetch("/api/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          userToken: sessionUserToken, 
+        body: JSON.stringify({
+          userToken: sessionUserToken,
           name: newKeyName,
-          merchantAddress: wallet?.address 
+          merchantAddress: wallet?.address,
         }),
       });
       const data = await res.json();
@@ -125,62 +111,97 @@ export default function DeveloperPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Developer Settings</h1>
-          <p className="text-muted-foreground text-sm uppercase font-bold tracking-widest">Manage your protocol access keys</p>
+    <div className="space-y-12">
+
+      {/* ── Page Header ─────────────────────────────────────────── */}
+      <div className="flex items-end justify-between border-b border-border pb-6">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2">
+            Mecha Pay · Developer
+          </p>
+          <h1 className="text-4xl font-bold tracking-tight">API Keys</h1>
+          <p className="mt-2 text-sm text-muted-foreground max-w-md">
+            Authenticate your backend services with protocol-level access keys. Keys are hashed and never stored in plaintext.
+          </p>
         </div>
 
-        <Dialog onOpenChange={(open) => { if (!open) setGeneratedKey(null); }}>
-          <DialogTrigger asChild>
-            <Button className="font-bold gap-2">
-              <Plus size={16} />
-              Create New Key
+        <div className="flex items-center gap-2">
+          <Link href="/docs">
+            <Button variant="outline" size="sm" className="font-bold gap-1.5 h-9">
+              API Docs
+              <ArrowUpRight size={13} />
             </Button>
-          </DialogTrigger>
+          </Link>
+
+          <Dialog
+            open={createOpen}
+            onOpenChange={(open) => {
+              setCreateOpen(open);
+              if (!open) setGeneratedKey(null);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button className="font-bold gap-2 h-9">
+                <Plus size={14} />
+                New Key
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="text-sm font-bold uppercase tracking-widest">
-                {generatedKey ? "Key Generated Successfully" : "Generate API Key"}
+                {generatedKey ? "Key Generated" : "Create API Key"}
               </DialogTitle>
               <DialogDescription className="text-xs">
-                {generatedKey 
-                  ? "Copy this key now. For security reasons, we cannot show it to you again."
-                  : "Give your key a descriptive name to identify it later."}
+                {generatedKey
+                  ? "This is the only time you will see this key. Store it somewhere safe immediately."
+                  : "Give your key a name that describes where it will be used."}
               </DialogDescription>
             </DialogHeader>
 
             {generatedKey ? (
-              <div className="space-y-4 py-4">
+              <div className="space-y-4 py-2">
                 <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
-                  <code className="text-xs font-mono font-bold break-all flex-1">{generatedKey}</code>
-                  <Button 
-                    variant="ghost" 
-                    size="icon-sm" 
+                  <code className="text-xs font-mono font-bold break-all flex-1 text-foreground">
+                    {generatedKey}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => copyToClipboard(generatedKey)}
+                    className="shrink-0"
                   >
-                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    {copied ? (
+                      <Check size={14} className="text-emerald-500" />
+                    ) : (
+                      <Copy size={14} />
+                    )}
                   </Button>
                 </div>
-                
-                <Alert variant="destructive" className="bg-destructive/5 border-destructive/20 mt-4 rounded-xl">
-                    <AlertTriangle className="size-4" />
-                    <AlertTitle className="text-[10px] uppercase font-bold tracking-widest leading-none mb-1">Security Advisory</AlertTitle>
-                    <AlertDescription className="text-[10px] font-bold uppercase tracking-widest leading-relaxed">
-                        Protocol security is your responsibility. Replace lost keys immediately.
-                    </AlertDescription>
+                <Alert
+                  variant="destructive"
+                  className="bg-destructive/5 border-destructive/20 rounded-xl"
+                >
+                  <AlertTriangle className="size-4" />
+                  <AlertTitle className="text-[10px] uppercase font-bold tracking-widest leading-none mb-1">
+                    One-time display
+                  </AlertTitle>
+                  <AlertDescription className="text-[10px] font-medium leading-relaxed">
+                    We cannot recover this key. If lost, revoke and generate a new one.
+                  </AlertDescription>
                 </Alert>
               </div>
             ) : (
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Key Name</label>
-                  <Input 
-                    placeholder="e.g. Production Backend" 
+              <div className="space-y-3 py-2">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Key Name
+                  </label>
+                  <Input
+                    placeholder="e.g. Production Backend"
                     value={newKeyName}
                     onChange={(e) => setNewKeyName(e.target.value)}
-                    className="font-bold text-xs"
+                    className="font-mono text-xs"
+                    onKeyDown={(e) => e.key === "Enter" && handleCreateKey()}
                   />
                 </div>
               </div>
@@ -188,179 +209,162 @@ export default function DeveloperPage() {
 
             <DialogFooter>
               {generatedKey ? (
-                <Button onClick={() => setGeneratedKey(null)} className="w-full font-bold">I've saved the key</Button>
-              ) : (
-                <Button 
-                  onClick={handleCreateKey} 
-                  disabled={isCreating || !newKeyName.trim()} 
+                <Button
+                  onClick={() => {
+                    setGeneratedKey(null);
+                    setCreateOpen(false);
+                  }}
                   className="w-full font-bold"
                 >
-                  {isCreating ? "Generating..." : "Generate Key"}
+                  Done — I've saved this key
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleCreateKey}
+                  disabled={isCreating || !newKeyName.trim()}
+                  className="w-full font-bold"
+                >
+                  {isCreating ? "Generating…" : "Generate Key"}
                 </Button>
               )}
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border-border shadow-none bg-muted/30">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                <Key size={18} />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-none">Total Keys</p>
-                <p className="text-2xl font-bold tracking-tight mt-1">{keys.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-border shadow-none bg-muted/30 col-span-2">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-sky-500/10 p-2 text-sky-600">
-                <Info size={18} />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-none">Authentication Protocol</p>
-                <div className="flex items-center gap-2 mt-1">
-                   <Badge variant="outline" className="font-mono text-[9px] h-5 bg-background">x-api-key</Badge>
-                   <span className="text-xs font-semibold text-muted-foreground">Header required for all off-chain settlements</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* ── Meta Strip ──────────────────────────────────────────── */}
+      <div className="flex items-center gap-8 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Key size={12} />
+          <span>
+            <strong className="text-foreground font-bold">{keys.length}</strong>{" "}
+            {keys.length === 1 ? "key" : "keys"} active
+          </span>
+        </div>
+        <Separator orientation="vertical" className="h-4" />
+        <div className="flex items-center gap-2">
+          <ShieldCheck size={12} />
+          <span>Authenticate via</span>
+          <Badge
+            variant="outline"
+            className="font-mono text-[9px] h-4 px-1.5 bg-muted"
+          >
+            x-api-key
+          </Badge>
+          <span>header · HTTPS only</span>
+        </div>
       </div>
 
-      <Card className="border-border shadow-none">
-        <CardHeader className="p-8">
-          <div className="flex items-center gap-3">
-             <div className="rounded-lg bg-primary/10 p-3 text-primary">
-               <Terminal size={20} />
-             </div>
-             <div>
-               <CardTitle className="text-lg font-bold">API Key Registry</CardTitle>
-               <CardDescription className="text-[11px] font-medium uppercase tracking-widest mt-1 italic">
-                 Hashed off-chain identity management
-               </CardDescription>
-             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="py-20 text-center text-xs text-muted-foreground animate-pulse uppercase font-serif tracking-widest italic">Syncing Keys...</div>
-          ) : keys.length === 0 ? (
-            <div className="py-20 text-center space-y-4">
-               <p className="text-xs text-muted-foreground italic">No API keys found. Initialize a key to begin using the protocol.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border">
-                  <TableHead className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground px-8 h-12">Name</TableHead>
-                  <TableHead className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground px-8 h-12">Key ID</TableHead>
-                  <TableHead className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground px-8 h-12">Created</TableHead>
-                  <TableHead className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground px-8 h-12">Last Used</TableHead>
-                  <TableHead className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground px-8 h-12 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {keys.map((key) => (
-                  <TableRow key={key.id} className="hover:bg-muted/30 border-b border-border transition-colors">
-                    <TableCell className="px-8 py-5">
-                      <span className="font-bold text-sm">{key.name}</span>
-                    </TableCell>
-                    <TableCell className="px-8 py-5">
-                      <div className="flex items-center gap-2">
-                        <code className="text-[11px] font-bold font-mono px-2 py-0.5 bg-muted rounded border border-border">
-                          {key.prefix}••••{key.mask}
-                        </code>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-8 py-5">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Clock size={12} />
-                        {new Date(key.createdAt).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-8 py-5">
-                      <span className="text-xs font-semibold">
-                        {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString() : "Never"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="px-8 py-5 text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="icon-sm"
-                        onClick={() => setKeyToDelete(key.id)}
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-      
-      <div className="grid gap-6 md:grid-cols-2">
-         <div className="p-6 rounded-2xl border border-border bg-card space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
-               <Info size={14} className="text-primary" />
-               Developer Quickstart
-            </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-               Use your API keys to authorize requests to the Mecha Pay API. All requests must be sent over HTTPS and include the key in the <code className="bg-muted px-1 rounded font-bold">x-api-key</code> header.
+      {/* ── Keys Table ──────────────────────────────────────────── */}
+      <div>
+        {loading ? (
+          <div className="py-24 text-center">
+            <p className="text-xs text-muted-foreground animate-pulse uppercase tracking-widest font-mono">
+              Syncing…
             </p>
-            <Separator />
-            <div className="space-y-2">
-               <pre className="p-4 bg-muted rounded-xl text-[10px] font-mono overflow-auto border border-border">
-{`curl -X GET "${process.env.NEXT_PUBLIC_BASE_URL || 'https://api.mechapay.com'}/api/v1/stats" \\
-  -H "x-api-key: mp_live_..." \\
-  -H "Content-Type: application/json"`}
-               </pre>
+          </div>
+        ) : keys.length === 0 ? (
+          <div className="py-24 text-center space-y-3">
+            <div className="inline-flex items-center justify-center size-12 rounded-full bg-muted mx-auto">
+              <Key size={18} className="text-muted-foreground" />
             </div>
-         </div>
+            <p className="text-sm font-medium text-muted-foreground">
+              No API keys yet
+            </p>
+            <p className="text-xs text-muted-foreground/70">
+              Generate your first key to start authenticating requests.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {/* Table Header */}
+            <div className="grid grid-cols-[2fr_2fr_1fr_1fr_40px] gap-4 px-0 pb-3">
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Name</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Key</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Created</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Last Used</span>
+              <span />
+            </div>
 
-         <div className="p-6 rounded-2xl border border-border bg-card space-y-4 flex flex-col justify-between">
-            <div className="space-y-4">
-               <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
-                  <Terminal size={14} className="text-primary" />
-                  API Documentation
-               </h3>
-               <p className="text-xs text-muted-foreground leading-relaxed">
-                  Explore the complete and interactive public API reference, find integration guides, read the core concepts, and see code examples.
-               </p>
-            </div>
-            <Link href="/docs" className="block w-full">
-               <Button variant="outline" className="w-full font-bold gap-2">
-                  View API Reference
-               </Button>
-            </Link>
-         </div>
+            {/* Table Rows */}
+            {keys.map((key) => (
+              <div
+                key={key.id}
+                className="grid grid-cols-[2fr_2fr_1fr_1fr_40px] gap-4 items-center py-4 group"
+              >
+                <span className="font-semibold text-sm truncate">{key.name}</span>
+
+                <code className="font-mono text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border w-fit">
+                  {key.prefix}••••{key.mask}
+                </code>
+
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Clock size={11} />
+                  {new Date(key.createdAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </div>
+
+                <span className="text-xs text-muted-foreground">
+                  {key.lastUsedAt
+                    ? new Date(key.lastUsedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : <span className="italic opacity-50">Never</span>}
+                </span>
+
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setKeyToDelete(key.id)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <Dialog open={!!keyToDelete} onOpenChange={(open) => { if (!open) setKeyToDelete(null); }}>
+
+
+      {/* ── Delete Confirmation Dialog ───────────────────────────── */}
+      <Dialog
+        open={!!keyToDelete}
+        onOpenChange={(open) => {
+          if (!open) setKeyToDelete(null);
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
               <AlertTriangle className="size-4 text-destructive" />
               Revoke API Key
             </DialogTitle>
-            <DialogDescription className="text-xs">
-              This action is irreversible. Systems using this key will immediately lose access to the protocol.
+            <DialogDescription className="text-xs leading-relaxed">
+              This is permanent and cannot be undone. Any service currently using this key will immediately lose access to the protocol.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setKeyToDelete(null)} className="font-bold">Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteKey} className="font-bold">Revoke Key</Button>
+          <DialogFooter className="mt-2">
+            <Button
+              variant="outline"
+              onClick={() => setKeyToDelete(null)}
+              className="font-bold"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteKey}
+              className="font-bold"
+            >
+              Revoke Key
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

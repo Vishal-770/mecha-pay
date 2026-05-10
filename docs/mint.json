@@ -1,0 +1,58 @@
+{
+  "name": "Mecha Pay Docs",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#1E3A8A",
+    "light": "#3B82F6",
+    "dark": "#1E40AF"
+  },
+  "topbarLinks": [
+    {
+      "name": "Support",
+      "url": "mailto:support@mecha-pay.com"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Dashboard",
+    "url": "http://localhost:3000/dashboard"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": [
+        "introduction",
+        "quickstart"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api-reference/authentication",
+        "api-reference/wallet",
+        "api-reference/analytics",
+        {
+          "group": "Plans",
+          "pages": [
+            "api-reference/list-plans",
+            "api-reference/get-plan",
+            "api-reference/plan-analytics"
+          ]
+        },
+        "api-reference/subscribers"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/Vishal-770/mecha-pay"
+  }
+}

@@ -1,0 +1,40 @@
+---
+title: "List Plans"
+api: "GET /api/v1/plans"
+description: "Retrieve a list of all plan IDs associated with your merchant account."
+---
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your Mecha Pay Developer API Key.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="plans" type="string[]">
+  An array of bytes32 plan IDs.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "http://localhost:3000/api/v1/plans" \
+  -H "x-api-key: your_api_key_here"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "success": true,
+  "plans": [
+    "0x0000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000002"
+  ]
+}
+```
+</ResponseExample>

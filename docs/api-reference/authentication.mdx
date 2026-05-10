@@ -1,0 +1,33 @@
+---
+title: "Authentication"
+description: "How to authenticate your requests to the Mecha Pay API."
+---
+
+All API requests must be authenticated using an API Key. You can manage your API keys in the [Developer Dashboard](http://localhost:3000/dashboard/developer).
+
+## API Keys
+
+API keys are unique to your merchant account. They grant access to your plans, analytics, and subscriber data. 
+
+<Warning>
+  Never share your API keys or include them in client-side code. They should only be used in secure, server-side environments.
+</Warning>
+
+## Using the API Key
+
+To authenticate, include the `x-api-key` header in your HTTP requests:
+
+```bash
+x-api-key: your_api_key_here
+```
+
+### Example Request
+
+```bash
+curl -X GET "http://localhost:3000/api/v1/wallet" \
+  -H "x-api-key: mecha_live_..."
+```
+
+## Security
+
+If your API key is compromised, you should revoke it immediately from the dashboard and generate a new one. Revoked keys will immediately return a `401 Unauthorized` error.

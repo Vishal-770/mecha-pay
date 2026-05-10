@@ -1,0 +1,57 @@
+---
+title: "Plan Analytics"
+api: "GET /api/v1/plans/{id}/analytics"
+description: "Retrieve detailed on-chain statistics for a specific plan."
+---
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique ID of the plan.
+</ParamField>
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your Mecha Pay Developer API Key.
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="analytics" type="object">
+  <Expandable title="properties">
+    <ResponseField name="planId" type="string">The ID of the plan.</ResponseField>
+    <ResponseField name="active" type="boolean">Whether the plan is currently accepting subscriptions.</ResponseField>
+    <ResponseField name="subscriptionCount" type="number">Total number of subscriptions for this plan.</ResponseField>
+    <ResponseField name="totalGrossVolume" type="string">Total USDC processed by this plan.</ResponseField>
+    <ResponseField name="totalFeesCollected" type="string">Total protocol fees paid by this plan.</ResponseField>
+    <ResponseField name="netRevenue" type="string">Net revenue earned by the merchant.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "http://localhost:3000/api/v1/plans/0x123.../analytics" \
+  -H "x-api-key: your_api_key_here"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "success": true,
+  "analytics": {
+    "planId": "0x123...",
+    "active": true,
+    "subscriptionCount": 42,
+    "totalGrossVolume": "42000000",
+    "totalFeesCollected": "840000",
+    "netRevenue": "41160000"
+  }
+}
+```
+</ResponseExample>
