@@ -1,0 +1,62 @@
+---
+title: "Theming & Customization"
+description: "Deeply customize the appearance of Mecha UI components."
+---
+
+The Mecha SDK is designed to blend seamlessly into your existing UI. You can customize the look and feel using the `appearance` prop on components like `MechaPricingTable`.
+
+## The MechaAppearance Object
+
+The `appearance` object allows you to override design tokens and apply custom styles to specific UI elements.
+
+```tsx
+const myAppearance = {
+  theme: 'dark',
+  variables: {
+    colorPrimary: '#FF0055',
+    borderRadius: '8px',
+    fontFamily: 'Geist Mono, monospace'
+  },
+  elements: {
+    card: { border: '2px solid #FF0055' },
+    button: { textTransform: 'none' }
+  }
+};
+```
+
+### Design Variables
+
+These variables control the global "Design System" of the components.
+
+| Variable | Type | Description |
+| :--- | :--- | :--- |
+| `colorPrimary` | `string` | The main brand color (used for buttons, accents, recommended badges). |
+| `colorSecondary` | `string` | Secondary accent color. |
+| `colorError` | `string` | Color used for error states and alerts. |
+| `borderRadius` | `string` | Corner radius for cards and buttons (e.g., `12px`). |
+| `fontFamily` | `string` | The font stack to be used. |
+| `backgroundColor` | `string` | Background color for cards and containers. |
+| `textColor` | `string` | Primary text color. |
+| `cardPadding` | `string` | Internal padding for tier cards. |
+| `gap` | `string` | Spacing between tier cards. |
+
+### Element Overrides
+
+You can pass standard `React.CSSProperties` to specific parts of the components for granular control.
+
+- `container`: The outer wrapper.
+- `card`: Individual tier cards.
+- `button`: The purchase/active buttons.
+- `price`: The price display section.
+- `tierLabel`: The tier name header.
+
+## Dark vs Light Mode
+
+The SDK includes curated defaults for both modes. Simply set the `theme` property:
+
+```tsx
+<MechaPricingTable 
+  planId="..." 
+  appearance={{ theme: 'light' }} 
+/>
+```

@@ -1,19 +1,23 @@
 {
-  "name": "Mecha Pay Docs",
+  "name": "Mecha Pay",
   "logo": {
     "dark": "/logo/logo.png",
     "light": "/logo/logo.png"
   },
   "favicon": "/logo/logo.png",
   "colors": {
-    "primary": "#1E3A8A",
-    "light": "#3B82F6",
-    "dark": "#1E40AF"
+    "primary": "#00FFC2",
+    "light": "#5EEAD4",
+    "dark": "#0D9488"
   },
   "topbarLinks": [
     {
       "name": "Support",
       "url": "mailto:support@mecha-pay.com"
+    },
+    {
+      "name": "Example App",
+      "url": "https://github.com/Vishal-770/mecha-pay/tree/master/test-mecha-app"
     }
   ],
   "topbarCtaButton": {
@@ -56,9 +60,18 @@
       "group": "React SDK",
       "pages": [
         "sdk/introduction",
-        "sdk/installation",
-        "sdk/components",
-        "sdk/hooks"
+        "sdk/setup",
+        {
+          "group": "Components",
+          "pages": [
+            "sdk/components/mecha-provider",
+            "sdk/components/mecha-pricing-table"
+          ]
+        },
+        "sdk/hooks/use-mecha",
+        "sdk/theming",
+        "sdk/types",
+        "sdk/example-app"
       ]
     }
   ],

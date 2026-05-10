@@ -1,0 +1,59 @@
+---
+title: "Example Test Project"
+description: "See a live integration of the Mecha SDK in a Vite + React project."
+---
+
+We have provided a reference implementation of the Mecha SDK in a dedicated test project. This project demonstrates how to combine the `MechaPricingTable` with the `useMecha` hook for a complete membership experience.
+
+## View on GitHub
+
+You can find the full source code for the test project here:
+[test-mecha-app](https://github.com/Vishal-770/mecha-pay/tree/master/test-mecha-app)
+
+## What's Inside?
+
+The example project includes:
+- **Vite + React + TypeScript** setup.
+- **`MechaProvider`** configuration.
+- **`MechaPricingTable`** with a custom "Cyber" theme.
+- **`useMecha`** implementation for a real-time status banner.
+
+## Running Locally
+
+To run the test project on your own machine:
+
+1. Navigate to the folder:
+   ```bash
+   cd test-mecha-app
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+
+## Reference Code
+
+Here is the core logic from the example app's `App.tsx`:
+
+```tsx
+import { MechaProvider, MechaPricingTable, useMecha } from "mechapay-sdk";
+
+function MembershipStatus() {
+  const { status, remainingSeconds, loading } = useMecha(PLAN_ID, USER_ID);
+
+  if (loading) return <div>Syncing...</div>;
+
+  return (
+    <div className="status-banner">
+      Status: <span className="status">{status}</span>
+      {status === 'ACTIVE' && (
+        <span className="timer">Expires in: {remainingSeconds}s</span>
+      )}
+    </div>
+  );
+}
+```

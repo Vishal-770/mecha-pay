@@ -44,7 +44,7 @@ function App() {
   return (
     <MechaProvider 
       apiKey="mp_live_36f153484685fdbfa522125830e99f792c726c21ee61a95c"
-      portalUrl="http://localhost:3000"
+      portalUrl="https://mecha-pay.vercel.app"
     >
       <div style={{ 
         minHeight: '100vh', 

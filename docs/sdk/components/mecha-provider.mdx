@@ -1,0 +1,37 @@
+---
+title: "MechaProvider"
+description: "The core configuration component for the Mecha SDK."
+---
+
+The `MechaProvider` is a context provider that should wrap your entire application. It stores your API key and portal settings, enabling hooks like `useMecha` and components like `MechaPricingTable` to function correctly.
+
+## Props
+
+<ParamField prop="apiKey" type="string" required>
+  Your Mecha Pay Developer API Key. Used for authenticated requests to the protocol indexers.
+</ParamField>
+
+<ParamField prop="portalUrl" type="string" default="https://mecha-pay.vercel.app">
+  The base URL of the Mecha Pay portal. This is used for generating checkout links and fetching data.
+</ParamField>
+
+## Implementation Example
+
+```tsx
+import { MechaProvider } from 'mechapay-sdk';
+
+export default function App() {
+  return (
+    <MechaProvider 
+      apiKey={process.env.NEXT_PUBLIC_MECHA_API_KEY}
+      portalUrl="https://mecha-pay.vercel.app"
+    >
+      {/* Rest of your application */}
+    </MechaProvider>
+  );
+}
+```
+
+<Warning>
+  While the `apiKey` is required, ensure you are using it in a way that aligns with your security needs. For client-side SDK usage, we recommend scoped keys that only have read access to plan data.
+</Warning>

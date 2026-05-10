@@ -1,0 +1,55 @@
+---
+title: "MechaPricingTable"
+description: "A high-fidelity pricing table with automated checkout integration."
+---
+
+The `MechaPricingTable` is the flagship UI component of the SDK. it fetches your plan details (name, duration, tiers, features) and displays them in a premium, interactive interface.
+
+## Usage
+
+```tsx
+import { MechaPricingTable } from 'mechapay-sdk';
+
+function MyPricing() {
+  return (
+    <MechaPricingTable 
+      planId="0x77c4..." 
+      userId="user_99" 
+      recommendedTierId="tier_premium"
+    />
+  );
+}
+```
+
+## Props
+
+<ParamField prop="planId" type="string" required>
+  The unique ID of the plan you want to display.
+</ParamField>
+
+<ParamField prop="userId" type="string">
+  The ID of your user. This will be passed to the smart contract as `buyerData`, allowing you to link the on-chain subscription to your off-chain user database.
+</ParamField>
+
+<ParamField prop="redirectUrl" type="string" default="window.location.href">
+  The URL the user should be redirected back to after a successful payment.
+</ParamField>
+
+<ParamField prop="appearance" type="MechaAppearance">
+  Customization object for theming. See [Theming](/sdk/theming) for details.
+</ParamField>
+
+<ParamField prop="hideBranding" type="boolean" default="false">
+  Set to `true` to remove the "Powered by Mecha Pay" footer.
+</ParamField>
+
+<ParamField prop="recommendedTierId" type="string">
+  The ID of the tier that should be highlighted as "Recommended". Defaults to the second tier in the list.
+</ParamField>
+
+## Visual Features
+
+- **Automated Fetching**: Retrieves all tiers, prices, and features from IPFS.
+- **Member Awareness**: If the provided `userId` has an active subscription, the table will highlight their current plan and show a countdown timer.
+- **Responsive Design**: Fluidly adapts from mobile to desktop layouts.
+- **Animations**: Uses `framer-motion` for smooth hover states and entry animations.

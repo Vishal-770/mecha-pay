@@ -1,0 +1,61 @@
+---
+title: "useMecha"
+description: "The primary React hook for subscription state management."
+---
+
+The `useMecha` hook allows you to fetch and track a user's subscription status in real-time. It includes a built-in countdown mechanism that updates every second, making it perfect for displaying "Time Remaining" banners or gating premium features.
+
+## Usage
+
+```tsx
+import { useMecha } from 'mechapay-sdk';
+
+function FeatureGatedContent() {
+  const { status, remainingSeconds, loading, error } = useMecha(
+    "0x_PLAN_ID", 
+    "USER_ID"
+  );
+
+  if (loading) return <LoadingSpinner />;
+  if (status !== 'ACTIVE') return <PricingPrompt />;
+
+  return (
+    <div>
+      <h1>Premium Content</h1>
+      <p>Access expires in: {remainingSeconds} seconds</p>
+    </div>
+  );
+}
+```
+
+## Parameters
+
+<ParamField path="planId" type="string" required>
+  The ID of the plan to check.
+</ParamField>
+
+<ParamField path="userId" type="string">
+  The user's unique identifier. If not provided, the hook will remain in a `NONE` status.
+</ParamField>
+
+## Returns
+
+<ResponseField name="status" type="'ACTIVE' | 'EXPIRED' | 'NONE'">
+  The current subscription state.
+</ResponseField>
+
+<ResponseField name="remainingSeconds" type="number">
+  The number of seconds remaining until the subscription expires. This value is updated every second via a live internal timer.
+</ResponseField>
+
+<ResponseField name="tierId" type="string | undefined">
+  The ID of the specific tier the user is subscribed to (if active).
+</ResponseField>
+
+<ResponseField name="loading" type="boolean">
+  `true` while the hook is fetching initial data from the Mecha indexer.
+</ResponseField>
+
+<ResponseField name="error" type="string | null">
+  Contains any error message encountered during synchronization.
+</ResponseField>

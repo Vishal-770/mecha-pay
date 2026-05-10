@@ -1,0 +1,81 @@
+---
+title: "API & Types Reference"
+description: "Detailed type definitions for the Mecha Pay SDK."
+---
+
+The Mecha Pay SDK is fully typed with TypeScript. Below are the primary interfaces you will interact with.
+
+## Plan
+
+Represents a subscription plan fetched from the protocol.
+
+```typescript
+export interface Plan {
+  id: string;      // The on-chain plan ID
+  name: string;    // Plan name (e.g. "SaaS Basic")
+  duration: string; // Duration in seconds
+  brand?: {
+    name?: string;
+    website?: string;
+  };
+  tiers: Tier[];
+}
+```
+
+## Tier
+
+Represents a specific price point and feature set within a plan.
+
+```typescript
+export interface Tier {
+  id: string;      // Tier ID (e.g. "tier_pro")
+  price: string;   // Price in USDC (6 decimals, e.g. "10000000" for $10)
+  label: string;   // Display label (e.g. "Pro")
+  features: Array<{
+    title: string;
+    description: string;
+  }>;
+}
+```
+
+## MechaSubscription
+
+The shape of the data returned by the `useMecha` hook.
+
+```typescript
+export interface MechaSubscription {
+  status: "ACTIVE" | "EXPIRED" | "NONE";
+  remainingSeconds: number;
+  tierId?: string;
+  loading: boolean;
+  error: string | null;
+}
+```
+
+## MechaAppearance
+
+Configuration for UI component styling.
+
+```typescript
+export interface MechaAppearance {
+  theme?: "light" | "dark";
+  variables?: {
+    colorPrimary?: string;
+    colorSecondary?: string;
+    colorError?: string;
+    borderRadius?: string;
+    fontFamily?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    cardPadding?: string;
+    gap?: string;
+  };
+  elements?: {
+    container?: React.CSSProperties;
+    card?: React.CSSProperties;
+    button?: React.CSSProperties;
+    price?: React.CSSProperties;
+    tierLabel?: React.CSSProperties;
+  };
+}
+```
