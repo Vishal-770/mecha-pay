@@ -145,4 +145,24 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  @keyframes scan-x {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .animate-scan-x {
+    animation: scan-x 3s linear infinite;
+  }
+
+  @keyframes progress-fast {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+  }
+
+  .animate-progress-fast {
+    animation: progress-fast 1s ease-in-out infinite;
+  }
 }
