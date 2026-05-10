@@ -53,6 +53,6 @@ Used for real-time validation or data that hasn't been indexed by the subgraph y
 | Service | Purpose | Integration |
 | :--- | :--- | :--- |
 | **Filebase (IPFS)** | Plan Metadata Storage | `POST /api/subscription/upload-metadata` |
-| **Mintlify** | Public Documentation | [mechapay.mintlify.app](https://mechapay.mintlify.app/) |
+| **Mintlify** | Public Documentation | [mecha-pay.vercel.app/docs](https://mecha-pay.vercel.app/docs) |
 | **Circle Iris API** | CCTP Attestations | Cross-chain message verification. |
 | **OAuth Providers** | Social Login | `POST /api/oauth` (Google, Apple, etc.) |

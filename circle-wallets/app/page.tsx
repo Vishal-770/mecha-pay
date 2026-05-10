@@ -94,7 +94,7 @@ export default function LandingPage() {
           </Link>
           <Link href="#features" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Features</Link>
           <Link href="#bridge" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Bridge</Link>
-          <Link href="https://mechapay.mintlify.app/" target="_blank" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Docs</Link>
+          <Link href="https://mecha-pay.vercel.app/docs" target="_blank" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Docs</Link>
 
           <Link href="/dashboard/marketplace" className="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-[#a1a1aa] hover:text-[#ffffff] hover:bg-[#ffffff]/5 rounded-xl transition-all">Marketplace</Link>
         </nav>
@@ -289,7 +289,7 @@ export default function LandingPage() {
             Get started by installing the <span className="font-mono text-[#b6f09c] text-sm bg-[#b6f09c]/10 px-2 py-1 rounded">mecha-pay</span> package and connecting your merchant account in minutes.
           </p>
           <div className="flex gap-4 mt-6">
-            <Link href="https://mechapay.mintlify.app/" target="_blank" className="h-12 px-8 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-xs uppercase shadow-xl shadow-[#b6f09c]/20 transition-all hover:opacity-90">
+            <Link href="https://mecha-pay.vercel.app/docs" target="_blank" className="h-12 px-8 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-xs uppercase shadow-xl shadow-[#b6f09c]/20 transition-all hover:opacity-90">
               Explore SDK Docs <ArrowUpRight className="ml-2 h-4 w-4 stroke-[3px]" />
             </Link>
           </div>
@@ -428,7 +428,7 @@ export default function LandingPage() {
               <Link href="#features" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Features</Link>
               <Link href="/dashboard/marketplace" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Marketplace</Link>
               <Link href="/dashboard/plans/create" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Create Plan</Link>
-              <Link href="https://mechapay.mintlify.app/" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">API Reference</Link>
+              <Link href="https://mecha-pay.vercel.app/docs" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">API Reference</Link>
 
             </div>
           </div>
@@ -446,7 +446,7 @@ export default function LandingPage() {
           <div className="flex flex-col gap-6">
             <h4 className="text-[#ffffff] font-black uppercase text-xs tracking-widest italic">Resources</h4>
             <div className="flex flex-col gap-3">
-              <Link href="https://mechapay.mintlify.app/" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Documentation</Link>
+              <Link href="https://mecha-pay.vercel.app/docs" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">Documentation</Link>
 
               <Link href="https://github.com/yourusername/mecha-pay" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GitHub</Link>
               <Link href="https://api.studio.thegraph.com/query/1704298/mecha-pay/v0.0.8" target="_blank" className="text-[#a1a1aa] text-sm font-bold hover:text-[#ffffff] transition-all">GraphQL API</Link>
