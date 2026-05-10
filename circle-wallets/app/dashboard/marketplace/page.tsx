@@ -258,12 +258,12 @@ export default function MarketplacePage() {
   }, [plans, search, sortBy]);
 
   return (
-    <section className="max-w-7xl mx-auto py-12 px-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <section className="w-full py-12 px-6">
       <CompactHeader title="Marketplace" subtitle="Protocol Discovery Engine" />
 
       {/* Filters (Library Based) */}
       <div className="mb-12 flex flex-col gap-6 lg:items-end lg:flex-row lg:justify-between pb-8 border-b border-border/10">
-        <div className="flex-1 max-w-2xl">
+        <div className="flex-1">
           <Field className="space-y-2">
             <Label className="pl-1">Search Directory</Label>
             <div className="relative group/search">

@@ -36,34 +36,20 @@ function GoogleIcon() {
 }
 
 /**
- * Animated background pattern with favicon
+ * Minimalist professional background with grid and subtle gradient
  */
 function BackgroundPattern() {
   return (
-    <div className="absolute inset-0 overflow-hidden">
-      {/* Gradient orbs */}
-      <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-primary/10 rounded-full blur-3xl animate-pulse opacity-20" />
-      <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-chart-2/10 rounded-full blur-3xl animate-pulse opacity-20" style={{ animationDelay: "1s" }} />
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Base Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
       
-      {/* Large favicon watermark */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-[0.03]">
-        <img 
-          src="/favicon.ico" 
-          alt="" 
-          className="w-full h-full object-contain"
-        />
-      </div>
+      {/* Subtle Depth Gradients */}
+      <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-primary/5 rounded-full blur-[120px] opacity-50" />
+      <div className="absolute bottom-0 right-1/4 w-1/2 h-1/2 bg-chart-2/5 rounded-full blur-[120px] opacity-30" />
       
-      {/* Additional smaller favicon elements */}
-      <div className="absolute top-[10%] right-[10%] w-32 h-32 opacity-[0.05] animate-pulse" style={{ animationDelay: "0.5s" }}>
-        <img 
-          src="/favicon.ico" 
-          alt="" 
-          className="w-full h-full object-contain"
-        />
-      </div>
-      
-      <div className="absolute bottom-[15%] left-[15%] w-24 h-24 opacity-[0.05] animate-pulse" style={{ animationDelay: "1.5s" }}>
+      {/* Stationery Watermark (Static) */}
+      <div className="absolute top-12 left-12 w-32 h-32 opacity-[0.02] grayscale contrast-200">
         <img 
           src="/favicon.ico" 
           alt="" 
@@ -178,76 +164,73 @@ function LoginContent() {
       
       <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left side - Branding */}
-        <div className="hidden lg:block space-y-6 px-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary shadow-lg shadow-primary/20 p-3">
-            <img 
-              src="/favicon.ico" 
-              alt="Mecha Pay Logo" 
-              className="w-full h-full object-contain"
-            />
+        <div className="hidden lg:block space-y-10 px-8">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-foreground/5 border border-border p-2">
+              <img 
+                src="/favicon.ico" 
+                alt="Mecha Pay Logo" 
+                className="w-full h-full object-contain grayscale"
+              />
+            </div>
+            <h1 className="text-3xl font-bold text-foreground tracking-tighter">
+              MECHA PAY
+            </h1>
           </div>
           
-          <div className="space-y-3">
-            <h1 className="text-5xl font-bold text-foreground tracking-tight">
-              Mecha Pay
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-md">
-              Secure, fast, and seamless payment protocol powered by blockchain technology
+          <div className="space-y-4">
+            <h2 className="text-5xl font-bold text-foreground leading-[1.1] tracking-tight">
+              The Protocol for <br />
+              <span className="text-muted-foreground">Modern Payments.</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-md leading-relaxed">
+              An engineering-grade infrastructure for USDC-native memberships, powered by Circle and the Arc blockchain.
             </p>
           </div>
 
-          <div className="space-y-4 pt-6">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          <div className="space-y-6 pt-8 border-t border-border/50 max-w-sm">
+            <div className="flex items-center gap-4 group">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full border border-border bg-background flex items-center justify-center transition-colors group-hover:border-primary/50">
+                <svg className="w-4 h-4 text-muted-foreground transition-colors group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Secure Transactions</h3>
-                <p className="text-sm text-muted-foreground">Bank-grade encryption for all payments</p>
-              </div>
+              <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Bank-grade encryption</p>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-chart-2/10 flex items-center justify-center">
-                <svg className="w-5 h-5 text-chart-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <div className="flex items-center gap-4 group">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full border border-border bg-background flex items-center justify-center transition-colors group-hover:border-primary/50">
+                <svg className="w-4 h-4 text-muted-foreground transition-colors group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Lightning Fast</h3>
-                <p className="text-sm text-muted-foreground">Instant payment confirmations</p>
-              </div>
+              <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Sub-second confirmation</p>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-chart-4/10 flex items-center justify-center">
-                <svg className="w-5 h-5 text-chart-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            <div className="flex items-center gap-4 group">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full border border-border bg-background flex items-center justify-center transition-colors group-hover:border-primary/50">
+                <svg className="w-4 h-4 text-muted-foreground transition-colors group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Multi-Chain Support</h3>
-                <p className="text-sm text-muted-foreground">Works across multiple blockchains</p>
-              </div>
+              <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Multi-chain liquidity</p>
             </div>
           </div>
         </div>
 
         {/* Right side - Login form */}
         <div className="w-full max-w-md mx-auto">
-          <div className="bg-card rounded-3xl shadow-2xl shadow-primary/5 border border-border p-8 md:p-10 backdrop-blur-sm">
+          <div className="bg-card rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border p-8 md:p-12 backdrop-blur-md">
             {/* Mobile logo */}
-            <div className="lg:hidden mb-8 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary shadow-lg shadow-primary/20 mb-4 p-3">
+            <div className="lg:hidden mb-10 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-foreground/5 border border-border mb-4 p-2">
                 <img 
                   src="/favicon.ico" 
                   alt="Mecha Pay Logo" 
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain grayscale"
                 />
               </div>
-              <h2 className="text-2xl font-bold text-card-foreground">Mecha Pay</h2>
+              <h2 className="text-xl font-bold text-card-foreground tracking-tighter uppercase">Mecha Pay</h2>
             </div>
 
             <div className="space-y-6">
@@ -272,7 +255,7 @@ function LoginContent() {
               <button
                 onClick={handleGoogleLogin}
                 disabled={!isReady || isLoading}
-                className="group relative w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-secondary px-6 py-4 text-base font-medium text-secondary-foreground shadow-sm transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-sm"
+                className="group relative w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-background px-6 py-4 text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 to-chart-2/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 {isLoading ? (
@@ -299,7 +282,7 @@ function LoginContent() {
                   <GoogleIcon />
                 )}
                 <span className="relative">
-                  {isLoading ? "Redirecting to Googleâ€¦" : "Continue with Google"}
+                  {isLoading ? "Redirecting to Google..." : "Continue with Google"}
                 </span>
               </button>
 

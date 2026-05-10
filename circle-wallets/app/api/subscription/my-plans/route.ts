@@ -122,15 +122,27 @@ function averageBigInt(total: bigint, count: number) {
   return total / BigInt(count);
 }
 
+import { validateWalletOwnership } from "@/lib/auth-util";
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const seller = searchParams.get("seller");
+    const userToken = searchParams.get("userToken");
 
-    if (!seller) {
+    if (!seller || !userToken) {
       return NextResponse.json(
-        { error: "seller is required" },
+        { error: "seller and userToken are required" },
         { status: 400 },
+      );
+    }
+
+    // Security: Validate that the seller address belongs to the userToken session
+    const isValid = await validateWalletOwnership(userToken, seller);
+    if (!isValid) {
+      return NextResponse.json(
+        { error: "Unauthorized: Wallet address does not belong to this user session" },
+        { status: 403 },
       );
     }
 

@@ -7,6 +7,7 @@ import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell"
 import { 
   ArrowRight,
   ArrowLeft,
+  ArrowUpRight,
   Activity,
   Monitor,
   ChevronRight,
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 type SubscriptionRow = {
   id: string;
@@ -73,26 +75,34 @@ function timeAgo(timestamp: string) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
 export default function MySubscriptionsPage() {
-  const { wallet } = useDashboardContext();
+  const { wallet, sessionUserToken } = useDashboardContext();
   const [items, setItems] = useState<SubscriptionRow[]>([]);
   const [notifications, setNotifications] = useState<NotificationEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isActivityOpen, setIsActivityOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     const run = async () => {
-      if (!wallet?.address) {
+      if (!wallet?.address || !sessionUserToken) {
         setLoading(false);
         return;
       }
 
       try {
         const [subRes, notifRes] = await Promise.all([
-          fetch(`/api/subscription/my-subscriptions?subscriber=${wallet.address}`, { cache: "no-store" }),
-          fetch(`/api/subscription/notifications?subscriber=${wallet.address}`, { cache: "no-store" })
+          fetch(`/api/subscription/my-subscriptions?subscriber=${wallet.address}&userToken=${sessionUserToken}`, { cache: "no-store" }),
+          fetch(`/api/subscription/notifications?subscriber=${wallet.address}&userToken=${sessionUserToken}`, { cache: "no-store" })
         ]);
 
         const subJson = await subRes.json();
@@ -112,160 +122,229 @@ export default function MySubscriptionsPage() {
     };
     void run();
     return () => { mounted = false; };
-  }, [wallet?.address]);
+  }, [wallet?.address, sessionUserToken]);
 
   const renderActivityFeed = () => (
-    <>
+    <div className="py-2">
       {notifications.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+          <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center text-muted-foreground/30">
+            <Activity size={24} />
+          </div>
+          <p className="text-xs font-medium text-muted-foreground max-w-[180px]">No recent activity has been recorded on the network.</p>
+        </div>
       ) : (
-        <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+        <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px before:h-full before:w-[1px] before:bg-border/60">
           {notifications.map((notif) => (
-            <div key={notif.id} className="relative flex items-start gap-4">
-              <div className="absolute left-0 h-4 w-4 rounded-full border-2 border-background bg-primary" />
-              <div className="pl-6 space-y-1">
-                <p className="text-sm font-medium">
+            <div key={notif.id} className="relative flex items-start gap-4 group">
+              <div className="absolute left-0 mt-1.5 h-[22px] w-[22px] rounded-full border-4 border-background bg-muted group-hover:bg-primary transition-all duration-300" />
+              <div className="pl-10 space-y-1.5">
+                <p className="text-xs font-bold text-foreground leading-tight">
                   {notif.type === "STATUS_CHANGE" 
-                    ? `Plan ${notif.planId.slice(0, 8)}: ${notif.active ? "Activated" : "Paused"}`
-                    : `Plan ${notif.planId.slice(0, 8)}: Updated`}
+                    ? `Plan ${notif.planId.slice(0, 8)} updated to ${notif.active ? "Active" : "Inactive"}`
+                    : `Plan ${notif.planId.slice(0, 8)} technical update`}
                 </p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  <span>{timeAgo(notif.blockTimestamp)}</span>
+                <div className="flex items-center gap-4 text-[10px] font-medium text-muted-foreground/80">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3 w-3 opacity-60" />
+                    <span>{timeAgo(notif.blockTimestamp)}</span>
+                  </div>
+                  <a 
+                    href={`https://testnet.arcscan.app/tx/${notif.transactionHash}`} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="hover:text-primary transition-colors flex items-center gap-1 font-bold"
+                  >
+                    View Receipt <ArrowUpRight className="h-2.5 w-2.5" />
+                  </a>
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 
   if (loading) {
     return (
-      <div className="w-full pt-6 pb-10 px-6 space-y-8 lg:pr-[360px] lg:pl-10">
-        <div className="space-y-4 mb-8">
-          <div className="h-4 w-32 bg-muted/40 rounded animate-pulse" />
-          <div className="h-10 w-64 bg-muted/40 rounded animate-pulse" />
+      <div className="w-full pt-10 pb-10 px-6 space-y-10 lg:px-12 max-w-[1600px] mx-auto">
+        <div className="space-y-6">
+          <Skeleton className="h-4 w-24 rounded-full" />
+          <Skeleton className="h-10 w-80 rounded-2xl" />
         </div>
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Skeleton className="h-[200px] rounded-xl animate-pulse" />
-          <Skeleton className="h-[200px] rounded-xl animate-pulse" />
+        <div className="grid gap-8 md:grid-cols-2">
+          <Skeleton className="h-[300px] rounded-[2.5rem] opacity-50" />
+          <Skeleton className="h-[300px] rounded-[2.5rem] opacity-50" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen">
-      {/* Main Content (Left) */}
-      <div className="w-full pt-6 pb-10 px-6 space-y-8 lg:pr-[360px] lg:pl-10">
+    <div className="relative">
+      <div className="w-full pt-8 pb-20 px-6 lg:px-12 space-y-12 mx-auto">
         
-        {/* Header Section */}
-        <div className="space-y-4 mb-8">
-          <Button variant="ghost" size="sm" className="pl-0 text-muted-foreground hover:text-foreground" asChild>
-            <Link href="/dashboard">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
-            </Link>
-          </Button>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight mb-2">My Subscriptions</h1>
-              <p className="text-muted-foreground text-sm">
-                Manage your recurring payments and active access tiers.
-              </p>
+        {/* Modern Nav Breadcrumb */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/dashboard"
+            className="group flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-all"
+          >
+            <div className="h-6 w-6 rounded-lg bg-muted/50 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+              <ArrowLeft size={12} className="stroke-[2.5px]" />
             </div>
-            <Button asChild variant="default" className="shrink-0">
+            Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Enhanced Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div className="space-y-3">
+            <h1 className="text-4xl lg:text-5xl font-black tracking-tight text-foreground">
+              My Subscriptions
+            </h1>
+            <p className="text-sm font-medium text-muted-foreground max-w-xl">
+              Manage your active service subscriptions, track remaining time, and view historical transaction receipts.
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="h-12 px-6 rounded-2xl font-bold text-xs border-border/60 hover:bg-muted/50 transition-all gap-2.5">
+                  <Activity className="h-4 w-4 text-primary" />
+                  History
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-md md:max-w-lg border-l-border/40 p-0 overflow-hidden flex flex-col">
+                <SheetHeader className="p-8 border-b border-border/20 bg-muted/5">
+                  <div className="flex items-center gap-4">
+                     <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                       <Activity size={24} strokeWidth={2} />
+                     </div>
+                     <div className="text-left space-y-1">
+                       <SheetTitle className="text-lg font-bold tracking-tight">Recent Activity</SheetTitle>
+                       <SheetDescription className="text-xs font-medium">
+                         Blockchain transaction logs and status changes.
+                       </SheetDescription>
+                     </div>
+                  </div>
+                </SheetHeader>
+                <div className="flex-1 overflow-y-auto px-8 py-2 no-scrollbar">
+                  {renderActivityFeed()}
+                </div>
+                <div className="p-6 border-t border-border/20 bg-muted/5 text-center">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Secured by Arc Settlement Layer</p>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Button asChild className="h-12 px-8 rounded-2xl font-bold text-xs shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all gap-2">
               <Link href="/dashboard/marketplace">
-                Explore Marketplace <ArrowRight className="ml-2 h-4 w-4" />
+                Marketplace <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
         </div>
 
         {items.length === 0 ? (
-          <Card className="border-dashed bg-muted/20">
-            <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Monitor className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">No Subscriptions Found</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mb-6">
-                You haven't joined any plans yet. Visit the marketplace to find services and start subscribing.
+          <div className="border border-border/50 bg-muted/5 flex flex-col items-center justify-center py-40 text-center gap-8 rounded-[3rem]">
+            <div className="h-24 w-24 rounded-[2rem] bg-muted/50 flex items-center justify-center text-muted-foreground/20 border border-border/40">
+              <Monitor size={48} strokeWidth={1.5} />
+            </div>
+            <div className="space-y-3 px-6">
+              <h3 className="text-3xl font-bold tracking-tight">No active subscriptions</h3>
+              <p className="text-sm font-medium text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                You haven't subscribed to any services yet. Explore the marketplace to find tools and plans for your business.
               </p>
-              <Button asChild>
-                <Link href="/dashboard/marketplace">Browse Marketplace</Link>
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+            <Button asChild className="h-12 px-8 rounded-2xl font-bold text-xs">
+              <Link href="/dashboard/marketplace">Browse Marketplace</Link>
+            </Button>
+          </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-2">
+          <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
             {items.map((item) => {
-              const title = item.metadata?.name ?? item.metadata?.brand?.name ?? `Plan ${item.plan.id.slice(0, 8)}`;
+              const title = item.metadata?.name ?? item.metadata?.brand?.name ?? `Subscription ${item.plan.id.slice(0, 8)}`;
               const progress = item.status === "ACTIVE" 
                 ? Math.min((item.remainingSeconds / Number(item.plan.duration)) * 100, 100) 
                 : 0;
 
               const activeTier = item.plan.tiers?.find(t => t.tierId === item.lastTierId);
-              const tierLabel = activeTier?.label || "Standard Tier";
+              const tierLabel = activeTier?.label || "Standard";
 
               return (
-                <Card key={item.id} className="flex flex-col hover:border-primary/50 transition-colors shadow-sm">
-                  <CardHeader className="pb-4 border-b">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={item.status === "ACTIVE" ? "default" : "secondary"}>
-                          {item.status}
+                <Card key={item.id} className="group flex flex-col bg-card border-border/60 rounded-[2.5rem] hover:border-primary/30 transition-all duration-500 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/5">
+                  <CardHeader className="p-8 pb-6 border-b border-border/30 relative bg-muted/5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2.5">
+                        <Badge className={cn(
+                          "text-[10px] font-bold px-3 py-1 rounded-full border-none shadow-sm",
+                          item.status === "ACTIVE" ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
+                        )}>
+                          {item.status === "ACTIVE" ? "Active" : "Expired"}
                         </Badge>
-                        <Badge variant="outline" className="text-primary border-primary/30">
+                        <Badge variant="outline" className="text-[10px] font-bold px-3 py-1 rounded-full border-primary/20 text-primary bg-primary/5">
                           {tierLabel}
                         </Badge>
                       </div>
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {item.plan.id.slice(0, 8)}...
+                      <span className="text-[10px] font-mono font-medium text-muted-foreground/60">
+                        ID: {item.plan.id.slice(0, 8)}
                       </span>
                     </div>
-                    <CardTitle className="text-lg line-clamp-1">{title}</CardTitle>
-                    <CardDescription className="line-clamp-2 mt-1 min-h-[40px]">
+                    <CardTitle className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">{title}</CardTitle>
+                    <div className="mt-3">
                       {item.metadata?.brand?.website ? (
-                        <a href={item.metadata.brand.website} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                          {item.metadata.brand.website}
+                        <a href={item.metadata.brand.website} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5 underline decoration-border group-hover:decoration-primary/40 underline-offset-4">
+                          Official Website <ArrowUpRight size={12} />
                         </a>
-                      ) : "No description provided."}
-                    </CardDescription>
+                      ) : (
+                        <span className="text-[10px] font-medium text-muted-foreground/40 italic">Website not verified</span>
+                      )}
+                    </div>
                   </CardHeader>
                   
-                  <CardContent className="flex-1 py-4 space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-muted-foreground">Time Remaining</span>
-                        <span className="font-medium">
-                          {item.status === "ACTIVE" ? formatCountdown(item.remainingSeconds) : "0s"}
-                        </span>
+                  <CardContent className="flex-1 p-8 pt-10 space-y-10 relative">
+                    <div className="space-y-5">
+                      <div className="flex justify-between items-end">
+                        <div className="space-y-1.5">
+                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Remaining Time</p>
+                          <p className="text-3xl font-black text-foreground tabular-nums">
+                            {item.status === "ACTIVE" ? formatCountdown(item.remainingSeconds) : "00h 00m"}
+                          </p>
+                        </div>
+                        <div className="text-right space-y-1">
+                           <p className="text-[11px] font-bold text-primary uppercase tracking-wider">{Math.round(progress)}% Usage</p>
+                        </div>
                       </div>
-                      <Progress value={progress} className="h-1.5" />
+                      <div className="relative h-2.5 w-full bg-muted rounded-full overflow-hidden shadow-inner">
+                         <div 
+                           className="absolute top-0 left-0 h-full bg-primary transition-all duration-1000 ease-out" 
+                           style={{ width: `${progress}%` }} 
+                         />
+                      </div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Spent</p>
-                        <p className="font-semibold text-sm">${formatUnits(item.totalSpent, 6)}</p>
+ 
+                    <div className="grid grid-cols-2 gap-10">
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total Investment</p>
+                        <p className="text-2xl font-bold text-foreground leading-none">${formatUnits(item.totalSpent, 6)} <span className="text-xs font-medium text-muted-foreground">USDC</span></p>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Renewals</p>
-                        <p className="font-semibold text-sm">{item.subscriptionCount}</p>
+                      <div className="space-y-2 border-l border-border/40 pl-8">
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Billing Cycles</p>
+                        <p className="text-2xl font-bold text-foreground leading-none">{item.subscriptionCount}</p>
                       </div>
+                    </div>
+ 
+                    <div className="pt-2">
+                      <Button asChild className="w-full h-14 rounded-[1.25rem] font-bold text-xs transition-all border-border/60 hover:bg-primary hover:text-white hover:border-primary" variant="outline">
+                        <Link href={`/dashboard/subscriptions/${item.plan.id}`} className="flex items-center justify-center gap-2">
+                          Manage Subscription <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
                     </div>
                   </CardContent>
-
-                  <div className="p-4 pt-0 mt-auto">
-                    <Button asChild className="w-full" variant="outline">
-                      <Link href={`/dashboard/subscriptions/${item.plan.id}`}>
-                        View Details
-                      </Link>
-                    </Button>
-                  </div>
                 </Card>
               );
             })}
@@ -273,36 +352,8 @@ export default function MySubscriptionsPage() {
         )}
       </div>
 
-      {/* Fixed Activity Sidebar (Desktop Only) */}
-      <div className="hidden lg:block fixed right-0 top-20 bottom-0 w-[320px] border-l bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-y-auto z-30">
-        <div className="p-6 space-y-6">
-          <h3 className="font-semibold text-sm flex items-center gap-2 pb-4 border-b">
-            <Activity className="h-4 w-4 text-primary" />
-            Global Activity Feed
-          </h3>
-          {renderActivityFeed()}
-        </div>
-      </div>
-
-      {/* Mobile Activity Sidebar */}
-      <div className="lg:hidden px-4 pb-10">
-        <Card>
-          <div 
-            className="p-6 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setIsActivityOpen(!isActivityOpen)}
-          >
-            <CardTitle className="flex items-center gap-2 m-0 text-base">
-              <Activity className="h-5 w-5 text-primary" />
-              Global Activity Feed
-            </CardTitle>
-            <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isActivityOpen ? "rotate-180" : ""}`} />
-          </div>
-          {isActivityOpen && (
-            <CardContent className="pt-0">
-              {renderActivityFeed()}
-            </CardContent>
-          )}
-        </Card>
+      <div className="py-12 border-t border-border/20 bg-muted/5 text-center">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Mecha Pay Gateway • Enterprise Portal</p>
       </div>
     </div>
   );

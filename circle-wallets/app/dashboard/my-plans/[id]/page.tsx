@@ -285,7 +285,7 @@ export default function MyPlanDetailPage() {
   const isV11 = plan.metadata?.version === "1.1";
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-6 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+    <div className="w-full py-12 px-6 space-y-12 pb-32">
       
       {/* Header Section */}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b border-border/40 pb-10">

@@ -82,25 +82,34 @@ function timeAgo(timestamp: string) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
 export default function SubscriptionDetailPage() {
   const params = useParams<{ id: string }>();
-  const { wallet } = useDashboardContext();
+  const { wallet, sessionUserToken } = useDashboardContext();
 
   const [data, setData] = useState<SubscriptionDetail | null>(null);
   const [notifications, setNotifications] = useState<NotificationEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isActivityOpen, setIsActivityOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     const run = async () => {
-      if (!params.id || !wallet?.address) return;
+      if (!params.id || !wallet?.address || !sessionUserToken) return;
       try {
         setLoading(true);
         const [subRes, notifRes] = await Promise.all([
-          fetch(`/api/subscription/my-subscriptions/${params.id}?subscriber=${wallet.address}`, { cache: "no-store" }),
-          fetch(`/api/subscription/notifications?subscriber=${wallet.address}`, { cache: "no-store" })
+          fetch(`/api/subscription/my-subscriptions/${params.id}?subscriber=${wallet.address}&userToken=${sessionUserToken}`, { cache: "no-store" }),
+          fetch(`/api/subscription/notifications?subscriber=${wallet.address}&userToken=${sessionUserToken}`, { cache: "no-store" })
         ]);
 
         const subJson = await subRes.json();
@@ -122,48 +131,52 @@ export default function SubscriptionDetailPage() {
 
     void run();
     return () => { mounted = false; };
-  }, [params.id, wallet?.address]);
+  }, [params.id, wallet?.address, sessionUserToken]);
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto py-10 px-4 space-y-8">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid gap-6 md:grid-cols-3">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
+      <div className="max-w-[1400px] mx-auto py-12 px-6 space-y-10 lg:px-12">
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-32 rounded-full" />
+          <Skeleton className="h-10 w-96 rounded-2xl" />
         </div>
-        <Skeleton className="h-64 w-full" />
+        <div className="grid gap-8 md:grid-cols-3">
+          <Skeleton className="h-32 w-full rounded-3xl opacity-60" />
+          <Skeleton className="h-32 w-full rounded-3xl opacity-60" />
+          <Skeleton className="h-32 w-full rounded-3xl opacity-60" />
+        </div>
+        <Skeleton className="h-96 w-full rounded-[3rem] opacity-40" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="max-w-5xl mx-auto py-20 px-4 text-center space-y-6">
-        <div className="h-16 w-16 bg-destructive/10 text-destructive flex items-center justify-center rounded-full mx-auto">
-          <AlertCircle size={32} />
+      <div className="max-w-xl mx-auto py-32 px-6 text-center space-y-8">
+        <div className="h-20 w-20 bg-destructive/10 text-destructive flex items-center justify-center rounded-[2rem] mx-auto border border-destructive/20 shadow-sm">
+          <AlertCircle size={36} />
         </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">Subscription Not Found</h2>
-          <p className="text-muted-foreground">{error || "This subscription could not be found or is still syncing."}</p>
+        <div className="space-y-3">
+          <h2 className="text-3xl font-black tracking-tight">Subscription missing</h2>
+          <p className="text-sm font-medium text-muted-foreground leading-relaxed">
+            {error || "This subscription could not be located on the network or is still syncing."}
+          </p>
         </div>
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="h-12 px-8 rounded-2xl font-bold text-xs">
           <Link href="/dashboard/subscriptions">Return to Subscriptions</Link>
         </Button>
       </div>
     );
   }
 
-  const title = data.metadata?.name ?? `Plan ${data.plan.id.slice(0, 8)}`;
+  const title = data.metadata?.name ?? `Subscription ${data.plan.id.slice(0, 8)}`;
   const isActive = data.status === "ACTIVE";
   const brand = data.metadata?.brand;
   
   const activeTier = data.plan.tiers?.find(t => t.tierId === data.lastTierId);
-  const tierLabel = activeTier?.label ?? "Base";
+  const tierLabel = activeTier?.label ?? "Standard";
   const progressPercent = Math.min((data.remainingSeconds / Number(data.plan.duration)) * 100, 100);
 
-  // Filter perks based on tier
   const isV11 = data.metadata?.version === "1.1";
   let perks: { title: string; description: string }[] = [];
   if (isV11) {
@@ -174,23 +187,30 @@ export default function SubscriptionDetailPage() {
   }
 
   const renderActivityFeed = () => (
-    <>
+    <div className="py-2">
       {notifications.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+          <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center text-muted-foreground/30">
+            <Activity size={24} />
+          </div>
+          <p className="text-xs font-medium text-muted-foreground max-w-[180px]">No activity logs found for this plan.</p>
+        </div>
       ) : (
-        <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+        <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px before:h-full before:w-[1px] before:bg-border/60">
           {notifications.map((notif) => (
-            <div key={notif.id} className="relative flex items-start gap-4">
-              <div className="absolute left-0 h-4 w-4 rounded-full border-2 border-background bg-primary" />
-              <div className="pl-6 space-y-1">
-                <p className="text-sm font-medium">
+            <div key={notif.id} className="relative flex items-start gap-4 group">
+              <div className="absolute left-0 mt-1.5 h-[22px] w-[22px] rounded-full border-4 border-background bg-muted group-hover:bg-primary transition-all duration-300" />
+              <div className="pl-10 space-y-1.5">
+                <p className="text-xs font-bold text-foreground leading-tight">
                   {notif.type === "STATUS_CHANGE" 
-                    ? (notif.active ? "Plan Activated" : "Plan Paused")
-                    : "Plan Updated"}
+                    ? (notif.active ? "Service Enabled" : "Service Disabled")
+                    : "Plan Configuration Update"}
                 </p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  <span>{timeAgo(notif.blockTimestamp)}</span>
+                <div className="flex items-center gap-4 text-[10px] font-medium text-muted-foreground/80">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3 w-3 opacity-60" />
+                    <span>{timeAgo(notif.blockTimestamp)}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -198,165 +218,172 @@ export default function SubscriptionDetailPage() {
         </div>
       )}
       
-      <div className="mt-8 pt-4 border-t border-border/40 text-center">
+      <div className="mt-12 pt-6 border-t border-border/20 text-center">
         <a 
           href={`https://testnet.arcscan.app/address/${SUBSCRIPTION_GATEWAY_ADDRESS}`} 
           target="_blank" 
           rel="noreferrer"
-          className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-1"
+          className="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2 uppercase tracking-widest"
         >
           <ShieldCheck className="h-3 w-3" />
-          Verified on Arc Protocol
+          Verified Protocol Gateway
         </a>
       </div>
-    </>
+    </div>
   );
 
   return (
-    <div className="relative min-h-screen">
-      {/* Main Content (Left) */}
-      <div className="w-full pt-6 pb-10 px-6 space-y-8 lg:pr-[360px] lg:pl-10">
-        {/* Header section */}
-        <div className="space-y-4 mb-8">
-          <Button variant="ghost" size="sm" className="pl-0 text-muted-foreground hover:text-foreground" asChild>
-            <Link href="/dashboard/subscriptions">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Subscriptions
-            </Link>
-          </Button>
-          
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight mb-2">{title}</h1>
-              <div className="flex items-center gap-2">
-                <Badge variant={isActive ? "default" : "secondary"}>
-                  {data.status}
-                </Badge>
-                <Badge variant="outline" className="text-primary border-primary/30">
-                  Tier: {tierLabel}
-                </Badge>
-              </div>
+    <div className="relative">
+      <div className="w-full pt-8 pb-20 px-6 lg:px-12 space-y-12 mx-auto">
+        
+        {/* Navigation Breadcrumb */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/dashboard/subscriptions"
+            className="group flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-all"
+          >
+            <div className="h-6 w-6 rounded-lg bg-muted/50 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+              <ArrowLeft size={12} className="stroke-[2.5px]" />
             </div>
-            <Button asChild variant="outline">
+            Back to All Subscriptions
+          </Link>
+        </div>
+
+        {/* Dynamic Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl lg:text-5xl font-black tracking-tight text-foreground">{title}</h1>
+              <Badge className={cn(
+                "text-[10px] font-bold px-3 py-1 rounded-full border-none shadow-sm",
+                isActive ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
+              )}>
+                {isActive ? "Active" : "Expired"}
+              </Badge>
+            </div>
+            <p className="text-sm font-medium text-muted-foreground max-w-xl">
+              Configuration and billing details for your active {tierLabel} access tier.
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="h-12 px-6 rounded-2xl font-bold text-xs border-border/60 hover:bg-muted/50 transition-all gap-2.5">
+                  <Activity className="h-4 w-4 text-primary" />
+                  Activity
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-md md:max-w-lg border-l-border/40 p-0 overflow-hidden flex flex-col">
+                <SheetHeader className="p-8 border-b border-border/20 bg-muted/5">
+                  <div className="flex items-center gap-4">
+                     <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                       <Activity size={24} strokeWidth={2} />
+                     </div>
+                     <div className="text-left space-y-1">
+                       <SheetTitle className="text-lg font-bold tracking-tight">Technical History</SheetTitle>
+                       <SheetDescription className="text-xs font-medium">
+                         On-chain logs and service state transitions.
+                       </SheetDescription>
+                     </div>
+                  </div>
+                </SheetHeader>
+                <div className="flex-1 overflow-y-auto px-8 py-4 no-scrollbar">
+                  {renderActivityFeed()}
+                </div>
+                <div className="p-6 border-t border-border/20 bg-muted/5 text-center">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Enterprise Security Layer</p>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Button asChild variant="outline" className="h-12 px-8 rounded-2xl font-bold text-xs border-border/60 hover:bg-muted/50 transition-all gap-2">
               <Link href={`/dashboard/marketplace/${data.plan.id}`}>
-                View in Marketplace <ExternalLink className="ml-2 h-4 w-4" />
+                View in Marketplace <ExternalLink className="h-4 w-4" />
               </Link>
             </Button>
           </div>
         </div>
 
-        {/* Main Stats Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Time Remaining</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold mb-2">
-                {isActive ? formatCountdown(data.remainingSeconds) : "Expired"}
-              </div>
-              <Progress value={progressPercent} className="h-2" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-              <p className="text-sm text-muted-foreground">USDC</p>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${formatUnits(data.totalSpent, 6)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {data.subscriptionCount} successful renewal{data.subscriptionCount !== 1 && "s"}
+        {/* High-Impact Stats Grid */}
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <Card className="rounded-[2.5rem] border-border/60 shadow-sm p-8 space-y-6">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <p className="text-[11px] font-bold uppercase tracking-wider">Remaining Time</p>
+              <Clock className="h-4 w-4 opacity-40" />
+            </div>
+            <div className="space-y-4">
+              <p className="text-4xl font-black text-foreground tabular-nums">
+                {isActive ? formatCountdown(data.remainingSeconds) : "00h 00m"}
               </p>
-            </CardContent>
+              <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden shadow-inner">
+                 <div 
+                   className="absolute top-0 left-0 h-full bg-primary transition-all duration-1000 ease-out" 
+                   style={{ width: `${progressPercent}%` }} 
+                 />
+              </div>
+            </div>
           </Card>
 
-          <Card className="sm:col-span-2 lg:col-span-1">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Provider</CardTitle>
-              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-semibold truncate">{brand?.name || "Unknown Provider"}</div>
+          <Card className="rounded-[2.5rem] border-border/60 shadow-sm p-8 space-y-6">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <p className="text-[11px] font-bold uppercase tracking-wider">Total Investment</p>
+              <p className="text-[10px] font-mono font-bold opacity-60">USDC</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-4xl font-black text-foreground tabular-nums">${formatUnits(data.totalSpent, 6)}</p>
+              <p className="text-xs font-medium text-muted-foreground">Across {data.subscriptionCount} billing cycles</p>
+            </div>
+          </Card>
+
+          <Card className="rounded-[2.5rem] border-border/60 shadow-sm p-8 space-y-6 sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <p className="text-[11px] font-bold uppercase tracking-wider">Service Provider</p>
+              <ShieldCheck className="h-4 w-4 opacity-40" />
+            </div>
+            <div className="space-y-3">
+              <p className="text-2xl font-bold text-foreground truncate">{brand?.name || "Independent Provider"}</p>
               {brand?.website && (
                 <a 
                   href={brand.website} 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="text-sm text-primary hover:underline flex items-center mt-1"
+                  className="text-xs font-bold text-primary hover:underline flex items-center gap-1.5 underline underline-offset-4 decoration-primary/20"
                 >
-                  Visit Website <ExternalLink className="ml-1 h-3 w-3" />
+                  Official Support <ExternalLink className="h-3 w-3" />
                 </a>
               )}
-            </CardContent>
+            </div>
           </Card>
         </div>
 
-        {/* Secondary Stats Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-muted/20 shadow-none border-dashed">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Plan Duration</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="font-semibold text-sm">
-                {Number(data.plan.duration) >= 86400 * 30 
-                  ? `${Math.round(Number(data.plan.duration) / (86400 * 30))} Months`
-                  : Number(data.plan.duration) >= 86400 
-                  ? `${Math.round(Number(data.plan.duration) / 86400)} Days`
-                  : `${Math.round(Number(data.plan.duration) / 3600)} Hours`}
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-muted/20 shadow-none border-dashed">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Network Fees Paid</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="font-semibold text-sm">${formatUnits(data.totalFeesPaid, 6)}</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-muted/20 shadow-none border-dashed">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">First Subscribed</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="font-semibold text-sm">
-                {new Date(Number(data.firstStartTime) * 1000).toLocaleDateString()}
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-muted/20 shadow-none border-dashed">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Global Subscribers</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="font-semibold text-sm">{data.plan.subscriptionCount} Users</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Features & Data */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Privileges</CardTitle>
-              <CardDescription>Features included in your {tierLabel} tier</CardDescription>
-            </CardHeader>
-            <CardContent>
+        {/* Detail Breakdown */}
+        <div className="grid gap-8 lg:grid-cols-2">
+          <Card className="rounded-[3rem] border-border/60 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-10 border-b border-border/30 bg-muted/5 flex items-center justify-between">
+               <div className="space-y-1">
+                 <h3 className="text-xl font-bold">Active Privileges</h3>
+                 <p className="text-xs font-medium text-muted-foreground">Features included in your {tierLabel} plan.</p>
+               </div>
+               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                 <CheckCircle2 size={20} />
+               </div>
+            </div>
+            <CardContent className="p-10 flex-1">
               {perks.length === 0 ? (
-                <div className="text-center py-6 text-sm text-muted-foreground border rounded-lg bg-muted/20">
-                  No features declared for this tier.
+                <div className="text-center py-12 text-sm font-medium text-muted-foreground border border-dashed rounded-[2rem] bg-muted/5">
+                  Standard access tier features apply.
                 </div>
               ) : (
-                <ul className="space-y-4">
+                <ul className="grid gap-6">
                   {perks.map((feature, i) => (
-                    <li key={i} className="flex gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-sm leading-none mb-1">{feature.title}</p>
-                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                    <li key={i} className="flex gap-4 group">
+                      <div className="h-6 w-6 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
+                        <CheckCircle2 size={12} strokeWidth={3} />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-bold text-sm leading-tight text-foreground">{feature.title}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
                       </div>
                     </li>
                   ))}
@@ -365,52 +392,54 @@ export default function SubscriptionDetailPage() {
             </CardContent>
           </Card>
 
-          {data.lastBuyerData && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Subscription Data</CardTitle>
-                <CardDescription>Encrypted payload provided during subscription</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-muted p-4 rounded-lg font-mono text-sm break-all">
+          <div className="space-y-8">
+            <Card className="rounded-[2.5rem] border-border/60 shadow-sm p-8 space-y-6">
+               <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Metadata Context</h3>
+               <div className="grid grid-cols-2 gap-8">
+                 <div className="space-y-1.5">
+                   <p className="text-[10px] font-bold text-muted-foreground/60 uppercase">Duration</p>
+                   <p className="text-sm font-bold">
+                     {Number(data.plan.duration) >= 86400 * 30 
+                       ? `${Math.round(Number(data.plan.duration) / (86400 * 30))} Months`
+                       : Number(data.plan.duration) >= 86400 
+                       ? `${Math.round(Number(data.plan.duration) / 86400)} Days`
+                       : `${Math.round(Number(data.plan.duration) / 3600)} Hours`}
+                   </p>
+                 </div>
+                 <div className="space-y-1.5 border-l border-border/40 pl-8">
+                   <p className="text-[10px] font-bold text-muted-foreground/60 uppercase">Network Tax</p>
+                   <p className="text-sm font-bold">${formatUnits(data.totalFeesPaid, 6)} <span className="text-[10px] opacity-40">USDC</span></p>
+                 </div>
+                 <div className="space-y-1.5">
+                   <p className="text-[10px] font-bold text-muted-foreground/60 uppercase">First Activated</p>
+                   <p className="text-sm font-bold">
+                     {new Date(Number(data.firstStartTime) * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                   </p>
+                 </div>
+                 <div className="space-y-1.5 border-l border-border/40 pl-8">
+                   <p className="text-[10px] font-bold text-muted-foreground/60 uppercase">Plan Adoption</p>
+                   <p className="text-sm font-bold">{data.plan.subscriptionCount} active users</p>
+                 </div>
+               </div>
+            </Card>
+
+            {data.lastBuyerData && (
+              <Card className="rounded-[2.5rem] border-border/60 shadow-sm p-8 space-y-4 bg-muted/5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Transaction Payload</h3>
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                </div>
+                <div className="bg-background border border-border/60 p-5 rounded-2xl font-mono text-[11px] break-all leading-relaxed text-muted-foreground/80 shadow-inner">
                   {data.lastBuyerData}
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Fixed Activity Sidebar (Desktop Only) */}
-      <div className="hidden lg:block fixed right-0 top-20 bottom-0 w-[320px] border-l bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-y-auto z-30">
-        <div className="p-6 space-y-6">
-          <h3 className="font-semibold text-sm flex items-center gap-2 pb-4 border-b">
-            <Activity className="h-4 w-4 text-primary" />
-            Activity History
-          </h3>
-          {renderActivityFeed()}
-        </div>
-      </div>
-
-      {/* Mobile Activity Sidebar */}
-      <div className="lg:hidden px-4 pb-10">
-        <Card>
-          <div 
-            className="p-6 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setIsActivityOpen(!isActivityOpen)}
-          >
-            <CardTitle className="flex items-center gap-2 m-0">
-              <Activity className="h-5 w-5" />
-              Activity History
-            </CardTitle>
-            <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isActivityOpen ? "rotate-180" : ""}`} />
+              </Card>
+            )}
           </div>
-          {isActivityOpen && (
-            <CardContent className="pt-0">
-              {renderActivityFeed()}
-            </CardContent>
-          )}
-        </Card>
+        </div>
+      </div>
+
+      <div className="py-12 border-t border-border/20 bg-muted/5 text-center">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Mecha Pay Gateway • Enterprise Portal</p>
       </div>
     </div>
   );

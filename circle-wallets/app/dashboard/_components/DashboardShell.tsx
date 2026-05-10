@@ -187,7 +187,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen flex-col items-center justify-center bg-background gap-4">
         <Loader />
         <div className="flex flex-col items-center gap-2">
-          <p className="text-sm font-black uppercase italic animate-pulse">Initializing Protocol...</p>
+          <p className="text-sm font-black uppercase italic">Initializing Protocol...</p>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground font-mono">Mecha Pay Command Center</p>
         </div>
       </div>
@@ -196,7 +196,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   return (
     <DashboardContext.Provider value={value}>
-      <div className="flex min-h-screen bg-background font-mulish">
+      <div className="flex bg-background font-mulish">
         
         {/* Mobile Header */}
         <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border z-50 flex items-center justify-between px-6">
@@ -217,10 +217,20 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {/* Sidebar */}
         <aside 
           className={cn(
-            "fixed inset-y-0 left-0 z-40 w-72 bg-sidebar border-r border-sidebar-border transition-transform duration-300 lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:block overflow-y-auto no-scrollbar",
+            "fixed inset-y-0 left-0 z-[60] w-72 bg-sidebar border-r border-sidebar-border transition-transform duration-300 lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:block overflow-y-auto no-scrollbar shadow-2xl lg:shadow-none",
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
+          {/* Mobile Close Button - Only visible when open on mobile */}
+          <div className="lg:hidden absolute top-5 right-5">
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-2 rounded-xl bg-muted/50 text-foreground hover:bg-muted transition-all border border-border"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
           <div className="flex flex-col h-full p-6">
             <div className="flex items-center gap-2 mb-10 px-2 mt-4 lg:mt-0">
               <img src="/logo.png" alt="Mecha Pay" className="h-8 w-8" />
@@ -276,7 +286,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {/* Overlay for mobile sidebar */}
         {isSidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] lg:hidden animate-in fade-in duration-300"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -311,10 +321,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </div>
           </header>
 
-          <main className="flex-1 p-6 lg:p-10 animate-in fade-in duration-700 mt-16 lg:mt-0 overflow-y-auto">
-            <div className="mx-auto max-w-6xl">
-              {children}
-            </div>
+          <main className="flex-1 p-6 lg:p-10 duration-700 mt-16 lg:mt-0 overflow-y-auto">
+            {children}
           </main>
         </div>
       </div>

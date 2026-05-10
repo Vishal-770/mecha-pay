@@ -311,7 +311,7 @@ export default function CreatePlanPage() {
   };
 
   return (
-    <section className="max-w-4xl mx-auto py-12 px-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <section className="w-full py-12 px-6">
       <CompactHeader title="Deploy Tiered Protocol" subtitle="Merchant Subscription Factory v1.1" />
 
       {/* Progress Tracker */}
@@ -343,7 +343,7 @@ export default function CreatePlanPage() {
 
       <div className="space-y-12">
         {step === 1 && (
-          <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+          <div className="space-y-10">
             <div className="flex items-center gap-2 mb-4">
               <LayoutGrid size={14} className="text-primary" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Core Identity</span>
@@ -390,7 +390,7 @@ export default function CreatePlanPage() {
         )}
 
         {step === 2 && (
-          <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+          <div className="space-y-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Layers size={14} className="text-primary" />

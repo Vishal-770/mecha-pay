@@ -205,7 +205,7 @@ export default function MarketplaceDetailPage() {
   }, [params.id, wallet?.address]);
 
   useEffect(() => {
-    if (!data?.plan || !wallet?.address) return;
+    if (!data?.plan || !wallet?.address || !sessionUserToken) return;
     let mounted = true;
     const run = async () => {
       try {
@@ -215,6 +215,7 @@ export default function MarketplaceDetailPage() {
           body: JSON.stringify({
             subscriber: wallet.address,
             planId: data.plan.planId,
+            userToken: sessionUserToken,
           }),
         });
         const json = (await res.json()) as EligibilityResponse;
@@ -269,6 +270,7 @@ export default function MarketplaceDetailPage() {
         body: JSON.stringify({
           subscriber: userAddress,
           planId: data.plan.planId,
+          userToken: sessionUserToken,
         }),
       });
       const latestEligibility = (await eligRes.json()) as EligibilityResponse;
@@ -361,7 +363,7 @@ export default function MarketplaceDetailPage() {
   const title = plan.metadata?.name ?? brand?.name ?? `Plan ${plan.planId.slice(0, 8)}`;
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-6 space-y-12 pb-32">
+    <div className="w-full py-12 px-6 space-y-12 pb-32">
       
       {/* Header Section */}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b border-border/40 pb-10">

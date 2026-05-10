@@ -95,7 +95,7 @@ function humanDuration(secondsValue: string) {
 }
 
 export default function MyPlansPage() {
-  const { wallet } = useDashboardContext();
+  const { wallet, sessionUserToken } = useDashboardContext();
   const [data, setData] = useState<MyPlansResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,13 +103,16 @@ export default function MyPlansPage() {
   useEffect(() => {
     let mounted = true;
     const run = async () => {
-      if (!wallet?.address) {
+      if (!wallet?.address || !sessionUserToken) {
         setLoading(false);
         return;
       }
 
       try {
-        const params = new URLSearchParams({ seller: wallet.address });
+        const params = new URLSearchParams({ 
+          seller: wallet.address,
+          userToken: sessionUserToken 
+        });
         const response = await fetch(
           `/api/subscription/my-plans?${params.toString()}`,
           { cache: "no-store" }
@@ -192,7 +195,7 @@ export default function MyPlansPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-6 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full py-12 px-6 space-y-12">
       
       {/* Header Matrix */}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b border-border/40 pb-10">

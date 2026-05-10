@@ -27,17 +27,29 @@ const query = `
   }
 `;
 
+import { validateWalletOwnership } from "@/lib/auth-util";
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as {
       subscriber?: string;
       planId?: string;
+      userToken?: string;
     };
 
-    if (!body.subscriber || !body.planId) {
+    if (!body.subscriber || !body.planId || !body.userToken) {
       return NextResponse.json(
-        { error: "subscriber and planId are required" },
+        { error: "subscriber, planId and userToken are required" },
         { status: 400 },
+      );
+    }
+
+    // Security: Validate wallet ownership
+    const isValid = await validateWalletOwnership(body.userToken, body.subscriber);
+    if (!isValid) {
+      return NextResponse.json(
+        { error: "Unauthorized: Wallet address does not belong to this user session" },
+        { status: 403 },
       );
     }
 

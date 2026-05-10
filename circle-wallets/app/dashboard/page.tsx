@@ -104,7 +104,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 
 export default function DashboardOverviewPage() {
-  const { wallet } = useDashboardContext();
+  const { wallet, sessionUserToken } = useDashboardContext();
   const clr = useCssColors();
   const tooltipStyle = {
     background: clr.tooltip.bg,
@@ -120,17 +120,26 @@ export default function DashboardOverviewPage() {
   useEffect(() => {
     let mounted = true;
     const run = async () => {
+      if (!wallet?.address || !sessionUserToken) {
+        setLoading(false);
+        return;
+      }
       try {
-        const p = new URLSearchParams();
-        if (wallet?.address) { p.set("seller", wallet.address); p.set("subscriber", wallet.address); }
-        const res = await fetch(`/api/subscription/analytics?${p}`, { cache: "no-store" });
+        const p = new URLSearchParams({
+          seller: wallet.address,
+          subscriber: wallet.address,
+          userToken: sessionUserToken
+        });
+        const res = await fetch(`/api/subscription/analytics?${p.toString()}`, { cache: "no-store" });
         const json = await res.json() as AnalyticsResponse;
         if (mounted) setAnalytics(json);
+      } catch (err) {
+        console.error("Dashboard analytics fetch failed:", err);
       } finally { if (mounted) setLoading(false); }
     };
     void run();
     return () => { mounted = false; };
-  }, [wallet?.address]);
+  }, [wallet?.address, sessionUserToken]);
 
   const usdcBalance = useMemo(() => {
     if (!wallet?.tokenBalances) return "0.00";
@@ -157,7 +166,7 @@ export default function DashboardOverviewPage() {
   const b = analytics?.buyerMetrics;
 
   return (
-    <div className="w-full min-h-screen bg-background">
+    <div className="w-full bg-background">
 
       {/* ── Top bar ── */}
       <div className="border-b border-border/40 px-5 md:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
@@ -292,7 +301,7 @@ export default function DashboardOverviewPage() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <SectionLabel>Monthly Volume</SectionLabel>
-                <p className="text-xs text-muted-foreground">12-month gross USDC &amp; subscription count</p>
+                <p className="text-xs text-muted-foreground">12-month gross USDC &amp; subscription metrics</p>
               </div>
               <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                 <span className="flex items-center gap-1.5">
@@ -326,14 +335,29 @@ export default function DashboardOverviewPage() {
                     />
                     <Tooltip
                       contentStyle={tooltipStyle}
-                      cursor={{ fill: `${clr.primary}18` }}
+                      cursor={{ fill: clr.border, opacity: 0.1 }}
                       formatter={(v, name) => {
                         const num = Number(v ?? 0);
-                        return [name === "vol" ? `$${num.toFixed(2)}` : num, name === "vol" ? "Volume" : "Subs"];
+                        return [
+                          name === "vol" ? `$${num.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : num, 
+                          name === "vol" ? "Volume" : "Subscriptions"
+                        ];
                       }}
                     />
-                    <Bar dataKey="vol"  fill={clr.primary} radius={[3, 3, 0, 0]} opacity={0.9} />
-                    <Bar dataKey="subs" fill={clr.muted}   radius={[3, 3, 0, 0]} opacity={0.7} />
+                    <Bar 
+                      dataKey="vol"  
+                      fill={clr.primary} 
+                      radius={[3, 3, 0, 0]} 
+                      opacity={0.8}
+                      activeBar={{ fill: clr.primary, opacity: 1, stroke: clr.primary, strokeWidth: 1 }}
+                    />
+                    <Bar 
+                      dataKey="subs" 
+                      fill={clr.muted}   
+                      radius={[3, 3, 0, 0]} 
+                      opacity={0.5}
+                      activeBar={{ fill: clr.muted, opacity: 0.8, stroke: clr.muted, strokeWidth: 1 }}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

@@ -233,7 +233,7 @@ export default function AdminDashboardPage() {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
         <Loader />
-        <p className="text-sm font-black uppercase italic animate-pulse">Verifying Governance Authority...</p>
+        <p className="text-sm font-black uppercase italic">Verifying Governance Authority...</p>
       </div>
     );
   }
@@ -242,7 +242,7 @@ export default function AdminDashboardPage() {
     return (
       <div className="flex h-[70vh] flex-col items-center justify-center text-center px-6">
         <div className="mb-6 rounded-3xl bg-red-500/10 p-6 text-red-500 ring-1 ring-red-500/20">
-          <ShieldAlert size={48} className="animate-pulse" />
+          <ShieldAlert size={48} />
         </div>
         <h1 className="text-3xl font-black uppercase italic tracking-tighter mb-2">Access Restricted</h1>
         <p className="max-w-md text-sm text-muted-foreground font-bold leading-relaxed mb-8">
@@ -309,7 +309,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <section className="space-y-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center gap-2 text-primary font-bold mb-1">

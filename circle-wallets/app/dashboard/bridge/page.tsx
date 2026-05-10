@@ -11,7 +11,7 @@ export default function BridgePage() {
           Move your USDC across 15+ testnet chains instantly using Circle CCTP.
         </p>
       </div>
-      <div className="max-w-6xl mx-auto w-full">
+      <div className="w-full">
         <BridgeUSDC />
       </div>
     </div>

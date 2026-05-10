@@ -55,13 +55,25 @@ const eventsQuery = `
   }
 `;
 
+import { validateWalletOwnership } from "@/lib/auth-util";
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const subscriber = searchParams.get("subscriber");
+    const userToken = searchParams.get("userToken");
 
-    if (!subscriber) {
-      return NextResponse.json({ error: "subscriber is required" }, { status: 400 });
+    if (!subscriber || !userToken) {
+      return NextResponse.json({ error: "subscriber and userToken are required" }, { status: 400 });
+    }
+
+    // Security: Validate wallet ownership
+    const isValid = await validateWalletOwnership(userToken, subscriber);
+    if (!isValid) {
+      return NextResponse.json(
+        { error: "Unauthorized: Wallet address does not belong to this user session" },
+        { status: 403 },
+      );
     }
 
     // 1. Get user's subscribed plans

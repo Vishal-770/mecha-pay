@@ -20,6 +20,7 @@ type Plan = {
   totalGrossVolume: string;
   totalFeesCollected: string;
   lastSubscriptionAt: string | null;
+  createdAt: string;
   tiers: Tier[];
 };
 
@@ -99,6 +100,7 @@ const sellerPlansQuery = `
       totalGrossVolume
       totalFeesCollected
       lastSubscriptionAt
+      createdAt
       tiers {
         id
         tierId
@@ -213,14 +215,45 @@ const transactionsQuery = `
 `;
 
 
+import { validateWalletOwnership } from "@/lib/auth-util";
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const seller = searchParams.get("seller");
     const subscriber = searchParams.get("subscriber");
+    const userToken = searchParams.get("userToken");
+
+    if (!userToken) {
+      return NextResponse.json(
+        { error: "userToken is required" },
+        { status: 400 },
+      );
+    }
+
+    // Security: Validate wallet ownership for both roles if they are being queried
+    if (seller) {
+      const isSellerOwner = await validateWalletOwnership(userToken, seller);
+      if (!isSellerOwner) {
+        return NextResponse.json(
+          { error: "Unauthorized: Seller wallet does not belong to this user session" },
+          { status: 403 },
+        );
+      }
+    }
+
+    if (subscriber) {
+      const isSubOwner = await validateWalletOwnership(userToken, subscriber);
+      if (!isSubOwner) {
+        return NextResponse.json(
+          { error: "Unauthorized: Subscriber wallet does not belong to this user session" },
+          { status: 403 },
+        );
+      }
+    }
     const eventsFirst = 1000;
     const now = Math.floor(Date.now() / 1000);
-    const thirtyDaysAgo = Math.max(now - 30 * 24 * 60 * 60, 0);
+    const oneYearAgo = Math.max(now - 365 * 24 * 60 * 60, 0);
 
     const results = await Promise.allSettled([
       // 0: seller metrics
@@ -231,11 +264,11 @@ export async function GET(req: Request) {
       subscriber
         ? querySubgraph<{ subscriber: Subscriber | null }>(subscriberQuery, { id: toLowerHex(subscriber) })
         : Promise.resolve({ subscriber: null }),
-      // 2: recent subscription events
+      // 2: recent subscription events (1 year)
       querySubgraph<{ subscribeds: SubscribedEvent[] }>(recentSubscriptionsQuery, {
         user: toLowerHex(seller || subscriber || "0x0000000000000000000000000000000000000000"),
-        first: eventsFirst,
-        since: String(thirtyDaysAgo),
+        first: 1000,
+        since: String(oneYearAgo),
       }),
       // 3: seller plans
       seller
@@ -245,8 +278,8 @@ export async function GET(req: Request) {
       subscriber
         ? querySubgraph<{ subscriptionStates: SubscriptionState[] }>(buyerStatesQuery, { subscriber: toLowerHex(subscriber) })
         : Promise.resolve({ subscriptionStates: [] }),
-      // 5: monthly stats
-      querySubgraph<{ monthlyStats: MonthlyStats[] }>(monthlyStatsQuery),
+      // 5: monthly stats (DEPRECATED - we will compute user specific)
+      Promise.resolve({ monthlyStats_collection: [] }),
       // 6: transactions
       (seller || subscriber)
         ? querySubgraph<{ transactions: Transaction[] }>(transactionsQuery, {
@@ -272,9 +305,7 @@ export async function GET(req: Request) {
     const recentEventsData = unwrap(results[2] as PromiseSettledResult<{ subscribeds: SubscribedEvent[] }>, { subscribeds: [] });
     const sellerPlansData = unwrap(results[3] as PromiseSettledResult<{ plans: Plan[] }>, { plans: [] });
     const buyerStatesData = unwrap(results[4] as PromiseSettledResult<{ subscriptionStates: SubscriptionState[] }>, { subscriptionStates: [] });
-    const monthlyStatsData = unwrap(results[5] as PromiseSettledResult<{ monthlyStats_collection: MonthlyStats[] }>, { monthlyStats_collection: [] });
     const transactionsData = unwrap(results[6] as PromiseSettledResult<{ transactions: Transaction[] }>, { transactions: [] });
-
 
     const recentSubscriptions = recentEventsData.subscribeds ?? [];
     const sellerPlans = sellerPlansData.plans ?? [];
@@ -320,31 +351,84 @@ export async function GET(req: Request) {
       }),
     );
 
-    // Aggregate revenue history for chart
-    const chartMap = new Map<string, bigint>();
+    // Aggregate 30-day revenue history for area chart
+    const revenueMap = new Map<string, bigint>();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60;
     for (let i = 0; i < 30; i++) {
         const d = new Date((now - i * 86400) * 1000);
         const key = d.toISOString().split("T")[0];
-        chartMap.set(key, 0n);
+        revenueMap.set(key, 0n);
     }
 
+    // Aggregate 12-month stats for bar chart
+    const monthlyMap = new Map<string, { totalGrossVolume: bigint; subscriptionsCreated: number; plansCreated: number; totalFeesCollected: bigint }>();
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(now * 1000);
+        d.setMonth(d.getMonth() - i);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        monthlyMap.set(key, { totalGrossVolume: 0n, subscriptionsCreated: 0, plansCreated: 0, totalFeesCollected: 0n });
+    }
+
+    // Count plans created per month
+    sellerPlans.forEach(plan => {
+        const d = new Date(Number(plan.createdAt) * 1000);
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (monthlyMap.has(monthKey)) {
+            const current = monthlyMap.get(monthKey)!;
+            monthlyMap.set(monthKey, { ...current, plansCreated: current.plansCreated + 1 });
+        }
+    });
+
     recentSubscriptions.forEach(event => {
-        const d = new Date(Number(event.blockTimestamp) * 1000);
-        const key = d.toISOString().split("T")[0];
-        if (chartMap.has(key)) {
-            // ONLY count if the user is the seller (actual revenue)
+        const timestamp = Number(event.blockTimestamp);
+        const d = new Date(timestamp * 1000);
+        
+        // Update 30-day map
+        if (timestamp >= thirtyDaysAgo) {
+            const dayKey = d.toISOString().split("T")[0];
+            if (revenueMap.has(dayKey)) {
+                if (event.seller.toLowerCase() === (seller || "").toLowerCase()) {
+                    revenueMap.set(dayKey, (revenueMap.get(dayKey) || 0n) + BigInt(event.totalAmount));
+                }
+            }
+        }
+
+        // Update 12-month map
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (monthlyMap.has(monthKey)) {
             if (event.seller.toLowerCase() === (seller || "").toLowerCase()) {
-                chartMap.set(key, (chartMap.get(key) || 0n) + BigInt(event.totalAmount));
+                const current = monthlyMap.get(monthKey)!;
+                monthlyMap.set(monthKey, {
+                    ...current,
+                    totalGrossVolume: current.totalGrossVolume + BigInt(event.totalAmount),
+                    subscriptionsCreated: current.subscriptionsCreated + 1,
+                    totalFeesCollected: current.totalFeesCollected + BigInt(event.feeAmount || "0")
+                });
             }
         }
     });
 
-    const revenueHistory = Array.from(chartMap.entries())
+    const revenueHistory = Array.from(revenueMap.entries())
         .map(([date, revenue]) => ({
             date,
             revenue: revenue.toString()
         }))
         .sort((a, b) => a.date.localeCompare(b.date));
+
+    const userMonthlyStats = Array.from(monthlyMap.entries())
+        .map(([key, stats]) => {
+            const [year, month] = key.split("-");
+            const d = new Date(Number(year), Number(month) - 1, 1);
+            return {
+                id: key,
+                monthStartTimestamp: Math.floor(d.getTime() / 1000).toString(),
+                totalGrossVolume: stats.totalGrossVolume.toString(),
+                subscriptionsCreated: stats.subscriptionsCreated,
+                plansCreated: stats.plansCreated,
+                totalFeesCollected: stats.totalFeesCollected.toString()
+            };
+        })
+        .sort((a, b) => Number(a.monthStartTimestamp) - Number(b.monthStartTimestamp));
 
     return NextResponse.json({
       globalOverview,
@@ -355,7 +439,7 @@ export async function GET(req: Request) {
       topPlans: topPlansWithMetadata,
       recentSubscriptions,
       revenueHistory,
-      monthlyStats: monthlyStatsData.monthlyStats_collection ?? [],
+      monthlyStats: userMonthlyStats,
       transactions: transactionsData.transactions ?? [],
     });
 
