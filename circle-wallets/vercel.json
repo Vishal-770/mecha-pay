@@ -2,43 +2,43 @@
   "rewrites": [
     {
       "source": "/_mintlify/:path*",
-      "destination": "https://mecha-pay.mintlify.dev/_mintlify/:path*"
+      "destination": "https://mechapay.mintlify.dev/_mintlify/:path*"
     },
     {
       "source": "/api/request",
-      "destination": "https://mecha-pay.mintlify.dev/_mintlify/api/request"
+      "destination": "https://mechapay.mintlify.dev/_mintlify/api/request"
     },
     {
       "source": "/docs",
-      "destination": "https://mecha-pay.mintlify.dev/docs"
+      "destination": "https://mechapay.mintlify.dev/docs"
     },
     {
       "source": "/docs/llms.txt",
-      "destination": "https://mecha-pay.mintlify.dev/llms.txt"
+      "destination": "https://mechapay.mintlify.dev/llms.txt"
     },
     {
       "source": "/docs/llms-full.txt",
-      "destination": "https://mecha-pay.mintlify.dev/llms-full.txt"
+      "destination": "https://mechapay.mintlify.dev/llms-full.txt"
     },
     {
       "source": "/docs/sitemap.xml",
-      "destination": "https://mecha-pay.mintlify.dev/sitemap.xml"
+      "destination": "https://mechapay.mintlify.dev/sitemap.xml"
     },
     {
       "source": "/docs/robots.txt",
-      "destination": "https://mecha-pay.mintlify.dev/robots.txt"
+      "destination": "https://mechapay.mintlify.dev/robots.txt"
     },
     {
       "source": "/docs/mcp",
-      "destination": "https://mecha-pay.mintlify.dev/mcp"
+      "destination": "https://mechapay.mintlify.dev/mcp"
     },
     {
       "source": "/docs/:path*",
-      "destination": "https://mecha-pay.mintlify.dev/docs/:path*"
+      "destination": "https://mechapay.mintlify.dev/docs/:path*"
     },
     {
       "source": "/mintlify-assets/:path+",
-      "destination": "https://mecha-pay.mintlify.dev/mintlify-assets/:path+"
+      "destination": "https://mechapay.mintlify.dev/mintlify-assets/:path+"
     }
   ]
 }
