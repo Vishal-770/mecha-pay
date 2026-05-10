@@ -1,10 +1,10 @@
 {
   "name": "Mecha Pay Docs",
   "logo": {
-    "dark": "/logo/dark.svg",
-    "light": "/logo/light.svg"
+    "dark": "/logo/logo.png",
+    "light": "/logo/logo.png"
   },
-  "favicon": "/favicon.png",
+  "favicon": "/logo/logo.png",
   "colors": {
     "primary": "#1E3A8A",
     "light": "#3B82F6",
