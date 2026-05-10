@@ -1,35 +1,35 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/request'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Only apply to api/v1 routes
-  if (request.nextUrl.pathname.startsWith('/api/v1')) {
-    const response = NextResponse.next()
-
-    // Add CORS headers
-    response.headers.set('Access-Control-Allow-Origin', '*')
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, x-api-key, Authorization')
-
-    // Handle preflight requests
-    if (request.method === 'OPTIONS') {
-      return new NextResponse(null, {
-        status: 204,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, x-api-key, Authorization',
-        },
-      })
-    }
-
-    return response
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+        'Access-Control-Max-Age': '86400',
+      },
+    });
   }
 
-  return NextResponse.next()
+  // Handle actual requests
+  const response = NextResponse.next();
+
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key');
+
+  return response;
 }
 
-// Specify the paths this middleware should run on
+// Apply CORS only to SDK, v1, and subscription endpoints
 export const config = {
-  matcher: '/api/v1/:path*',
-}
+  matcher: [
+    '/api/v1/:path*',
+    '/api/sdk/:path*',
+    '/api/subscription/:path*',
+  ],
+};
