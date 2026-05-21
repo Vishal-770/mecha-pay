@@ -6,13 +6,7 @@ import { useParams } from "next/navigation";
 import { formatUnits } from "ethers";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { useCircleSDK } from "@/context/CircleSDKContext";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+
 import { SUBSCRIPTION_GATEWAY_ADDRESS } from "@/lib/subscription";
 import {
   Table,
@@ -35,25 +29,20 @@ import {
 import { 
   TrendingUp, 
   Users, 
-  Clock, 
   Activity, 
   ArrowLeft, 
   ExternalLink, 
   AlertCircle,
-  FileText,
   UserCheck,
   Target,
   CheckCircle2,
-  Globe,
-  Tag,
   ShieldCheck,
   ArrowUpRight,
   Layers,
   Search
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { EditPlanDialog } from "./EditPlanDialog";
 
 type BuyerRow = {
@@ -151,15 +140,15 @@ function truncateAddress(address: string) {
 }
 
 const SectionHeader = ({ title, subtitle, icon: Icon }: any) => (
-  <div className="flex items-center gap-3 mb-6">
-    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-      <Icon size={20} strokeWidth={2.5} />
+  <div className="flex items-center gap-3 mb-4">
+    <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center text-foreground/70 border border-border/30">
+      <Icon size={15} strokeWidth={2} />
     </div>
     <div>
-      <h2 className="text-sm font-black uppercase tracking-widest text-foreground leading-none mb-1">
+      <h2 className="text-sm font-semibold text-foreground leading-none mb-0.5">
         {title}
       </h2>
-      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+      <p className="text-[11px] text-muted-foreground leading-none">
         {subtitle}
       </p>
     </div>
@@ -272,7 +261,7 @@ export default function MyPlanDetailPage() {
           <h2 className="text-2xl font-black uppercase tracking-tight">{error ?? "Protocol Not Found"}</h2>
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Unable to synchronize with indexing node</p>
         </div>
-        <Button variant="outline" className="rounded-xl px-8 h-12 font-black uppercase tracking-widest text-[10px]" asChild>
+        <Button variant="outline" className="rounded-lg px-8 h-12 font-black uppercase tracking-widest text-[10px]" asChild>
           <Link href="/dashboard/my-plans">Back to my plans</Link>
         </Button>
       </div>
@@ -285,320 +274,317 @@ export default function MyPlanDetailPage() {
   const isV11 = plan.metadata?.version === "1.1";
 
   return (
-    <div className="w-full py-12 px-6 space-y-12 pb-32">
-      
-      {/* Header Section */}
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b border-border/40 pb-10">
-        <div className="space-y-3">
+    <div className="w-full py-10 px-6 lg:px-12 pb-28 max-w-[1400px] mx-auto space-y-0">
+
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between py-8 border-b border-border/15">
+        <div className="space-y-2.5">
           <Link
             href="/dashboard/my-plans"
-            className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 hover:text-primary transition-colors"
+            className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform stroke-[3px]" />
-            Back to Registry
+            <ArrowLeft size={11} />
+            My Plans
           </Link>
-          <div className="flex items-center gap-4">
-            <h1 className="text-4xl font-black uppercase tracking-tight text-foreground">
-              {title}
-            </h1>
-            <Badge variant={plan.active ? "secondary" : "outline"} className={cn(
-              "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border-none shadow-sm",
-              plan.active ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground/50"
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+            <span className={cn(
+              "inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full",
+              plan.active
+                ? "bg-emerald-500/10 text-emerald-600"
+                : "bg-muted text-muted-foreground"
             )}>
-              {plan.active ? "Live" : "Inactive"}
-            </Badge>
+              {plan.active ? "● Live" : "○ Inactive"}
+            </span>
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Tag size={12} className="text-primary" /> PID: <span className="font-mono text-foreground/80">{truncateAddress(plan.planId)}</span></span>
-            <span className="h-1 w-1 rounded-full bg-border" />
-            <span className="flex items-center gap-1.5"><Globe size={12} className="text-primary" /> Network: <span className="text-foreground/80">ARC Testnet</span></span>
-            <span className="h-1 w-1 rounded-full bg-border" />
-            <span className="flex items-center gap-1.5"><Clock size={12} className="text-primary" /> Cycle: <span className="text-foreground/80">{humanDuration(plan.duration)}</span></span>
+          <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+            <span className="font-mono">{truncateAddress(plan.planId)}</span>
+            <span className="text-border">·</span>
+            <span>ARC Testnet</span>
+            <span className="text-border">·</span>
+            <span>{humanDuration(plan.duration)} cycle</span>
+            {brand?.website && (
+              <>
+                <span className="text-border">·</span>
+                <a href={brand.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-foreground transition-colors">
+                  {brand.website} <ExternalLink size={9} />
+                </a>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <EditPlanDialog 
-            planId={plan.planId} 
-            durationSeconds={Number(plan.duration)} 
-            metadata={plan.metadata} 
-            onSuccess={() => window.location.reload()} 
+        <div className="flex items-center gap-2 shrink-0">
+          <EditPlanDialog
+            planId={plan.planId}
+            durationSeconds={Number(plan.duration)}
+            metadata={plan.metadata}
+            onSuccess={() => window.location.reload()}
           />
-          <Button 
+          <Button
             asChild
-            variant="outline"
-            className="h-11 px-6 rounded-xl border-border/80 font-black uppercase tracking-widest text-[10px]"
+            variant="ghost"
+            className="h-9 px-4 text-xs font-medium text-muted-foreground hover:text-foreground gap-1.5"
           >
             <a href={`https://testnet.arcscan.app/address/${SUBSCRIPTION_GATEWAY_ADDRESS}`} target="_blank" rel="noreferrer">
-              On-Chain Ledger <ArrowUpRight size={14} className="ml-2 opacity-40" />
+              On-Chain Ledger <ArrowUpRight size={11} />
             </a>
           </Button>
-          <Button 
+          <Button
             onClick={() => void handleToggleStatus()}
             disabled={toggling || !wallet}
-            variant={plan.active ? "destructive" : "default"}
+            size="sm"
             className={cn(
-              "h-11 px-6 rounded-xl font-black uppercase tracking-widest text-[10px] border-none shadow-lg transition-all",
-              plan.active ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white" : "bg-primary text-primary-foreground shadow-primary/20"
+              "h-9 px-4 text-xs font-medium rounded-lg transition-all",
+              plan.active
+                ? "bg-red-500/8 text-red-600 hover:bg-red-500 hover:text-white border border-red-200/50 dark:border-red-900/50"
+                : "bg-foreground text-background hover:opacity-90"
             )}
           >
-            {toggling ? "Processing..." : plan.active ? "Deactivate Protocol" : "Restore Protocol"}
+            {toggling ? "Processing…" : plan.active ? "Deactivate" : "Restore"}
           </Button>
         </div>
       </div>
 
-      {/* Analytics Matrix */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ── Stats Row ──────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-border/15 border-b border-border/15">
         {[
-          { label: "Gross Volume", value: `$${Number(formatUnits(plan.totalGrossVolume, 6)).toLocaleString()}`, sub: `${plan.subscriptionCount} Total Subs`, icon: Activity, color: "text-primary" },
-          { label: "Active Members", value: metrics.activeBuyerCount, sub: `Renewals: ${analytics.activeRate.toFixed(1)}%`, icon: Users, color: "text-sky-500" },
-          { label: "Net Earnings", value: `$${Number(formatUnits(analytics.netEarnings, 6)).toLocaleString()}`, sub: `After 5% Fee`, icon: Target, color: "text-emerald-500" },
-          { label: "Avg. Ticket", value: `$${Number(formatUnits(analytics.avgRevenuePerSubscriber, 6)).toFixed(2)}`, sub: "Per Active Cycle", icon: TrendingUp, color: "text-amber-500" },
+          { label: "Gross Volume", value: `$${Number(formatUnits(plan.totalGrossVolume, 6)).toLocaleString()}`, sub: `${plan.subscriptionCount} subscriptions`, icon: Activity },
+          { label: "Active Members", value: `${metrics.activeBuyerCount}`, sub: `${analytics.activeRate.toFixed(1)}% renewal rate`, icon: Users },
+          { label: "Net Earnings", value: `$${Number(formatUnits(analytics.netEarnings, 6)).toLocaleString()}`, sub: "After 5% protocol fee", icon: Target },
+          { label: "Avg. Ticket", value: `$${Number(formatUnits(analytics.avgRevenuePerSubscriber, 6)).toFixed(2)}`, sub: "Per active cycle", icon: TrendingUp },
         ].map((stat, i) => (
-          <Card key={i} className="bg-card border-border/80 shadow-none rounded-2xl group hover:bg-muted/5 transition-colors">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{stat.label}</CardTitle>
-              <stat.icon size={14} className={cn(stat.color, "stroke-[3px]")} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-black italic text-foreground leading-none">{stat.value}</div>
-              <p className="text-[9px] font-bold text-muted-foreground/60 mt-2 uppercase tracking-widest">{stat.sub}</p>
-            </CardContent>
-          </Card>
+          <div key={i} className="flex flex-col gap-1.5 px-6 py-6 first:pl-0 last:pr-0">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-muted-foreground">{stat.label}</p>
+              <stat.icon size={12} className="text-muted-foreground/30" />
+            </div>
+            <p className="text-2xl font-semibold tracking-tight text-foreground">{stat.value}</p>
+            <p className="text-[11px] text-muted-foreground/60">{stat.sub}</p>
+          </div>
         ))}
       </div>
 
-      {/* Tier Architecture section (Full Width) */}
-      <section className="space-y-6">
-        <SectionHeader title="Tier Architecture" subtitle="Offering & Entitlement Matrix" icon={Layers} />
-        <div className="grid gap-6 md:grid-cols-3">
-          {isV11 ? (
-            plan.metadata?.tiers?.map((tier: any, i: number) => (
-              <Card key={i} className="relative bg-card border-border/80 rounded-2xl overflow-hidden shadow-none group hover:border-primary/30 transition-all">
-                <div className="absolute top-0 right-0 h-24 w-24 bg-primary/5 rounded-full -mr-12 -mt-12 transition-all group-hover:bg-primary/10" />
-                <CardHeader className="p-6 pb-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/10 text-[9px] font-black uppercase tracking-widest px-2.5 py-1">
-                      Tier 0{i + 1}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-xl font-black uppercase tracking-tight mb-1">{tier.label}</CardTitle>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black italic">${tier.price}</span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">USDC / Cycle</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6 pt-0 space-y-6">
-                  <div className="h-[1px] w-full bg-border/10" />
-                  <div className="space-y-4">
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">Tier Entitlements</p>
-                    <div className="space-y-3">
-                      {tier.features?.map((f: any, fi: number) => (
-                        <div key={fi} className="flex gap-3">
-                          <CheckCircle2 size={12} className="text-emerald-500 mt-1 flex-shrink-0 stroke-[3px]" />
-                          <div>
-                            <p className="text-[11px] font-bold text-foreground leading-tight">{f.title}</p>
-                            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-2">{f.description}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card className="md:col-span-3 bg-muted/5 border-dashed border-border border-2 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-4">
-               <Layers size={24} className="text-muted-foreground/30" />
-               <div className="space-y-1">
-                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Legacy v1.0 Plan</p>
-                 <p className="text-sm font-bold text-foreground/60">This protocol was deployed using a single-tier configuration.</p>
-               </div>
-            </Card>
-          )}
-        </div>
-      </section>
-
-      {/* Middle Grid: Revenue vs Brand Info */}
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Main Chart Column (2/3) */}
-        <div className="lg:col-span-2">
-          <section className="space-y-6">
-            <SectionHeader title="Revenue Scaling" subtitle="Historical Settlement Performance" icon={TrendingUp} />
-            <Card className="bg-card border-border/80 shadow-none rounded-3xl overflow-hidden h-full">
-              <CardContent className="p-8 pl-2">
-                <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                      <defs>
-                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.15}/>
-                          <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="var(--border)" opacity={0.5} />
-                      <XAxis 
-                        dataKey="date" 
-                        stroke="var(--muted-foreground)" 
-                        fontSize={10} 
-                        fontWeight="bold"
-                        tickLine={false} 
-                        axisLine={false} 
-                        tickFormatter={(v) => v.split("-").slice(1).join("/")}
-                        dy={10}
-                      />
-                      <YAxis stroke="var(--muted-foreground)" fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} dx={-10} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', border: '1px solid var(--border)' }}
-                        labelStyle={{ fontWeight: 'black', textTransform: 'uppercase', fontSize: '10px', marginBottom: '4px' }}
-                        itemStyle={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--foreground)' }}
-                      />
-                      <Area type="monotone" dataKey="revenueNum" name="Revenue" stroke="var(--primary)" fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
+      {/* ── Tier Architecture ──────────────────────────────── */}
+      <div className="py-8 border-b border-border/15 space-y-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Tier Architecture</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Offering & entitlement matrix</p>
+          </div>
+          <Layers size={14} className="text-muted-foreground/30" />
         </div>
 
-        {/* Sidebar Column (1/3) */}
-        <div className="space-y-8">
-           {/* Brand Identity Card */}
-           <section className="space-y-6">
-            <SectionHeader title="Provider" subtitle="Identity Verification Hub" icon={ShieldCheck} />
-            <Card className="bg-card border-border/80 shadow-none rounded-3xl p-8 space-y-6">
-              <div className="flex items-center gap-4">
-                 <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20">
-                   <Globe size={24} strokeWidth={2.5} />
-                 </div>
-                 <div>
-                   <p className="text-xl font-black uppercase tracking-tight leading-none mb-1">{brand?.name || "Verified Merchant"}</p>
-                   <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Global Provider</p>
-                 </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Gateway Resolution</p>
-                  <a href={brand?.website} target="_blank" rel="noreferrer" className="text-xs font-bold text-foreground flex items-center gap-1.5 hover:text-primary transition-colors truncate">
-                    {brand?.website || "N/A"} <ExternalLink size={10} />
-                  </a>
-                </div>
-                <div className="h-[1px] w-full bg-border/10" />
+        {isV11 ? (
+          <div className="grid gap-px md:grid-cols-3 bg-border/10 rounded-lg overflow-hidden">
+            {plan.metadata?.tiers?.map((tier: any, i: number) => (
+              <div key={i} className="bg-background p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                   <div className="space-y-1">
-                     <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Settlement Fee</p>
-                     <p className="text-xs font-black italic">500 BPS (5%)</p>
-                   </div>
-                   <div className="text-right space-y-1">
-                     <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Protocol Version</p>
-                     <p className="text-xs font-black italic">v1.1.0 Multi-Tier</p>
-                   </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">Tier {i + 1}</span>
+                  <span className="text-[10px] text-muted-foreground/50">USDC / cycle</span>
+                </div>
+                <div>
+                  <p className="text-lg font-semibold tracking-tight">{tier.label}</p>
+                  <p className="text-2xl font-bold text-foreground mt-0.5">${tier.price}</p>
+                </div>
+                {tier.features?.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-border/10">
+                    {tier.features.map((f: any, fi: number) => (
+                      <div key={fi} className="flex gap-2">
+                        <CheckCircle2 size={11} className="text-emerald-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-[11px] font-medium text-foreground leading-tight">{f.title}</p>
+                          <p className="text-[10px] text-muted-foreground leading-snug mt-0.5 line-clamp-2">{f.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 py-6 text-muted-foreground/50">
+            <Layers size={16} />
+            <p className="text-sm">Legacy v1.0 — single-tier configuration</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Revenue Chart + Sidebar ─────────────────────────── */}
+      <div className="grid gap-0 lg:grid-cols-3 lg:divide-x lg:divide-border/15">
+
+        {/* Chart */}
+        <div className="lg:col-span-2 py-8 lg:pr-8 space-y-5 border-b border-border/15 lg:border-b-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Revenue Scaling</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Historical settlement performance</p>
+            </div>
+            <TrendingUp size={14} className="text-muted-foreground/30" />
+          </div>
+          <div className="h-[340px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.12}/>
+                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border)" opacity={0.4} />
+                <XAxis
+                  dataKey="date"
+                  stroke="var(--muted-foreground)"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => v.split("-").slice(1).join("/")}
+                  dy={8}
+                />
+                <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} dx={-8} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', borderRadius: '8px', fontSize: '12px' }}
+                  labelStyle={{ fontWeight: '600', fontSize: '11px', marginBottom: '2px' }}
+                  itemStyle={{ fontSize: '12px', color: 'var(--foreground)' }}
+                />
+                <Area type="monotone" dataKey="revenueNum" name="Revenue" stroke="var(--primary)" fillOpacity={1} fill="url(#colorRev)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Sidebar: Provider + Loyalty */}
+        <div className="lg:pl-8 py-8 space-y-8">
+
+          {/* Provider */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">Provider</p>
+              <ShieldCheck size={13} className="text-muted-foreground/30" />
+            </div>
+            <div className="space-y-3">
+              <div>
+                <p className="text-base font-semibold">{brand?.name || "Independent Provider"}</p>
+                {brand?.website && (
+                  <a href={brand.website} target="_blank" rel="noreferrer" className="text-[11px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 mt-0.5">
+                    {brand.website} <ExternalLink size={9} />
+                  </a>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/10">
+                <div>
+                  <p className="text-[10px] text-muted-foreground/60 mb-0.5">Settlement Fee</p>
+                  <p className="text-sm font-medium">5% (500 BPS)</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground/60 mb-0.5">Version</p>
+                  <p className="text-sm font-medium">v1.1.0</p>
                 </div>
               </div>
-            </Card>
-          </section>
+            </div>
+          </div>
 
-          {/* Loyalty Metrics Card */}
-          <section className="space-y-6">
-            <SectionHeader title="Loyalty" subtitle="Returning Member Performance" icon={UserCheck} />
-            <Card className="bg-card border-border/80 shadow-none rounded-3xl p-8 space-y-6">
-              <div className="flex items-center justify-between">
-                 <div className="space-y-1">
-                    <p className="text-2xl font-black italic leading-none">{analytics.repeatBuyerCount}</p>
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Returning Members</p>
-                 </div>
-                 <div className="text-right space-y-1">
-                    <p className="text-2xl font-black italic text-emerald-500 leading-none">{analytics.repeatBuyerRate.toFixed(1)}%</p>
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Renewal Rate</p>
-                 </div>
+          {/* Loyalty */}
+          <div className="space-y-4 pt-6 border-t border-border/10">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">Loyalty</p>
+              <UserCheck size={13} className="text-muted-foreground/30" />
+            </div>
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-2xl font-semibold tracking-tight">{analytics.repeatBuyerCount}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Returning members</p>
               </div>
-              <div className="h-2.5 w-full bg-muted/20 rounded-full overflow-hidden border border-border/10">
-                <div 
-                  className="h-full bg-gradient-to-r from-primary to-emerald-500 transition-all duration-1000 shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]" 
-                  style={{ width: `${analytics.repeatBuyerRate}%` }} 
-                />
+              <div className="text-right">
+                <p className="text-2xl font-semibold tracking-tight text-emerald-500">{analytics.repeatBuyerRate.toFixed(1)}%</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Renewal rate</p>
               </div>
-              <p className="text-[10px] font-bold text-muted-foreground leading-relaxed uppercase tracking-wide opacity-60 italic">
-                A high renewal rate means your members are staying subscribed over multiple cycles.
-              </p>
-            </Card>
-          </section>
+            </div>
+            <div className="h-1 w-full bg-muted/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary to-emerald-500 transition-all duration-1000"
+                style={{ width: `${analytics.repeatBuyerRate}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+              A high renewal rate indicates strong member retention.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Member Registry (Full Width Bottom) */}
-      <section className="space-y-6">
-         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <SectionHeader title="Member Registry" subtitle="Participant Access Hub" icon={Users} />
-            <div className="relative w-full sm:w-80 mb-6">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 stroke-[3px]" />
-              <input 
-                type="text" 
-                placeholder="Search Identity or Metadata..." 
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full h-12 bg-muted/20 border border-border/80 rounded-2xl pl-10 pr-4 text-[11px] font-bold outline-none focus:border-primary/50 transition-all placeholder:text-muted-foreground/30 uppercase tracking-widest"
-              />
-            </div>
-         </div>
-         <Card className="bg-card border-border/80 shadow-none rounded-3xl overflow-hidden">
-            <Table>
-              <TableHeader className="bg-muted/10">
-                <TableRow className="border-border/40 hover:bg-transparent">
-                  <TableHead className="pl-8 py-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subscriber Wallet</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cycles</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Paid</TableHead>
-                  <TableHead className="text-right pr-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground">User Info</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBuyers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-20 text-[10px] font-black uppercase tracking-widest text-muted-foreground/30 italic">
-                      No protocol participants discovered in ledger
-                    </TableCell>
-                  </TableRow>
-                ) : filteredBuyers.map((buyer) => (
-                  <TableRow key={buyer.id} className="group border-border/20 hover:bg-muted/5 transition-colors">
-                    <TableCell className="pl-8 py-6">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20">
-                          {buyer.subscriber.slice(2, 4).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-black italic text-sm">{truncateAddress(buyer.subscriber)}</p>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest break-all opacity-40">{buyer.subscriber}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={cn(
-                        "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border-none shadow-sm",
-                        buyer.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground/50"
-                      )}>
-                        {buyer.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs font-bold text-muted-foreground">
-                      {buyer.subscriptionCount} Cycles
-                    </TableCell>
-                    <TableCell className="text-sm font-black italic">
-                      ${Number(formatUnits(buyer.totalSpent, 6)).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right pr-8">
-                       <span className="inline-block max-w-[180px] truncate bg-muted/40 px-4 py-2 rounded-xl text-[10px] font-bold text-muted-foreground font-mono group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                        {buyer.buyerData || "NULL_DATA"}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-         </Card>
-      </section>
+      {/* ── Member Registry ─────────────────────────────────── */}
+      <div className="pt-8 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Member Registry</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Subscriber access & billing data</p>
+          </div>
+          <div className="relative w-full sm:w-64">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40" />
+            <input
+              type="text"
+              placeholder="Search wallet or metadata…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full h-8 bg-transparent border border-border/30 rounded-md pl-8 pr-3 text-xs outline-none focus:border-border/60 transition-all placeholder:text-muted-foreground/40"
+            />
+          </div>
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border/10 hover:bg-transparent">
+              <TableHead className="py-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 pl-0">Subscriber</TableHead>
+              <TableHead className="py-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">Status</TableHead>
+              <TableHead className="py-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">Cycles</TableHead>
+              <TableHead className="py-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">Total Paid</TableHead>
+              <TableHead className="py-3 text-right text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 pr-0">Data</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredBuyers.length === 0 ? (
+              <TableRow className="border-border/10">
+                <TableCell colSpan={5} className="text-center py-14 text-xs text-muted-foreground/40 pl-0">
+                  No subscribers found
+                </TableCell>
+              </TableRow>
+            ) : filteredBuyers.map((buyer) => (
+              <TableRow key={buyer.id} className="group border-border/10 hover:bg-muted/[0.025] transition-colors">
+                <TableCell className="py-4 pl-0">
+                  <div className="flex items-center gap-3">
+                    <div className="h-7 w-7 rounded-full bg-muted/60 flex items-center justify-center text-[9px] font-semibold text-muted-foreground shrink-0">
+                      {buyer.subscriber.slice(2, 4).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{truncateAddress(buyer.subscriber)}</p>
+                      <p className="text-[10px] text-muted-foreground/40 font-mono">{buyer.subscriber.slice(0, 16)}…</p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="py-4">
+                  <span className={cn(
+                    "inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full",
+                    buyer.status === "ACTIVE"
+                      ? "bg-emerald-500/8 text-emerald-600"
+                      : "bg-muted/60 text-muted-foreground"
+                  )}>
+                    {buyer.status === "ACTIVE" ? "● Active" : "○ Expired"}
+                  </span>
+                </TableCell>
+                <TableCell className="py-4 text-sm text-muted-foreground">{buyer.subscriptionCount}</TableCell>
+                <TableCell className="py-4 text-sm font-medium">${Number(formatUnits(buyer.totalSpent, 6)).toLocaleString()}</TableCell>
+                <TableCell className="py-4 text-right pr-0">
+                  <span className="inline-block max-w-[140px] truncate font-mono text-[10px] text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">
+                    {buyer.buyerData || "—"}
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <div className="pt-20 text-center opacity-20">
         <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em]">Mecha Pay Merchant OS v1.1.0 • Settlement Infrastructure</p>

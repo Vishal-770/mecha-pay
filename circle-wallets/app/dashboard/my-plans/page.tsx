@@ -5,27 +5,21 @@ import Link from "next/link";
 import { formatUnits } from "ethers";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { cn } from "@/lib/utils";
-import { 
-  Button, 
-  buttonVariants 
-} from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  TrendingUp, 
-  Users, 
-  CreditCard, 
-  Activity, 
-  Calendar,
+import {
+  TrendingUp,
+  Users,
+  Activity,
   ChevronRight,
   Plus,
   Zap,
   Target,
   ArrowUpRight,
   Layers,
-  Globe
+  Globe,
+  Calendar,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 type PlanAnalytics = {
   totalSubscribers: number;
@@ -88,7 +82,7 @@ type MyPlansResponse = {
 function humanDuration(secondsValue: string) {
   const seconds = Number(secondsValue);
   const days = Math.floor(seconds / 86400);
-  if (days >= 1) return `${days} day${days !== 1 ? "s" : ""}`;
+  if (days >= 1) return `${days}d`;
   const hours = Math.floor(seconds / 3600);
   if (hours >= 1) return `${hours}h`;
   return `${Math.max(Math.floor(seconds / 60), 1)}m`;
@@ -107,11 +101,10 @@ export default function MyPlansPage() {
         setLoading(false);
         return;
       }
-
       try {
-        const params = new URLSearchParams({ 
+        const params = new URLSearchParams({
           seller: wallet.address,
-          userToken: sessionUserToken 
+          userToken: sessionUserToken,
         });
         const response = await fetch(
           `/api/subscription/my-plans?${params.toString()}`,
@@ -126,7 +119,6 @@ export default function MyPlansPage() {
         if (mounted) setLoading(false);
       }
     };
-
     void run();
     return () => { mounted = false; };
   }, [wallet?.address]);
@@ -140,14 +132,30 @@ export default function MyPlansPage() {
 
   if (loading) {
     return (
-      <div className="p-8 space-y-10">
-        <Skeleton className="h-12 w-1/3 rounded-xl" />
-        <div className="grid gap-6 md:grid-cols-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
+      <div className="w-full py-10 px-6 lg:px-12 max-w-[1400px] mx-auto space-y-0">
+        <div className="py-8 border-b border-border/15 space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-8 w-48" />
         </div>
-        <div className="grid gap-8 lg:grid-cols-2">
-          <Skeleton className="h-80 rounded-3xl" />
-          <Skeleton className="h-80 rounded-3xl" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-border/15 border-b border-border/15">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="px-6 py-6 first:pl-0 space-y-2">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-7 w-28" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          ))}
+        </div>
+        <div className="pt-6 space-y-0">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="py-5 border-b border-border/10 flex items-center justify-between">
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-56" />
+              </div>
+              <Skeleton className="h-8 w-24" />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -155,16 +163,19 @@ export default function MyPlansPage() {
 
   if (error) {
     return (
-      <div className="p-8">
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center space-y-4">
-          <Activity className="h-12 w-12 text-destructive mx-auto" />
-          <div className="space-y-1">
-            <h3 className="text-lg font-black uppercase tracking-tight">Sync Failure</h3>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{error}</p>
+      <div className="w-full py-10 px-6 lg:px-12 max-w-[1400px] mx-auto">
+        <div className="py-16 flex flex-col items-center gap-4 text-center border-b border-border/15">
+          <Activity size={24} className="text-destructive/50" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">Failed to load plans</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{error}</p>
           </div>
-          <Button variant="outline" onClick={() => window.location.reload()} className="h-10 rounded-xl px-8 text-[10px] font-black uppercase tracking-widest">
-            Retry Sync
-          </Button>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+          >
+            Try again
+          </button>
         </div>
       </div>
     );
@@ -172,145 +183,182 @@ export default function MyPlansPage() {
 
   if (!data || data.plans.length === 0) {
     return (
-      <div className="p-8">
-        <Card className="border-dashed border-2 bg-muted/5 flex flex-col items-center justify-center p-24 text-center gap-6 rounded-[3rem]">
-          <div className="h-20 w-20 rounded-3xl bg-muted flex items-center justify-center text-muted-foreground/30 shadow-inner">
-            <Zap size={40} strokeWidth={2.5} />
+      <div className="w-full py-10 px-6 lg:px-12 max-w-[1400px] mx-auto">
+        <div className="py-8 border-b border-border/15 flex items-center justify-between">
+          <div>
+            <p className="text-[11px] text-muted-foreground">My Plans</p>
+            <h2 className="text-xl font-semibold tracking-tight mt-0.5">Creator Console</h2>
           </div>
-          <div className="space-y-2">
-            <CardTitle className="text-3xl font-black uppercase tracking-tight">No Protocols Deployed</CardTitle>
-            <CardDescription className="max-w-xs mx-auto text-xs font-bold uppercase tracking-widest leading-relaxed">
-              Launch your first subscription gateway to start receiving settled payments on ARC.
-            </CardDescription>
-          </div>
-          <Link 
-            href="/dashboard/plans/create" 
-            className={cn(buttonVariants({ variant: "default" }), "h-12 px-8 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-primary/40")}
+          <Link
+            href="/dashboard/plans/create"
+            className={cn(buttonVariants({ size: "sm" }), "h-9 px-4 text-xs font-medium rounded-lg gap-1.5")}
           >
-            <Plus className="mr-2 h-4 w-4 stroke-[3px]" /> Deploy Protocol
+            <Plus size={13} /> New Plan
           </Link>
-        </Card>
+        </div>
+        <div className="py-24 flex flex-col items-center gap-5 text-center">
+          <div className="h-12 w-12 rounded-xl bg-muted/30 flex items-center justify-center">
+            <Zap size={20} className="text-muted-foreground/40" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold">No plans deployed yet</p>
+            <p className="text-xs text-muted-foreground max-w-xs">
+              Create your first subscription plan to start accepting recurring USDC payments on ARC.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/plans/create"
+            className={cn(buttonVariants({ size: "sm" }), "h-9 px-5 text-xs font-medium rounded-lg gap-1.5 mt-2")}
+          >
+            <Plus size={13} /> Deploy First Plan
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full py-12 px-6 space-y-12">
-      
-      {/* Header Matrix */}
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b border-border/40 pb-10">
-        <div className="space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Settlement Hub</p>
-          <h2 className="text-4xl font-black uppercase tracking-tight text-foreground">Creator Console</h2>
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Global Protocol Management & Settlement Liquidity</p>
+    <div className="w-full py-10 px-6 lg:px-12 pb-28 max-w-[1400px] mx-auto space-y-0">
+
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div className="flex items-start justify-between py-8 border-b border-border/15">
+        <div className="space-y-1">
+          <p className="text-[11px] text-muted-foreground">My Plans</p>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">Creator Console</h2>
+          <p className="text-[11px] text-muted-foreground">Manage your subscription protocols & view settlement data</p>
         </div>
-        <Link 
-          href="/dashboard/plans/create" 
-          className={cn(buttonVariants({ variant: "default" }), "h-12 px-8 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-primary/40")}
+        <Link
+          href="/dashboard/plans/create"
+          className={cn(buttonVariants({ size: "sm" }), "h-9 px-4 text-xs font-medium rounded-lg gap-1.5 shrink-0")}
         >
-          <Plus className="mr-2 h-4 w-4 stroke-[3px]" /> New Offering
+          <Plus size={13} /> New Plan
         </Link>
       </div>
 
-      {/* Global Metrics */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ── Summary Stats ──────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-border/15 border-b border-border/15">
         {[
-          { label: "Active Gateways", value: data.summary.activePlans, sub: `Of ${data.summary.totalPlans} Total`, icon: Globe, color: "text-primary" },
-          { label: "Total Volume", value: `$${Number(formatUnits(BigInt(data.summary.totalGross), 6)).toLocaleString()}`, sub: "Cumulative Settled", icon: TrendingUp, color: "text-emerald-500" },
-          { label: "Net Settled", value: `$${Number(formatUnits(BigInt(data.summary.totalNet), 6)).toLocaleString()}`, sub: "After Registry Fees", icon: Activity, color: "text-sky-500" },
-          { label: "Loyalty Status", value: "High", sub: "Based on Renewals", icon: Target, color: "text-amber-500" },
+          {
+            label: "Active Plans",
+            value: `${data.summary.activePlans} / ${data.summary.totalPlans}`,
+            sub: "Currently live",
+            icon: Globe,
+          },
+          {
+            label: "Total Volume",
+            value: `$${Number(formatUnits(BigInt(data.summary.totalGross), 6)).toLocaleString()}`,
+            sub: "Gross settled",
+            icon: TrendingUp,
+          },
+          {
+            label: "Net Earnings",
+            value: `$${Number(formatUnits(BigInt(data.summary.totalNet), 6)).toLocaleString()}`,
+            sub: "After protocol fees",
+            icon: Activity,
+          },
+          {
+            label: "Total Subscribers",
+            value: `${sortedPlans.reduce((s, p) => s + p.analysis.totalSubscribers, 0)}`,
+            sub: "Across all plans",
+            icon: Users,
+          },
         ].map((stat, i) => (
-          <Card key={i} className="bg-card border-border/80 shadow-none rounded-2xl group hover:bg-muted/5 transition-colors">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{stat.label}</CardTitle>
-              <stat.icon size={14} className={cn(stat.color, "stroke-[3px]")} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-black italic text-foreground leading-none">{stat.value}</div>
-              <p className="text-[9px] font-bold text-muted-foreground/60 mt-2 uppercase tracking-widest">{stat.sub}</p>
-            </CardContent>
-          </Card>
+          <div key={i} className="flex flex-col gap-1.5 px-6 py-6 first:pl-0 last:pr-0">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-muted-foreground">{stat.label}</p>
+              <stat.icon size={12} className="text-muted-foreground/30" />
+            </div>
+            <p className="text-2xl font-semibold tracking-tight text-foreground">{stat.value}</p>
+            <p className="text-[11px] text-muted-foreground/60">{stat.sub}</p>
+          </div>
         ))}
       </div>
 
-      {/* Protocol Grid */}
-      <div className="grid gap-8 lg:grid-cols-2">
+      {/* ── Plans List ─────────────────────────────────────── */}
+      <div className="pt-6">
+        {/* Column Headers */}
+        <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-6 pb-3 border-b border-border/10 items-center">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">Plan</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 text-right w-24">Volume</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 text-right w-20 hidden md:block">Members</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 text-right w-20 hidden lg:block">Renewal</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 text-right w-24"></p>
+        </div>
+
         {sortedPlans.map((plan) => {
-          const title = plan.metadata?.name ?? plan.metadata?.brand?.name ?? `Protocol ${plan.planId.slice(0, 10)}`;
+          const title = plan.metadata?.name ?? plan.metadata?.brand?.name ?? `Plan ${plan.planId.slice(0, 10)}`;
           const prices = plan.tiers?.map(t => BigInt(t.price)) ?? [];
-          const minPrice = prices.length > 0 ? prices.reduce((a, b) => a < b ? a : b) : BigInt(0);
-          const maxPrice = prices.length > 0 ? prices.reduce((a, b) => a > b ? a : b) : BigInt(0);
-          const priceDisplay = minPrice === maxPrice 
-            ? `${formatUnits(minPrice, 6)} USDC`
-            : `${formatUnits(minPrice, 6)} - ${formatUnits(maxPrice, 6)} USDC`;
+          const minPrice = prices.length > 0 ? prices.reduce((a, b) => a < b ? a : b) : BigInt(plan.price || "0");
+          const maxPrice = prices.length > 0 ? prices.reduce((a, b) => a > b ? a : b) : BigInt(plan.price || "0");
+          const priceDisplay = minPrice === maxPrice
+            ? `$${formatUnits(minPrice, 6)}`
+            : `$${formatUnits(minPrice, 6)}–$${formatUnits(maxPrice, 6)}`;
 
           return (
-            <Card key={plan.planId} className="group relative overflow-hidden bg-card border-border/80 rounded-[2rem] shadow-none hover:border-primary/30 transition-all duration-500">
-              <div className="absolute top-0 right-0 h-40 w-40 bg-primary/5 rounded-full -mr-20 -mt-20 group-hover:bg-primary/10 transition-all duration-700" />
-              
-              <CardHeader className="p-8 pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-2xl font-black uppercase tracking-tight text-foreground group-hover:text-primary transition-colors">{title}</h3>
-                      <ArrowUpRight size={16} className="text-muted-foreground/20 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
-                    </div>
-                    <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                      <span className="flex items-center gap-1"><Layers size={10} /> {plan.tiers?.length || 1} Tiers</span>
-                      <span className="h-1 w-1 rounded-full bg-border" />
-                      <span className="flex items-center gap-1"><Calendar size={10} /> {humanDuration(plan.duration)} Cycle</span>
-                    </div>
-                  </div>
-                  <Badge variant={plan.active ? "secondary" : "outline"} className={cn(
-                    "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border-none shadow-sm",
-                    plan.active ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground/40"
+            <Link
+              key={plan.planId}
+              href={`/dashboard/my-plans/${plan.planId}`}
+              className="group grid grid-cols-[1fr_auto_auto_auto_auto] gap-6 py-5 border-b border-border/10 items-center hover:bg-muted/[0.025] transition-colors -mx-3 px-3 rounded-lg"
+            >
+              {/* Plan Info */}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2.5">
+                  <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{title}</p>
+                  <span className={cn(
+                    "inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded-full shrink-0",
+                    plan.active
+                      ? "bg-emerald-500/10 text-emerald-600"
+                      : "bg-muted text-muted-foreground/60"
                   )}>
-                    {plan.active ? "Live" : "Inactive"}
-                  </Badge>
+                    {plan.active ? "● Live" : "○ Off"}
+                  </span>
                 </div>
-              </CardHeader>
+                <div className="flex items-center gap-2.5 mt-1 text-[11px] text-muted-foreground/60">
+                  <span className="flex items-center gap-1">
+                    <Layers size={10} /> {plan.tiers?.length || 1} tier{(plan.tiers?.length || 1) !== 1 ? "s" : ""}
+                  </span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar size={10} /> {humanDuration(plan.duration)} cycle
+                  </span>
+                  <span>·</span>
+                  <span>{priceDisplay} USDC</span>
+                  {plan.analysis.lastSubscriptionAgeDays != null && (
+                    <>
+                      <span>·</span>
+                      <span>last activity {plan.analysis.lastSubscriptionAgeDays}d ago</span>
+                    </>
+                  )}
+                </div>
+              </div>
 
-              <CardContent className="p-8 pt-6 space-y-8">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Settlement Volume</p>
-                    <p className="text-2xl font-black italic text-foreground leading-none">${Number(formatUnits(BigInt(plan.analysis.grossEarnings), 6)).toLocaleString()}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Active Now</p>
-                    <p className="text-2xl font-black italic text-emerald-500 leading-none">{plan.analysis.activeSubscribers}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Renewal Rate</p>
-                    <p className="text-2xl font-black italic text-sky-500 leading-none">{plan.analysis.repeatBuyerRate.toFixed(1)}%</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Registry Pricing</p>
-                    <p className="text-sm font-black text-primary leading-none uppercase tracking-tight">{priceDisplay}</p>
-                  </div>
-                </div>
+              {/* Volume */}
+              <div className="text-right w-24">
+                <p className="text-sm font-semibold text-foreground">
+                  ${Number(formatUnits(BigInt(plan.analysis.grossEarnings), 6)).toLocaleString()}
+                </p>
+                <p className="text-[10px] text-muted-foreground/50 mt-0.5">gross</p>
+              </div>
 
-                <div className="flex items-center justify-between pt-6 border-t border-border/40">
-                  <p className="text-[9px] text-muted-foreground/40 font-black uppercase tracking-widest">
-                    {plan.analysis.lastSubscriptionAgeDays == null
-                      ? "Zero Registry Activity"
-                      : `Last Activity: ${plan.analysis.lastSubscriptionAgeDays}D Ago`}
-                  </p>
-                  <Link 
-                    href={`/dashboard/my-plans/${plan.planId}`} 
-                    className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-10 rounded-xl px-6 border-border/80 font-black uppercase tracking-widest text-[9px] shadow-sm hover:bg-primary hover:text-white hover:border-primary transition-all")}
-                  >
-                    View Protocol Insights <ChevronRight className="ml-1 h-3 w-3 stroke-[3px]" />
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Members */}
+              <div className="text-right w-20 hidden md:block">
+                <p className="text-sm font-semibold text-foreground">{plan.analysis.activeSubscribers}</p>
+                <p className="text-[10px] text-muted-foreground/50 mt-0.5">active</p>
+              </div>
+
+              {/* Renewal Rate */}
+              <div className="text-right w-20 hidden lg:block">
+                <p className="text-sm font-semibold text-foreground">{plan.analysis.repeatBuyerRate.toFixed(1)}%</p>
+                <p className="text-[10px] text-muted-foreground/50 mt-0.5">renewal</p>
+              </div>
+
+              {/* Arrow */}
+              <div className="w-8 flex justify-end">
+                <ArrowUpRight size={13} className="text-muted-foreground/20 group-hover:text-muted-foreground transition-colors" />
+              </div>
+            </Link>
           );
         })}
-      </div>
-
-      <div className="pt-10 text-center opacity-20">
-        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em]">Mecha Pay Merchant OS • Institutional Subscription Infrastructure</p>
       </div>
 
     </div>

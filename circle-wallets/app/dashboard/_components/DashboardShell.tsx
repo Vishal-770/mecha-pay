@@ -31,7 +31,8 @@ import {
   Settings,
   Terminal,
   BookOpen,
-  Webhook
+  Webhook,
+  ExternalLink
 } from "lucide-react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { cn } from "@/lib/utils";
@@ -255,31 +256,27 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               ))}
             </nav>
 
-            <div className="mt-auto space-y-4 pt-6 border-t border-border">
-              {allWallets.length > 0 && (
-                <div className="space-y-2">
-                  <p className="px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Blockchain Link</p>
-                  <div className="flex flex-col gap-1">
-                    {allWallets.map((w) => (
-                      <button
-                        key={w.id}
-                        onClick={() => selectWallet(w.id)}
-                        className={cn(
-                          "w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left",
-                          wallet?.id === w.id 
-                            ? "bg-primary/5 border-primary/20 text-primary ring-1 ring-primary/10" 
-                            : "bg-transparent border-transparent text-muted-foreground hover:bg-muted/50"
-                        )}
-                      >
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-[10px] font-black uppercase tracking-widest truncate">{w.blockchain.replace("-", " ")}</span>
-                          <span className="text-[9px] font-mono opacity-60 truncate">{w.address}</span>
-                        </div>
-                        {wallet?.id === w.id && <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse ml-2 shrink-0" />}
-                      </button>
-                    ))}
+            <div className="mt-auto pt-4 pb-2 border-t border-border/40">
+              {wallet && (
+                <a
+                  href={`https://testnet.arcscan.app/address/${wallet.address}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors group"
+                >
+                  <div className="h-9 w-9 rounded-md bg-muted/40 border border-border/50 text-foreground/70 flex items-center justify-center shrink-0 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 transition-colors">
+                    <Wallet size={16} />
                   </div>
-                </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                      {wallet.blockchain.replace("-", " ")}
+                    </span>
+                    <span className="text-[11px] font-mono text-muted-foreground truncate">
+                      {wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}
+                    </span>
+                  </div>
+                  <ExternalLink size={14} className="text-muted-foreground/40 group-hover:text-foreground transition-colors" />
+                </a>
               )}
             </div>
           </div>

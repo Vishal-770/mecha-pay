@@ -130,7 +130,7 @@ export function EditPlanDialog({ planId, durationSeconds, metadata, onSuccess }:
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="h-11 px-6 rounded-xl border-border/80 font-black uppercase tracking-widest text-[10px]">
+        <Button variant="outline" className="h-11 px-6 rounded-lg border-border/80 font-black uppercase tracking-widest text-[10px]">
           <Edit3 className="mr-2 h-4 w-4" /> Edit & Notify
         </Button>
       </DialogTrigger>
