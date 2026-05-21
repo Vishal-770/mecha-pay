@@ -1,15 +1,25 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useMemo } from "react";
-import { CheckCircle2, Zap, ShieldCheck, Loader2, Lock, ArrowRight, AlertCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle2, Zap, Loader2, Lock, ArrowRight, AlertCircle, Check } from "lucide-react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-/* ── Types ── */
+/* ── Utility: CSS Merger ── */
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export interface Feature {
+  title: string;
+  description: string;
+}
+
 export interface Tier {
   id: string;
   price: string;
   label: string;
-  features: Array<{ title: string; description: string }>;
+  features: Feature[];
 }
 
 export interface Plan {
@@ -18,6 +28,13 @@ export interface Plan {
   duration: string;
   brand?: { name?: string; website?: string };
   tiers: Tier[];
+}
+
+export interface SubscribedTierDetail {
+  tierId: string;
+  tierName: string;
+  features: Feature[];
+  expiryDate: Date;
 }
 
 export interface MechaAppearance {
@@ -45,6 +62,32 @@ export interface MechaAppearance {
 export interface MechaConfig {
   apiKey: string;
   portalUrl?: string;
+}
+
+export interface MechaLabels {
+  activeSubscription?: string;      // Default: "Current Plan"
+  upgrade?: string;                 // Default: "Upgrade"
+  downgrade?: string;               // Default: "Downgrade"
+  changePlan?: string;              // Default: "Switch Plan"
+  getTier?: string;                 // Default: "Get {{tierLabel}}"
+  selectPlanDescription?: string;   // Default: "Select a membership tier to access the protocol."
+  subscriptionActiveHeader?: string; // Default: "Subscription Active · {{countdown}} Left"
+}
+
+export interface MechaClassNames {
+  container?: string;
+  grid?: string;
+  card?: string;
+  badge?: string;
+  tierLabel?: string;
+  priceContainer?: string;
+  priceAmount?: string;
+  priceMuted?: string;
+  featuresList?: string;
+  featureItem?: string;
+  featureTitle?: string;
+  featureDescription?: string;
+  button?: string;
 }
 
 /* ── Context ── */
@@ -89,20 +132,22 @@ const useMechaConfig = () => {
 export interface MechaSubscription {
   status: "ACTIVE" | "EXPIRED" | "NONE";
   remainingSeconds: number;
-  tierId?: string;
+  tierId?: string;    // Primary active tier ID (backward compatibility)
+  tierIds: string[];  // List of all active/bought tier IDs
   loading: boolean;
   error: string | null;
 }
 
 /**
  * useMecha
- * The primary hook to check a user's subscription status and remaining time.
+ * The primary hook to check a user's subscription status, active tier IDs, and remaining time.
  */
 export const useMecha = (planId: string, userId?: string) => {
   const { apiKey, portalUrl } = useMechaConfig();
   const [subscription, setSubscription] = useState<MechaSubscription>({
     status: "NONE",
     remainingSeconds: 0,
+    tierIds: [],
     loading: !!userId,
     error: null,
   });
@@ -124,15 +169,19 @@ export const useMecha = (planId: string, userId?: string) => {
         if (!res.ok) throw new Error(data.error || "Failed to fetch subscription status");
 
         if (data.subscription) {
+          const activeTierId = data.subscription.tierId;
+          const activeTierIds = data.subscription.tierIds || (activeTierId ? [activeTierId] : []);
+
           setSubscription({
             status: data.subscription.status,
             remainingSeconds: data.subscription.remainingSeconds,
-            tierId: data.subscription.tierId,
+            tierId: activeTierId,
+            tierIds: activeTierIds,
             loading: false,
             error: null
           });
         } else {
-          setSubscription(s => ({ ...s, status: "NONE", loading: false }));
+          setSubscription(s => ({ ...s, status: "NONE", tierIds: [], loading: false }));
         }
       } catch (err: any) {
         setSubscription(s => ({ ...s, loading: false, error: err.message }));
@@ -146,11 +195,15 @@ export const useMecha = (planId: string, userId?: string) => {
   useEffect(() => {
     if (subscription.remainingSeconds <= 0 || subscription.status !== "ACTIVE") return;
     const timer = setInterval(() => {
-      setSubscription(prev => ({
-        ...prev,
-        remainingSeconds: Math.max(prev.remainingSeconds - 1, 0),
-        status: prev.remainingSeconds - 1 <= 0 ? "EXPIRED" : "ACTIVE"
-      }));
+      setSubscription(prev => {
+        const nextSeconds = Math.max(prev.remainingSeconds - 1, 0);
+        return {
+          ...prev,
+          remainingSeconds: nextSeconds,
+          status: nextSeconds <= 0 ? "EXPIRED" : "ACTIVE",
+          tierIds: nextSeconds <= 0 ? [] : prev.tierIds
+        };
+      });
     }, 1000);
     return () => clearInterval(timer);
   }, [subscription.remainingSeconds, subscription.status]);
@@ -158,7 +211,7 @@ export const useMecha = (planId: string, userId?: string) => {
   return subscription;
 };
 
-/* ── Utility ── */
+/* ── Format Utilities ── */
 function formatPrice(price: string) {
   return (Number(price) / 1e6).toLocaleString("en-US", {
     minimumFractionDigits: 2,
@@ -184,7 +237,7 @@ function formatCountdown(seconds: number) {
   return `${hours}h ${mins}m ${secs}s`;
 }
 
-/* ── Components ── */
+/* ── Pricing Table Component ── */
 
 export interface MechaPricingTableProps {
   planId: string;
@@ -195,11 +248,31 @@ export interface MechaPricingTableProps {
   style?: React.CSSProperties;
   hideBranding?: boolean;
   recommendedTierId?: string;
+  
+  // Customization Overrides
+  customLabels?: MechaLabels;
+  classNames?: MechaClassNames;
+  
+  // Custom Renderers
+  renderHeader?: (plan: Plan, subscription: MechaSubscription) => React.ReactNode;
+  renderFooter?: () => React.ReactNode;
+  renderTierButton?: (
+    tier: Tier, 
+    state: { 
+      isActive: boolean; 
+      isCurrent: boolean; 
+      isDisabled: boolean; 
+      isUpgrade: boolean; 
+      isDowngrade: boolean; 
+      label: string 
+    }, 
+    handleSelect: () => void
+  ) => React.ReactNode;
 }
 
 /**
  * MechaPricingTable
- * Professional pricing table that consumes configuration from MechaProvider.
+ * Professional, premium, and fully customizable pricing table.
  */
 export const MechaPricingTable = ({
   planId,
@@ -210,6 +283,11 @@ export const MechaPricingTable = ({
   style,
   hideBranding = false,
   recommendedTierId,
+  customLabels,
+  classNames,
+  renderHeader,
+  renderFooter,
+  renderTierButton,
 }: MechaPricingTableProps) => {
   const { apiKey, portalUrl } = useMechaConfig();
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -221,14 +299,14 @@ export const MechaPricingTable = ({
   const theme = appearance?.theme || "dark";
   const isDark = theme === "dark";
 
-  // Design Tokens
+  // Base Style Tokens
   const tokens = {
     primary: appearance?.variables?.colorPrimary || (isDark ? "#ffffff" : "#000000"),
     error: appearance?.variables?.colorError || "#ef4444",
     background: appearance?.variables?.backgroundColor || (isDark ? "#0a0a0a" : "#ffffff"),
     text: appearance?.variables?.textColor || (isDark ? "#ffffff" : "#000000"),
     muted: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
-    border: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+    border: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
     cardBg: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
     radius: appearance?.variables?.borderRadius || "1.5rem",
     font: appearance?.variables?.fontFamily || "Inter, sans-serif",
@@ -266,10 +344,18 @@ export const MechaPricingTable = ({
 
   const isActiveSub = subscription.status === "ACTIVE" && subscription.remainingSeconds > 0;
 
+  // Compute Active Tier Price (for upgrade/downgrade logic)
+  const maxActivePrice = useMemo(() => {
+    if (!isActiveSub || !plan) return 0;
+    const activeTiers = plan.tiers.filter(t => subscription.tierIds.includes(t.id));
+    return activeTiers.length > 0 ? Math.max(...activeTiers.map(t => Number(t.price))) : 0;
+  }, [isActiveSub, plan, subscription.tierIds]);
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px', fontFamily: tokens.font, color: tokens.text }}>
         <Loader2 style={{ animation: 'spin 1s linear infinite', opacity: 0.5 }} />
+        <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }` }} />
       </div>
     );
   }
@@ -284,115 +370,418 @@ export const MechaPricingTable = ({
     );
   }
 
+  // Inject beautiful hover and layout CSS styles (Premium Custom Classes)
+  const customStyles = `
+    .mecha-container-cls {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    .mecha-grid-cls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--mecha-gap);
+      justify-content: center;
+      padding: 20px 0;
+      box-sizing: border-box;
+    }
+    .mecha-card-cls {
+      flex: 1 1 320px;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--mecha-card-bg);
+      border: 1px solid var(--mecha-border-color);
+      border-radius: var(--mecha-radius);
+      padding: var(--mecha-padding);
+      position: relative;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+      box-sizing: border-box;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .mecha-card-cls:hover {
+      transform: translateY(-6px);
+      border-color: var(--mecha-primary-alpha-50);
+      box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
+    }
+    .mecha-card-rec-cls {
+      border-color: var(--mecha-primary);
+      box-shadow: 0 10px 30px -10px var(--mecha-primary-alpha-15);
+    }
+    .mecha-card-rec-cls:hover {
+      box-shadow: 0 20px 40px -10px var(--mecha-primary-alpha-30);
+    }
+    .mecha-card-active-cls {
+      border-color: #10b981;
+      box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.15);
+      background-color: var(--mecha-card-active-bg);
+    }
+    .mecha-card-active-cls:hover {
+      box-shadow: 0 20px 40px -10px rgba(16, 185, 129, 0.3);
+    }
+    .mecha-btn-cls {
+      margin-top: 32px;
+      width: 100%;
+      height: 52px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .mecha-btn-cls:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.15);
+    }
+    .mecha-btn-cls:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+    .mecha-btn-active-cls {
+      background-color: rgba(16, 185, 129, 0.08);
+      color: #10b981;
+      cursor: default;
+      border: 1px solid rgba(16, 185, 129, 0.15);
+    }
+    .mecha-btn-primary-cls {
+      background-color: var(--mecha-primary);
+      color: var(--mecha-btn-text-color);
+    }
+    .mecha-btn-disabled-cls {
+      background-color: var(--mecha-border-color);
+      color: var(--mecha-muted-text);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  `;
+
+  const cssVariables = {
+    "--mecha-primary": tokens.primary,
+    "--mecha-primary-alpha-50": `${tokens.primary}80`,
+    "--mecha-primary-alpha-15": `${tokens.primary}26`,
+    "--mecha-primary-alpha-30": `${tokens.primary}4d`,
+    "--mecha-card-bg": tokens.cardBg,
+    "--mecha-border-color": tokens.border,
+    "--mecha-radius": tokens.radius,
+    "--mecha-padding": tokens.padding,
+    "--mecha-gap": tokens.gap,
+    "--mecha-btn-text-color": isDark ? "#000000" : "#ffffff",
+    "--mecha-card-active-bg": isDark ? "rgba(16, 185, 129, 0.03)" : "rgba(16, 185, 129, 0.02)",
+    "--mecha-muted-text": tokens.muted,
+  } as React.CSSProperties;
+
   return (
-    <div className={className} style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', fontFamily: tokens.font, color: tokens.text, ...style }}>
-      {!hideBranding && (
-        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-          {isActiveSub && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '6px 12px', borderRadius: '100px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px' }}>
-              <CheckCircle2 size={12} />
-              Subscription Active · {formatCountdown(subscription.remainingSeconds)} Left
-            </div>
-          )}
-          <h2 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-0.04em', marginBottom: '16px', ...appearance?.elements?.tierLabel }}>{plan?.name}</h2>
-          <p style={{ color: tokens.muted, fontSize: '16px', fontWeight: 500 }}>Select a membership tier to access the protocol.</p>
-        </div>
+    <div 
+      className={cn("mecha-container-cls", className, classNames?.container)} 
+      style={{ fontFamily: tokens.font, color: tokens.text, ...cssVariables, ...style }}
+    >
+      <style dangerouslySetInnerHTML={{ __html: customStyles }} />
+
+      {/* ── Header Segment ── */}
+      {renderHeader ? (
+        renderHeader(plan || { id: planId, name: "", duration: "", tiers: [] }, subscription)
+      ) : (
+        !hideBranding && (
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            {isActiveSub && (
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                backgroundColor: 'rgba(16, 185, 129, 0.08)', 
+                border: '1px solid rgba(16, 185, 129, 0.15)',
+                color: '#10b981', 
+                padding: '6px 14px', 
+                borderRadius: '100px', 
+                fontSize: '11px', 
+                fontWeight: 800, 
+                textTransform: 'uppercase', 
+                letterSpacing: '1px', 
+                marginBottom: '24px',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.1)'
+              }}>
+                <Check size={13} style={{ strokeWidth: 3 }} />
+                {customLabels?.subscriptionActiveHeader 
+                  ? customLabels.subscriptionActiveHeader.replace("{{countdown}}", formatCountdown(subscription.remainingSeconds))
+                  : `Subscription Active · ${formatCountdown(subscription.remainingSeconds)} Left`
+                }
+              </div>
+            )}
+            <h2 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-0.04em', marginBottom: '16px', color: tokens.text, ...appearance?.elements?.tierLabel }} className={classNames?.tierLabel}>
+              {plan?.name}
+            </h2>
+            <p style={{ color: tokens.muted, fontSize: '15px', fontWeight: 500 }}>
+              {customLabels?.selectPlanDescription || "Select a membership tier to access the protocol."}
+            </p>
+          </div>
+        )
       )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: tokens.gap, justifyContent: 'center', padding: '20px 0' }}>
+      {/* ── Pricing Tiers Grid ── */}
+      <div className={cn("mecha-grid-cls", classNames?.grid)}>
         {plan?.tiers.map((tier, idx) => {
           const isRecommended = recommendedTierId ? tier.id === recommendedTierId : idx === 1;
-          const isThisTierActive = isActiveSub && subscription.tierId === tier.id;
+          const isThisTierActive = isActiveSub && subscription.tierIds.includes(tier.id);
           
+          // Determine Transition Type relative to maximum bought tier
+          const tierPrice = Number(tier.price);
+          const isUpgrade = isActiveSub && !isThisTierActive && tierPrice > maxActivePrice;
+          const isDowngrade = isActiveSub && !isThisTierActive && tierPrice < maxActivePrice;
+          
+          // Resolve standard label text
+          let buttonText = `Get ${tier.label}`;
+          if (isThisTierActive) {
+            buttonText = customLabels?.activeSubscription || "Current Plan";
+          } else if (isActiveSub) {
+            if (isUpgrade) {
+              buttonText = customLabels?.upgrade || "Upgrade";
+            } else if (isDowngrade) {
+              buttonText = customLabels?.downgrade || "Downgrade";
+            } else {
+              buttonText = customLabels?.changePlan || "Switch Plan";
+            }
+          } else {
+            if (customLabels?.getTier) {
+              buttonText = customLabels.getTier.replace("{{tierLabel}}", tier.label);
+            }
+          }
+
           return (
-            <motion.div
+            <div
               key={tier.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              whileHover={{ y: -4 }}
+              className={cn(
+                "mecha-card-cls",
+                isThisTierActive && "mecha-card-active-cls",
+                !isThisTierActive && isRecommended && "mecha-card-rec-cls",
+                classNames?.card
+              )}
               style={{
-                flex: '1 1 320px',
-                maxWidth: '400px',
-                display: 'flex',
-                flexDirection: 'column',
-                backgroundColor: tokens.cardBg,
-                border: `1px solid ${isThisTierActive ? '#10b981' : isRecommended ? tokens.primary : tokens.border}`,
-                borderRadius: tokens.radius,
-                padding: tokens.padding,
-                position: 'relative',
-                boxShadow: isThisTierActive ? '0 20px 40px -12px rgba(16, 185, 129, 0.2)' : isRecommended ? `0 20px 40px -12px ${tokens.primary}20` : 'none',
-                opacity: (isActiveSub && !isThisTierActive) ? 0.6 : 1,
+                border: isThisTierActive 
+                  ? '1px solid #10b981' 
+                  : isRecommended 
+                    ? `1px solid var(--mecha-primary)` 
+                    : `1px solid var(--mecha-border-color)`,
                 ...appearance?.elements?.card
               }}
             >
+              {/* Premium Glow Badges */}
               {isThisTierActive && (
-                <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#10b981', color: '#fff', padding: '4px 16px', borderRadius: '100px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>Current Plan</div>
+                <div 
+                  className={cn(classNames?.badge)}
+                  style={{ 
+                    position: 'absolute', 
+                    top: '-12px', 
+                    left: '50%', 
+                    transform: 'translateX(-50%)', 
+                    backgroundColor: '#10b981', 
+                    color: '#fff', 
+                    padding: '4px 16px', 
+                    borderRadius: '100px', 
+                    fontSize: '10px', 
+                    fontWeight: 900, 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '1px',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Check size={11} style={{ strokeWidth: 3 }} />
+                  Active
+                </div>
               )}
               {!isThisTierActive && isRecommended && (
-                <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', backgroundColor: tokens.primary, color: isDark ? '#000' : '#fff', padding: '4px 16px', borderRadius: '100px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>Recommended</div>
+                <div 
+                  className={cn(classNames?.badge)}
+                  style={{ 
+                    position: 'absolute', 
+                    top: '-12px', 
+                    left: '50%', 
+                    transform: 'translateX(-50%)', 
+                    backgroundColor: tokens.primary, 
+                    color: isDark ? '#000000' : '#ffffff', 
+                    padding: '4px 16px', 
+                    borderRadius: '100px', 
+                    fontSize: '10px', 
+                    fontWeight: 900, 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '1px',
+                    boxShadow: `0 4px 12px ${tokens.primary}25`
+                  }}
+                >
+                  Recommended
+                </div>
               )}
 
               <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '8px', ...appearance?.elements?.tierLabel }}>{tier.label}</h3>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '32px', ...appearance?.elements?.price }}>
-                  <span style={{ fontSize: '40px', fontWeight: 900 }}>${formatPrice(tier.price)}</span>
-                  <span style={{ fontSize: '14px', color: tokens.muted, fontWeight: 700 }}>/ {humanDuration(plan?.duration || "0")}</span>
+                <h3 
+                  className={cn(classNames?.tierLabel)} 
+                  style={{ fontSize: '24px', fontWeight: 900, marginBottom: '8px', ...appearance?.elements?.tierLabel }}
+                >
+                  {tier.label}
+                </h3>
+                
+                <div 
+                  className={cn(classNames?.priceContainer)} 
+                  style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '32px', ...appearance?.elements?.price }}
+                >
+                  <span className={cn(classNames?.priceAmount)} style={{ fontSize: '40px', fontWeight: 900 }}>
+                    ${formatPrice(tier.price)}
+                  </span>
+                  <span className={cn(classNames?.priceMuted)} style={{ fontSize: '14px', color: tokens.muted, fontWeight: 700 }}>
+                    / {humanDuration(plan?.duration || "0")}
+                  </span>
                 </div>
-                <div style={{ borderTop: `1px solid ${tokens.border}`, paddingTop: '24px' }}>
+
+                <div className={cn(classNames?.featuresList)} style={{ borderTop: `1px solid var(--mecha-border-color)`, paddingTop: '24px' }}>
                   {tier.features.map((f, i) => (
-                    <div key={i} style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'flex-start' }}>
-                      <div style={{ marginTop: '4px' }}><CheckCircle2 size={16} style={{ color: isThisTierActive ? '#10b981' : tokens.primary, flexShrink: 0 }} /></div>
+                    <div key={i} className={cn("mecha-feat-item", classNames?.featureItem)} style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'flex-start' }}>
+                      <div style={{ marginTop: '3px', flexShrink: 0 }}>
+                        <CheckCircle2 size={16} style={{ color: isThisTierActive ? '#10b981' : tokens.primary }} />
+                      </div>
                       <div>
-                        <p style={{ fontSize: '13px', fontWeight: 700, margin: 0, lineHeight: '1.4' }}>{f.title}</p>
-                        {f.description && <p style={{ fontSize: '11px', color: tokens.muted, marginTop: '2px', lineHeight: '1.4' }}>{f.description}</p>}
+                        <p className={cn(classNames?.featureTitle)} style={{ fontSize: '13.5px', fontWeight: 700, margin: 0, lineHeight: '1.4' }}>
+                          {f.title}
+                        </p>
+                        {f.description && (
+                          <p className={cn(classNames?.featureDescription)} style={{ fontSize: '11.5px', color: tokens.muted, marginTop: '2px', lineHeight: '1.4', margin: 0 }}>
+                            {f.description}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <button
-                onClick={() => !isActiveSub && handleSelect(tier.id)}
-                disabled={isActiveSub}
-                style={{
-                  marginTop: '32px',
-                  width: '100%',
-                  height: '52px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  backgroundColor: isThisTierActive ? 'rgba(16, 185, 129, 0.1)' : (isActiveSub ? tokens.border : tokens.primary),
-                  color: isThisTierActive ? '#10b981' : (isActiveSub ? tokens.muted : (isDark ? '#000' : '#fff')),
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  letterSpacing: '1.5px',
-                  fontSize: '11px',
-                  cursor: isActiveSub ? 'default' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  transition: 'all 0.2s',
-                  ...appearance?.elements?.button
-                }}
-              >
-                {isThisTierActive ? "Active Subscription" : (isActiveSub ? "Plan Locked" : `Get ${tier.label}`)}
-                {!isActiveSub && <ArrowRight size={14} />}
-                {isThisTierActive && <CheckCircle2 size={14} />}
-              </button>
-            </motion.div>
+              {/* ── Tier CTA Button Renderer ── */}
+              {renderTierButton ? (
+                renderTierButton(
+                  tier, 
+                  { 
+                    isActive: isActiveSub, 
+                    isCurrent: isThisTierActive, 
+                    isDisabled: isThisTierActive, 
+                    isUpgrade, 
+                    isDowngrade, 
+                    label: buttonText 
+                  }, 
+                  () => handleSelect(tier.id)
+                )
+              ) : (
+                <button
+                  onClick={() => !isThisTierActive && handleSelect(tier.id)}
+                  disabled={isThisTierActive}
+                  className={cn(
+                    "mecha-btn-cls",
+                    isThisTierActive 
+                      ? "mecha-btn-active-cls" 
+                      : "mecha-btn-primary-cls",
+                    classNames?.button
+                  )}
+                  style={{
+                    backgroundColor: isThisTierActive ? 'rgba(16, 185, 129, 0.08)' : tokens.primary,
+                    color: isThisTierActive ? '#10b981' : (isDark ? '#000000' : '#ffffff'),
+                    border: isThisTierActive ? '1px solid rgba(16, 185, 129, 0.2)' : 'none',
+                    ...appearance?.elements?.button
+                  }}
+                >
+                  {buttonText}
+                  {!isThisTierActive && <ArrowRight size={13} style={{ strokeWidth: 2.5 }} />}
+                  {isThisTierActive && <Check size={13} style={{ strokeWidth: 3 }} />}
+                </button>
+              )}
+            </div>
           );
         })}
       </div>
 
-      {!hideBranding && (
-        <div style={{ marginTop: '60px', textAlign: 'center', opacity: 0.3, display: 'flex', justifyContent: 'center', gap: '20px', alignItems: 'center' }}>
-          <p style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>Powered by Mecha Pay</p>
-          <Lock size={12} /><Zap size={12} />
-        </div>
+      {/* ── Footer / Branding Segment ── */}
+      {renderFooter ? (
+        renderFooter()
+      ) : (
+        !hideBranding && (
+          <div style={{ marginTop: '60px', textAlign: 'center', opacity: 0.35, display: 'flex', justifyContent: 'center', gap: '20px', alignItems: 'center' }}>
+            <p style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', margin: 0 }}>
+              Powered by Mecha Pay
+            </p>
+            <Lock size={11} />
+            <Zap size={11} />
+          </div>
+        )
       )}
-
-      <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }` }} />
     </div>
   );
+};
+
+/**
+ * useMechaPerks
+ * Fetches and resolves active plan tier details (tier name, features, expiry date) subscribed by the user.
+ * Returns null if the user has no active subscriptions, or is expired.
+ */
+export const useMechaPerks = (planId: string, userId?: string) => {
+  const { apiKey, portalUrl } = useMechaConfig();
+  const subscription = useMecha(planId, userId);
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState(true);
+
+  useEffect(() => {
+    if (!planId) return;
+    const fetchPlan = async () => {
+      try {
+        setLoadingPlan(true);
+        const url = `${portalUrl}/api/sdk/plan/${planId}`;
+        const res = await fetch(url, {
+          headers: { "x-api-key": apiKey }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setPlan(data.plan);
+        }
+      } catch (err) {
+        console.error("Failed to fetch plan in useMechaPerks", err);
+      } finally {
+        setLoadingPlan(false);
+      }
+    };
+    fetchPlan();
+  }, [planId, apiKey, portalUrl]);
+
+  const perks = useMemo((): SubscribedTierDetail[] | null | undefined => {
+    if (subscription.loading || loadingPlan) return undefined;
+    if (subscription.status !== "ACTIVE" || subscription.tierIds.length === 0 || !plan) {
+      return null;
+    }
+
+    const expiryTime = new Date(Date.now() + subscription.remainingSeconds * 1000);
+
+    // Filter tiers that are currently active/bought by the user
+    const activeTiers = plan.tiers.filter(t => subscription.tierIds.includes(t.id));
+    
+    // Map active tiers to details containing tier name, features, and expiry date
+    return activeTiers.map(t => ({
+      tierId: t.id,
+      tierName: t.label,
+      features: t.features,
+      expiryDate: expiryTime,
+    }));
+  }, [subscription.loading, subscription.status, subscription.tierIds, subscription.remainingSeconds, plan, loadingPlan]);
+
+  return {
+    perks,
+    loading: subscription.loading || loadingPlan,
+    error: subscription.error
+  };
 };
