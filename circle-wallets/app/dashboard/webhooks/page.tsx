@@ -383,8 +383,10 @@ export default function WebhooksPage() {
                       value={selectedPlanId}
                       onValueChange={(val) => setSelectedPlanId(val || "")}
                     >
-                      <SelectTrigger className="w-full bg-background border border-input h-10 px-3 rounded-lg text-xs font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none">
-                        <SelectValue placeholder="Select a subscription plan" />
+                      <SelectTrigger className="w-full bg-background border border-input h-10 px-3 rounded-lg text-xs font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none text-left">
+                        <span>
+                          {availablePlanOptions.find((opt) => opt.id === selectedPlanId)?.label || "Select a subscription plan"}
+                        </span>
                       </SelectTrigger>
                       <SelectContent>
                         {availablePlanOptions.map((opt) => (
