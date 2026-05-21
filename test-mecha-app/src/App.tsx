@@ -1,4 +1,4 @@
-import { MechaProvider, MechaPricingTable, useMecha, useMechaPerks } from "mechapay";
+import { MechaProvider, MechaPricingTable, useMecha, useMechaPerks } from "mechapay-react";
 import { Zap } from "lucide-react";
 
 const PLAN_ID = "0xb074b0822015c916dd232e7f6e7cfd051ecfde5628a14cdb8b2f4050e40a6d1c";
