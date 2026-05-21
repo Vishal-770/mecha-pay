@@ -80,16 +80,26 @@ export interface MechaAppearance {
   };
 }
 
-## Perk
+## Feature
 
-Represents an individual perk/entitlement resolved across active subscription tiers.
+Represents a feature item in a tier.
 
 ```typescript
-export interface Perk {
+export interface Feature {
   title: string;
   description: string;
-  tierId: string;
-  tierName: string;
 }
 ```
+
+## SubscribedTierDetail
+
+Represents details about an active tier subscription.
+
+```typescript
+export interface SubscribedTierDetail {
+  tierId: string;
+  tierName: string;
+  features: Feature[];
+  expiryDate: Date;
+}
 ```

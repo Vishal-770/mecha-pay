@@ -47,6 +47,64 @@ function MyPricing() {
   The ID of the tier that should be highlighted as "Recommended". Defaults to the second tier in the list.
 </ParamField>
 
+<ParamField prop="className" type="string">
+  Standard CSS class name applied to the outer container.
+</ParamField>
+
+<ParamField prop="style" type="React.CSSProperties">
+  Standard inline styles applied to the outer container.
+</ParamField>
+
+<ParamField prop="customLabels" type="MechaLabels">
+  Custom label overrides for UI text elements. Supports translation or custom phrasing.
+  
+  ```typescript
+  interface MechaLabels {
+    activeSubscription?: string;      // Default: "Current Plan"
+    upgrade?: string;                 // Default: "Upgrade"
+    downgrade?: string;               // Default: "Downgrade"
+    changePlan?: string;              // Default: "Switch Plan"
+    getTier?: string;                 // Default: "Get {{tierLabel}}"
+    selectPlanDescription?: string;   // Default: "Select a membership tier to access the protocol."
+    subscriptionActiveHeader?: string; // Default: "Subscription Active · {{countdown}} Left"
+  }
+  ```
+</ParamField>
+
+<ParamField prop="classNames" type="MechaClassNames">
+  Custom TailwindCSS or standard class overrides for styling table elements.
+  
+  ```typescript
+  interface MechaClassNames {
+    container?: string;
+    grid?: string;
+    card?: string;
+    badge?: string;
+    tierLabel?: string;
+    priceContainer?: string;
+    priceAmount?: string;
+    priceMuted?: string;
+    featuresList?: string;
+    featureItem?: string;
+    featureTitle?: string;
+    featureDescription?: string;
+    button?: string;
+  }
+  ```
+</ParamField>
+
+<ParamField prop="renderHeader" type="(plan: Plan, subscription: MechaSubscription) => React.ReactNode">
+  A custom render function to completely replace the default pricing table header section.
+</ParamField>
+
+<ParamField prop="renderFooter" type="() => React.ReactNode">
+  A custom render function to completely replace the default footer / brand section.
+</ParamField>
+
+<ParamField prop="renderTierButton" type="(tier: Tier, state: { isActive: boolean; isCurrent: boolean; isDisabled: boolean; isUpgrade: boolean; isDowngrade: boolean; label: string }, handleSelect: () => void) => React.ReactNode">
+  A custom render function to completely replace the default CTA button for each tier. Allows injecting your own custom button designs or logic.
+</ParamField>
+
 ## Visual Features
 
 - **Automated Fetching**: Retrieves all tiers, prices, and features from IPFS.

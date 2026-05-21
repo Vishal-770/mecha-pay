@@ -1,9 +1,9 @@
 ---
 title: "useMechaPerks"
-description: "React hook to retrieve and flat-map features across all active subscription tiers."
+description: "React hook to retrieve resolved subscription details and features across all active tiers."
 ---
 
-The `useMechaPerks` hook resolves and aggregates all perks, features, and active entitlements associated with the user's active subscriptions (across multiple tiers). It eliminates duplicate perks automatically, making it perfect for checking feature access rights programmatically.
+The `useMechaPerks` hook resolves and aggregates all active subscription details, active tiers, and features/entitlements associated with the user's active subscriptions under a given plan. It is ideal for checking feature flags, tier names, and expiration dates across multiple active tiers programmatically.
 
 ## Usage
 
@@ -19,22 +19,32 @@ function PremiumFeatureDashboard() {
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
-  // Check if user has access to a specific perk title
-  const hasAccessToAnalytics = perks?.some(p => p.title === "Advanced Analytics");
+  // Gather all active feature list items from all active tiers
+  const activeFeatures = perks?.flatMap(p => p.features) || [];
+  const hasAccessToAnalytics = activeFeatures.some(f => f.title === "Advanced Analytics");
 
   return (
     <div>
-      <h1>Your Entitlements</h1>
-      <ul>
-        {perks?.map((perk, i) => (
-          <li key={i}>
-            <strong>{perk.title}</strong>: {perk.description} (from Tier: {perk.tierName})
-          </li>
-        ))}
-      </ul>
+      <h1>Your Active Subscriptions & Entitlements</h1>
+      
+      {perks?.map((tier, i) => (
+        <div key={i} className="tier-card" style={{ marginBottom: '24px' }}>
+          <h2>Tier: {tier.tierName}</h2>
+          <p>Expires on: {tier.expiryDate.toLocaleDateString()}</p>
+          
+          <h3>Features:</h3>
+          <ul>
+            {tier.features.map((feature, j) => (
+              <li key={j}>
+                <strong>{feature.title}</strong>: {feature.description}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
       
       {hasAccessToAnalytics && (
-        <button>Open Analytics Dashboard</button>
+        <button className="analytics-btn">Open Advanced Analytics</button>
       )}
     </div>
   );
@@ -53,15 +63,20 @@ function PremiumFeatureDashboard() {
 
 ## Returns
 
-<ResponseField name="perks" type="Perk[] | null">
-  A list of all active features/entitlements from the user's active tiers, or `null` if the user has no active subscriptions.
+<ResponseField name="perks" type="SubscribedTierDetail[] | null | undefined">
+  A list of all active subscription tier details from the user's active tiers, `undefined` while loading, or `null` if the user has no active subscriptions.
   
   ```typescript
-  interface Perk {
-    title: string;
-    description: string;
+  interface SubscribedTierDetail {
     tierId: string;
     tierName: string;
+    features: Feature[];
+    expiryDate: Date;
+  }
+  
+  interface Feature {
+    title: string;
+    description: string;
   }
   ```
 </ResponseField>

@@ -62,13 +62,20 @@ function PremiumDashboard() {
   if (error) return <div>Error loading perks: {error}</div>;
 
   return (
-    <ul>
-      {perks?.map((perk, i) => (
-        <li key={i}>
-          <strong>{perk.title}</strong>: {perk.description} (from Tier: {perk.tierName})
-        </li>
+    <div>
+      {perks?.map((tier, i) => (
+        <div key={i} style={{ marginBottom: '16px' }}>
+          <h3>Tier: {tier.tierName} (Expires: {tier.expiryDate.toLocaleDateString()})</h3>
+          <ul>
+            {tier.features.map((feature, j) => (
+              <li key={j}>
+                <strong>{feature.title}</strong>: {feature.description}
+              </li>
+            ))}
+          </ul>
+        </div>
       ))}
-    </ul>
+    </div>
   );
 }
 ```
@@ -77,6 +84,6 @@ function PremiumDashboard() {
 
 | Value | Type | Description |
 | :--- | :--- | :--- |
-| `perks` | `Perk[] | null` | List of all active features/entitlements from active subscription tiers. |
+| `perks` | `SubscribedTierDetail[] | null | undefined` | List of all active tier details from active subscription tiers. `undefined` while loading, `null` if no active subscription. |
 | `loading` | `boolean` | Whether the SDK is currently fetching data. |
 | `error` | `any` | Any error encountered during synchronization. |
