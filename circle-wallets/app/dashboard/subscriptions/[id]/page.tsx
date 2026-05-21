@@ -44,6 +44,7 @@ type SubscriptionDetail = {
   lastEndTime: string;
   lastBuyerData: string;
   lastTierId: string;
+  tierIds?: string[];
   metadata: {
     name?: string;
     brand?: { name?: string; website?: string };
@@ -173,15 +174,26 @@ export default function SubscriptionDetailPage() {
   const isActive = data.status === "ACTIVE";
   const brand = data.metadata?.brand;
   
-  const activeTier = data.plan.tiers?.find(t => t.tierId === data.lastTierId);
-  const tierLabel = activeTier?.label ?? "Standard";
+  const activeTiers = data.plan.tiers?.filter(t => data.tierIds?.includes(t.tierId) || t.tierId === data.lastTierId) ?? [];
+  const tierLabel = activeTiers.length > 0 ? activeTiers.map(t => t.label).join(", ") : "Standard";
   const progressPercent = Math.min((data.remainingSeconds / Number(data.plan.duration)) * 100, 100);
 
   const isV11 = data.metadata?.version === "1.1";
   let perks: { title: string; description: string }[] = [];
   if (isV11) {
-    const tierMeta = data.metadata?.tiers?.find(t => t.label === tierLabel);
-    perks = tierMeta?.features ?? [];
+    activeTiers.forEach(tier => {
+      const tierMeta = data.metadata?.tiers?.find(t => t.label === tier.label);
+      if (tierMeta?.features) {
+        perks.push(...tierMeta.features);
+      }
+    });
+    // Deduplicate perks by title
+    const seen = new Set();
+    perks = perks.filter(p => {
+      if (seen.has(p.title)) return false;
+      seen.add(p.title);
+      return true;
+    });
   } else {
     perks = data.metadata?.features ?? [];
   }

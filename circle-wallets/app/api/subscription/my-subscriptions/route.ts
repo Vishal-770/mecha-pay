@@ -72,6 +72,13 @@ const query = `
         }
       }
     }
+    subscribeds(
+      where: { subscriber: $subscriber }
+    ) {
+      planId
+      tierId
+      endTime
+    }
   }
 `;
 
@@ -102,7 +109,10 @@ export async function GET(req: Request) {
     const first = Math.min(Number(searchParams.get("first") ?? "100"), 200);
     const skip = Math.max(Number(searchParams.get("skip") ?? "0"), 0);
 
-    const data = await querySubgraph<{ subscriptionStates: StateRecord[] }>(
+    const data = await querySubgraph<{
+      subscriptionStates: StateRecord[];
+      subscribeds: { planId: string; tierId: string; endTime: string }[];
+    }>(
       query,
       {
         subscriber: toLowerHex(subscriber),
@@ -130,7 +140,22 @@ export async function GET(req: Request) {
 
         const lastEndTime = toNumber(entry.lastEndTime);
         const remainingSeconds = Math.max(lastEndTime - now, 0);
-        const active = remainingSeconds > 0 && entry.status === "ACTIVE";
+        const isStateActive = remainingSeconds > 0 && entry.status === "ACTIVE";
+
+        // Find active tierIds for this specific plan entry
+        const activeSubs = (data.subscribeds ?? []).filter(
+          (sub) =>
+            sub.planId.toLowerCase() === entry.plan.id.toLowerCase() &&
+            toNumber(sub.endTime) >= now
+        );
+        const tierIds = Array.from(new Set(activeSubs.map((sub) => sub.tierId)));
+
+        // Ensure lastTierId is in the active list if state is active
+        if (isStateActive && entry.lastTierId && !tierIds.includes(entry.lastTierId)) {
+          tierIds.push(entry.lastTierId);
+        }
+
+        const active = isStateActive || tierIds.length > 0;
 
         return {
           ...entry,
@@ -138,6 +163,7 @@ export async function GET(req: Request) {
           remainingSeconds,
           canRenew: !active,
           metadata,
+          tierIds,
         };
       }),
     );

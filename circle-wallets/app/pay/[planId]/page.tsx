@@ -107,6 +107,7 @@ export default function PaymentPage() {
     remainingSeconds: number;
     lastEndTime: string;
     lastTierId?: string;
+    tierIds?: string[];
   } | null>(null);
 
   // Success state — which tier was just purchased
@@ -600,7 +601,7 @@ export default function PaymentPage() {
 
                 const metaTier = plan?.metadata?.tiers?.find(mt => mt.label === tier.label);
                 const tierFeatures = metaTier?.features ?? [];
-                const isThisTierActive = isActiveSub && subscription?.lastTierId === tier.tierId;
+                const isThisTierActive = isActiveSub && (subscription?.tierIds?.includes(tier.tierId) || subscription?.lastTierId === tier.tierId);
 
                 return (
                   <div

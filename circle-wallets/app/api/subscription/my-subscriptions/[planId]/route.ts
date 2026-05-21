@@ -89,14 +89,60 @@ export async function GET(
     }
 
     let entry: SubscriptionState | null = null;
+    let subscribedsList: { tierId: string; endTime: string; buyerData: string }[] = [];
 
     if (subscriber) {
       const id = `${toLowerHex(subscriber)}-${toLowerHex(planId)}`;
-      const data = await querySubgraph<{ subscriptionState: SubscriptionState | null }>(
-        query,
-        { id }
-      );
+      const subQuery = `
+        query SingleSubscriptionWithEvents($id: ID!, $subscriber: Bytes!, $planId: Bytes!) {
+          subscriptionState(id: $id) {
+            id
+            status
+            subscriptionCount
+            totalSpent
+            totalFeesPaid
+            firstStartTime
+            lastStartTime
+            lastEndTime
+            lastBuyerData
+            lastTierId
+            updatedAt
+            seller {
+              id
+            }
+            plan {
+              id
+              duration
+              ipfsHash
+              active
+              subscriptionCount
+              tiers {
+                tierId
+                price
+                label
+                active
+              }
+            }
+          }
+          subscribeds(
+            where: { subscriber: $subscriber, planId: $planId }
+          ) {
+            tierId
+            endTime
+            buyerData
+          }
+        }
+      `;
+      const data = await querySubgraph<{
+        subscriptionState: SubscriptionState | null;
+        subscribeds: { tierId: string; endTime: string; buyerData: string }[];
+      }>(subQuery, {
+        id,
+        subscriber: toLowerHex(subscriber),
+        planId: toLowerHex(planId),
+      });
       entry = data.subscriptionState;
+      subscribedsList = data.subscribeds ?? [];
     } else if (userId) {
       // Query by buyer data (userId)
       const userQuery = `
@@ -133,13 +179,24 @@ export async function GET(
               }
             }
           }
+          subscribeds(
+            where: { planId: $planId, buyerData: $userId }
+          ) {
+            tierId
+            endTime
+            buyerData
+          }
         }
       `;
-      const data = await querySubgraph<{ subscriptionStates: SubscriptionState[] }>(
-        userQuery,
-        { planId: toLowerHex(planId), userId }
-      );
+      const data = await querySubgraph<{
+        subscriptionStates: SubscriptionState[];
+        subscribeds: { tierId: string; endTime: string; buyerData: string }[];
+      }>(userQuery, {
+        planId: toLowerHex(planId),
+        userId,
+      });
       entry = data.subscriptionStates?.[0] || null;
+      subscribedsList = data.subscribeds ?? [];
     }
 
     if (!entry) {
@@ -162,7 +219,18 @@ export async function GET(
 
     const lastEndTime = toNumber(entry.lastEndTime);
     const remainingSeconds = Math.max(lastEndTime - now, 0);
-    const isActive = remainingSeconds > 0 && entry.status === "ACTIVE";
+    const isStateActive = remainingSeconds > 0 && entry.status === "ACTIVE";
+
+    // Filter subscribeds to find all active tiers
+    const activeSubs = subscribedsList.filter(sub => toNumber(sub.endTime) >= now);
+    const tierIds = Array.from(new Set(activeSubs.map(sub => sub.tierId)));
+
+    // Ensure lastTierId is in the active list if state is active
+    if (isStateActive && entry.lastTierId && !tierIds.includes(entry.lastTierId)) {
+      tierIds.push(entry.lastTierId);
+    }
+
+    const isActive = isStateActive || tierIds.length > 0;
 
     return NextResponse.json({
       subscription: {
@@ -170,6 +238,7 @@ export async function GET(
         status: isActive ? "ACTIVE" : "EXPIRED",
         remainingSeconds,
         metadata,
+        tierIds,
       },
     });
   } catch (err) {

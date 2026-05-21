@@ -51,6 +51,12 @@ const SUB_QUERY = `
       lastEndTime
       lastTierId
     }
+    subscribeds(
+      where: { planId: $planId, buyerData: $userId }
+    ) {
+      tierId
+      endTime
+    }
   }
 `;
 
@@ -98,7 +104,7 @@ export async function GET(
     // 3. Optional: Check Subscription by userId
     let subscription = null;
     if (userId) {
-      const subData = await querySubgraph<{ subscriptionStates: any[] }>(
+      const subData = await querySubgraph<{ subscriptionStates: any[]; subscribeds: any[] }>(
         SUB_QUERY,
         {
           planId: toLowerHex(planId),
@@ -110,12 +116,24 @@ export async function GET(
         const lastEndTime = toNumber(entry.lastEndTime);
         const now = toSecondsNow();
         const remainingSeconds = Math.max(lastEndTime - now, 0);
-        const isActive = remainingSeconds > 0 && entry.status === "ACTIVE";
+        const isStateActive = remainingSeconds > 0 && entry.status === "ACTIVE";
+
+        // Filter subscribeds to find all active tiers
+        const activeSubs = (subData.subscribeds ?? []).filter(sub => toNumber(sub.endTime) >= now);
+        const tierIds = Array.from(new Set(activeSubs.map(sub => sub.tierId)));
+
+        // Ensure lastTierId is in the active list if state is active
+        if (isStateActive && entry.lastTierId && !tierIds.includes(entry.lastTierId)) {
+          tierIds.push(entry.lastTierId);
+        }
+
+        const isActive = isStateActive || tierIds.length > 0;
 
         subscription = {
           status: isActive ? "ACTIVE" : "EXPIRED",
           remainingSeconds,
           tierId: entry.lastTierId,
+          tierIds,
         };
       }
     }

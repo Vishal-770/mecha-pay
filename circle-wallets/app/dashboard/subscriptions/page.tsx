@@ -30,6 +30,7 @@ type SubscriptionRow = {
   remainingSeconds: number;
   canRenew: boolean;
   lastTierId?: string;
+  tierIds?: string[];
   plan: {
     id: string;
     duration: string;
@@ -271,8 +272,8 @@ export default function MySubscriptionsPage() {
                 ? Math.min((item.remainingSeconds / Number(item.plan.duration)) * 100, 100) 
                 : 0;
 
-              const activeTier = item.plan.tiers?.find(t => t.tierId === item.lastTierId);
-              const tierLabel = activeTier?.label || "Standard";
+              const activeTiers = item.plan.tiers?.filter(t => item.tierIds?.includes(t.tierId) || t.tierId === item.lastTierId) ?? [];
+              const tierLabel = activeTiers.length > 0 ? activeTiers.map(t => t.label).join(", ") : "Standard";
 
               return (
                 <Card key={item.id} className="group flex flex-col bg-card border-border/60 rounded-[2.5rem] hover:border-primary/30 transition-all duration-500 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/5">
