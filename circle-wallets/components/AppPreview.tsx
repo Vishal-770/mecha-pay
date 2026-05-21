@@ -2,86 +2,118 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { motion } from "framer-motion"
-import { ArrowUpRight } from "lucide-react"
+import { motion, useScroll, useTransform } from "framer-motion"
+import { ArrowUpRight, ShieldCheck } from "lucide-react"
+import { useRef } from "react"
 
 export default function AppPreview() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  // Parallax effect for the image
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"],
+  })
+  
+  const y = useTransform(scrollYProgress, [0, 1], [50, -50])
+  const opacity = useTransform(scrollYProgress, [0, 0.3, 1], [0.5, 1, 1])
+  const rotateX = useTransform(scrollYProgress, [0, 0.5], [10, 0])
+
   return (
-    <section className="relative w-full py-24 lg:py-40 overflow-hidden bg-[#000000] border-t border-[#ffffff]/5">
+    <section 
+      ref={containerRef}
+      className="relative w-full pt-32 pb-40 overflow-hidden bg-[#000000]"
+    >
+      {/* Subtle Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[50%] bg-[#b6f09c] rounded-full blur-[200px] opacity-[0.03] pointer-events-none" />
       
+      {/* Decorative Grid */}
+      <div className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none" 
+           style={{
+             backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
+             backgroundSize: '4rem 4rem'
+           }} 
+      />
+
       <div className="relative z-10 container mx-auto px-6 lg:px-12 flex flex-col items-center text-center">
-        {/* Badge - Static & Clean */}
+        
+        {/* Premium Badge */}
         <motion.div
-           initial={{ opacity: 0, y: 10 }}
+           initial={{ opacity: 0, y: 15 }}
            whileInView={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.5 }}
-           viewport={{ once: true }}
-           className="inline-flex items-center gap-2 px-3 py-1 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full mb-10"
+           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+           viewport={{ once: true, margin: "-100px" }}
+           className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full mb-8 backdrop-blur-md"
         >
-          <span className="text-[#a1a1aa] text-[10px] font-bold uppercase tracking-[0.2em] leading-none">
+          <ShieldCheck className="h-3.5 w-3.5 text-[#b6f09c]" />
+          <span className="text-zinc-300 text-xs font-semibold tracking-wide">
             Institutional Grade Infrastructure
           </span>
         </motion.div>
 
-        {/* Main Heading - High Contrast */}
+        {/* Main Heading - Clean & Sophisticated */}
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          viewport={{ once: true }}
-          className="text-4xl md:text-7xl lg:text-8xl font-black tracking-tighter text-[#ffffff] uppercase leading-[0.9] max-w-5xl mb-8"
+          transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true, margin: "-100px" }}
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] font-bold tracking-tighter text-[#ffffff] leading-[1.05] max-w-4xl mb-8"
         >
           The New Standard <br/>
-          <span className="text-[#b6f09c]">For Onchain Payments</span>
+          <span className="text-[#b6f09c]">
+            For Onchain Payments
+          </span>
         </motion.h2>
 
-
-        {/* Sub-heading */}
+        {/* Sub-heading - Legible and balanced */}
         <motion.p
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          viewport={{ once: true }}
-          className="text-[#71717a] font-medium text-lg md:text-xl max-w-2xl mb-14 leading-relaxed"
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true, margin: "-100px" }}
+          className="text-zinc-400 font-medium text-lg md:text-xl max-w-2xl mb-12 leading-relaxed"
         >
           A unified stack for USDC bridging, smart analytics, and automated membership lifecycles. 
           Built for scale, secured by MPC, and optimized for sub-second finality.
         </motion.p>
 
-        {/* CTA Buttons - Clean & Professional */}
+        {/* CTA Buttons - Professional static styling */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
-          viewport={{ once: true }}
-          className="flex flex-col sm:flex-row items-center gap-5 mb-24"
+          transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true, margin: "-100px" }}
+          className="flex flex-col sm:flex-row items-center gap-4 mb-24 w-full sm:w-auto"
         >
-          <Link href="/login" className="h-14 px-12 flex items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-xs uppercase tracking-widest transition-all hover:opacity-90">
-            Get Started
+          <Link href="/login" className="flex h-14 w-full sm:w-auto px-8 items-center justify-center gap-2 rounded-full bg-[#b6f09c] text-sm font-bold text-[#000000] hover:opacity-90 transition-opacity">
+            <span>Get Started</span>
+            <ArrowUpRight className="h-4 w-4 stroke-[3px]" />
           </Link>
-          <Link href="/docs" className="h-14 px-12 flex items-center justify-center rounded-xl border border-[#ffffff]/10 bg-[#ffffff]/5 text-[#ffffff] font-extrabold text-xs uppercase tracking-widest transition-all hover:bg-[#ffffff]/10">
-            Developer Docs <ArrowUpRight className="ml-2 h-4 w-4" />
+          <Link href="/docs" className="flex h-14 w-full sm:w-auto px-8 items-center justify-center gap-2 rounded-full border border-[#ffffff]/10 bg-transparent text-sm font-semibold text-[#ffffff] hover:bg-[#ffffff]/5 transition-colors">
+            <span>Developer Docs</span>
           </Link>
         </motion.div>
 
-        {/* App Showcase Visual - Static High Fidelity */}
+        {/* App Showcase Visual - Crisp and Professional */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }} // Smooth professional easing
-          viewport={{ once: true }}
-          className="relative w-full max-w-6xl"
+          style={{ y, opacity, rotateX }}
+          className="relative w-full max-w-6xl perspective-[2000px]"
         >
+          {/* Subtle outer glow removed to keep it cleaner */}
+          <div className="absolute inset-0 bg-[#ffffff]/5 blur-[100px] rounded-[3rem] -z-10" />
           
-          {/* Main App Image Container */}
-          <div className="relative rounded-[2.5rem] border border-[#ffffff]/10 bg-[#000000] p-3 shadow-2xl shadow-[#000000] overflow-hidden">
-             <div className="relative rounded-[1.8rem] overflow-hidden">
+          {/* Premium Bezel Container */}
+          <div className="relative rounded-[2.5rem] border border-[#ffffff]/10 bg-[#050505] p-2 md:p-3 shadow-2xl overflow-hidden">
+             
+             {/* Inner Screen */}
+             <div className="relative rounded-[1.8rem] md:rounded-[2rem] overflow-hidden border border-[#ffffff]/5 bg-[#000000]">
+               {/* Image */}
                <Image 
                  src="/demo-app.png" 
                  alt="Mecha Pay Dashboard" 
                  width={2560} 
                  height={1440} 
-                 className="w-full object-cover active:scale-100 grayscale hover:grayscale-0 transition-all duration-700"
+                 className="w-full object-cover rounded-[1.8rem] md:rounded-[2rem]"
                  priority
                />
              </div>

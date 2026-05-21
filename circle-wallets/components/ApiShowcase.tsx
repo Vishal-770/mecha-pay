@@ -24,34 +24,34 @@ const apiFeatureDetails = [
 
 export default function ApiShowcase() {
   return (
-    <section className="relative w-full py-24 lg:py-40 bg-[#000000] overflow-hidden border-t border-[#ffffff]/5">
+    <section className="relative w-full py-24 lg:py-32 bg-[#000000] overflow-hidden z-20">
       
-      <div className="container mx-auto px-6 lg:px-12 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-20 items-center">
+      <div className="max-w-7xl mx-auto px-6 sm:px-12 lg:px-20 relative z-10 w-full">
+        <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
           
           {/* Left Side: Content */}
-          <div className="flex flex-col gap-8">
-            <div className="px-3 py-1 bg-[#b6f09c]/10 border border-[#b6f09c]/20 rounded-full w-fit">
-              <span className="text-[#b6f09c] text-[10px] font-bold uppercase tracking-[0.2em] leading-none">Developer Suite</span>
+          <div className="flex flex-col gap-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-2">
+              <span className="text-zinc-300 text-xs font-semibold tracking-wide">Developer Suite</span>
             </div>
             
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-[#ffffff] leading-[0.9]">
-              Seamless Data <br/><span className="text-[#a1a1aa]">Via REST API</span>
+            <h2 className="text-5xl lg:text-6xl font-bold tracking-tighter text-[#ffffff]">
+              Seamless Data <br/><span className="text-[#b6f09c]">Via REST API</span>
             </h2>
             
-            <p className="text-[#71717a] font-medium text-lg lg:text-xl leading-relaxed max-w-xl">
+            <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2 lg:mt-4 max-w-xl">
               Integrate real-time subscription status and plan metadata directly into your backend or proprietary dashboard using our standardized REST endpoints.
             </p>
 
             <div className="flex flex-col gap-6 mt-4">
               {apiFeatureDetails.map((feature, i) => (
                 <div key={i} className="flex gap-4 items-start">
-                  <div className="p-2 rounded-lg bg-[#ffffff]/5 border border-[#ffffff]/10 shrink-0">
+                  <div className="p-2.5 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 shrink-0">
                     {feature.icon}
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-[#ffffff] font-bold text-sm uppercase tracking-wider">{feature.title}</span>
-                    <span className="text-[#71717a] text-sm leading-relaxed">{feature.description}</span>
+                    <span className="text-[#ffffff] font-bold text-base">{feature.title}</span>
+                    <span className="text-zinc-400 text-sm leading-relaxed">{feature.description}</span>
                   </div>
                 </div>
               ))}
@@ -60,67 +60,67 @@ export default function ApiShowcase() {
             <div className="mt-8">
               <Link 
                 href="/docs" 
-                className="inline-flex h-14 px-10 items-center justify-center rounded-xl bg-[#b6f09c] text-[#000000] font-black text-xs uppercase tracking-widest transition-all hover:opacity-90 group/btn"
+                className="flex h-14 w-full sm:w-fit px-8 items-center justify-center gap-2 rounded-full bg-[#b6f09c] text-sm font-bold text-[#000000] hover:opacity-90 transition-opacity"
               >
-                API Reference 
-                <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1" />
+                <span>API Reference</span>
+                <ArrowUpRight className="h-4 w-4 stroke-[3px]" />
               </Link>
             </div>
           </div>
 
           {/* Right Side: API Preview */}
-          <div className="relative group">
-            <div className="relative bg-[#0b0b0f] border border-[#ffffff]/5 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden">
+          <div className="relative group perspective-[2000px]">
+            <div className="relative bg-[#050505] border border-[#ffffff]/10 rounded-2xl shadow-2xl overflow-hidden w-full max-w-xl mx-auto">
                {/* Terminal-like header */}
-               <div className="flex items-center justify-between mb-8 border-b border-[#ffffff]/5 pb-6">
+               <div className="w-full h-12 bg-[#ffffff]/5 border-b border-[#ffffff]/5 flex items-center justify-between px-4 z-20">
                  <div className="flex gap-2">
-                    <div className="h-3 w-3 rounded-full bg-[#ffffff]/10 border border-[#ffffff]/20" />
-                    <div className="h-3 w-3 rounded-full bg-[#ffffff]/10 border border-[#ffffff]/20" />
-                    <div className="h-3 w-3 rounded-full bg-[#ffffff]/10 border border-[#ffffff]/20" />
+                    <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                    <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
                  </div>
-                 <div className="px-3 py-1 bg-[#b6f09c]/10 rounded-md">
-                    <span className="text-[10px] font-mono text-[#b6f09c]">GET /api/v1/status</span>
+                 <div className="px-3 py-1 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-md">
+                    <span className="text-[10px] font-mono text-zinc-400">GET /api/v1/status</span>
                  </div>
                </div>
 
                {/* JSON Preview Content */}
-               <div className="font-mono text-sm leading-relaxed">
-                  <div className="text-[#ffffff]">{"{"}</div>
+               <div className="p-6 font-mono text-xs sm:text-sm leading-relaxed">
+                  <div className="text-zinc-300">{"{"}</div>
                   <div className="pl-6 flex gap-2">
-                    <span className="text-[#a1a1aa]">"status":</span>
-                    <span className="text-[#b6f09c]">"active"</span>,
+                    <span className="text-[#7ee787]">"status"</span><span className="text-zinc-500">:</span>
+                    <span className="text-[#a5d6ff]">"active"</span><span className="text-zinc-500">,</span>
                   </div>
                   <div className="pl-6 flex gap-2">
-                    <span className="text-[#a1a1aa]">"subscriber":</span>
-                    <span className="text-[#ffffff]">"0x71C...3921"</span>,
+                    <span className="text-[#7ee787]">"subscriber"</span><span className="text-zinc-500">:</span>
+                    <span className="text-[#a5d6ff]">"0x71C...3921"</span><span className="text-zinc-500">,</span>
                   </div>
                   <div className="pl-6 flex gap-2">
-                    <span className="text-[#a1a1aa]">"plan":</span>
-                    <span className="text-[#ffffff]">"Enterprise Tier"</span>,
+                    <span className="text-[#7ee787]">"plan"</span><span className="text-zinc-500">:</span>
+                    <span className="text-[#a5d6ff]">"Enterprise Tier"</span><span className="text-zinc-500">,</span>
                   </div>
                   <div className="pl-6 flex gap-2">
-                    <span className="text-[#a1a1aa]">"expiresAt":</span>
-                    <span className="text-[#ffffff]">1711649400</span>,
+                    <span className="text-[#7ee787]">"expiresAt"</span><span className="text-zinc-500">:</span>
+                    <span className="text-[#79c0ff]">1711649400</span><span className="text-zinc-500">,</span>
                   </div>
                   <div className="pl-6 flex gap-2">
-                    <span className="text-[#a1a1aa]">"metadata":</span>
+                    <span className="text-[#7ee787]">"metadata"</span><span className="text-zinc-500">:</span>
                     <div className="flex flex-col">
-                       <span className="text-[#ffffff]">{"{"}</span>
+                       <span className="text-zinc-300">{"{"}</span>
                        <div className="pl-6 flex gap-2">
-                         <span className="text-[#a1a1aa]">"userId":</span>
-                         <span className="text-[#b6f09c]">"dev_v1_001"</span>
+                         <span className="text-[#7ee787]">"userId"</span><span className="text-zinc-500">:</span>
+                         <span className="text-[#a5d6ff]">"dev_v1_001"</span>
                        </div>
-                       <span className="text-[#ffffff]">{"}"}</span>
+                       <span className="text-zinc-300">{"}"}</span>
                     </div>
                   </div>
-                  <div className="text-[#ffffff]">{"}"}</div>
+                  <div className="text-zinc-300">{"}"}</div>
                </div>
             </div>
 
             {/* Floating Tag */}
-            <div className="absolute -bottom-6 -right-6 px-6 py-4 bg-[#000000] border border-[#ffffff]/10 rounded-2xl shadow-2xl flex items-center gap-3">
-               <div className="h-2 w-2 rounded-full bg-[#b6f09c]" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-[#ffffff] italic">Real-time Hook Active</span>
+            <div className="absolute -bottom-5 -right-2 sm:-right-6 px-4 py-2 sm:px-6 sm:py-3 bg-[#050505] border border-[#ffffff]/10 rounded-full shadow-2xl flex items-center gap-3 z-30">
+               <div className="h-2 w-2 rounded-full bg-[#27c93f]" />
+               <span className="text-[10px] sm:text-xs font-semibold text-zinc-300">Real-time Hook Active</span>
             </div>
           </div>
 
