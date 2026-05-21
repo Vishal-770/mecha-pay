@@ -106,6 +106,7 @@ export default function PaymentPage() {
     status: "ACTIVE" | "EXPIRED";
     remainingSeconds: number;
     lastEndTime: string;
+    lastTierId?: string;
   } | null>(null);
 
   // Success state — which tier was just purchased
@@ -181,10 +182,14 @@ export default function PaymentPage() {
 
   /* ── Check existing subscription ── */
   useEffect(() => {
-    if (!wallet?.address || !planId) return;
+    if (!planId) return;
+    if (!userId && !wallet?.address) return;
     const checkSub = async () => {
       try {
-        const res = await fetch(`/api/subscription/my-subscriptions/${planId}?subscriber=${wallet.address}`);
+        const queryParam = userId
+          ? `userId=${encodeURIComponent(userId)}`
+          : `subscriber=${encodeURIComponent(wallet?.address ?? "")}`;
+        const res = await fetch(`/api/subscription/my-subscriptions/${planId}?${queryParam}`);
         if (res.ok) {
           const data = await res.json();
           setSubscription(data.subscription);
@@ -196,7 +201,7 @@ export default function PaymentPage() {
       }
     };
     void checkSub();
-  }, [wallet?.address, planId]);
+  }, [wallet?.address, planId, userId]);
 
   const isOwner = wallet?.address.toLowerCase() === plan?.seller?.id?.toLowerCase();
   const isActiveSub = subscription?.status === "ACTIVE" && (subscription?.remainingSeconds ?? 0) > 0;
@@ -595,6 +600,7 @@ export default function PaymentPage() {
 
                 const metaTier = plan?.metadata?.tiers?.find(mt => mt.label === tier.label);
                 const tierFeatures = metaTier?.features ?? [];
+                const isThisTierActive = isActiveSub && subscription?.lastTierId === tier.tierId;
 
                 return (
                   <div
@@ -654,7 +660,7 @@ export default function PaymentPage() {
                           <div className="text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20 bg-primary/5 py-2.5 rounded-md text-center font-sans">
                             Owner
                           </div>
-                        ) : isActiveSub ? (
+                        ) : isThisTierActive ? (
                           <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 border border-emerald-500/20 bg-emerald-500/5 py-2.5 rounded-md text-center font-sans">
                             Active
                           </div>
