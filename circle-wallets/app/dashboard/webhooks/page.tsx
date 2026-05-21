@@ -383,15 +383,17 @@ export default function WebhooksPage() {
                       value={selectedPlanId}
                       onValueChange={(val) => setSelectedPlanId(val || "")}
                     >
-                      <SelectTrigger className="w-full bg-background border border-input h-10 px-3 rounded-lg text-xs font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none text-left">
-                        <span>
+                      <SelectTrigger className="w-full bg-background border border-input h-10 px-3 rounded-lg text-xs font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none text-left flex items-center justify-between min-w-0 gap-2">
+                        <span className="truncate pr-4 block max-w-[280px] sm:max-w-[360px]">
                           {availablePlanOptions.find((opt) => opt.id === selectedPlanId)?.label || "Select a subscription plan"}
                         </span>
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
                         {availablePlanOptions.map((opt) => (
-                          <SelectItem key={opt.id} value={opt.id} className="text-xs font-semibold">
-                            {opt.label}
+                          <SelectItem key={opt.id} value={opt.id} className="text-xs font-semibold max-w-full">
+                            <span className="truncate block max-w-[260px] sm:max-w-[340px]">
+                              {opt.label}
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
