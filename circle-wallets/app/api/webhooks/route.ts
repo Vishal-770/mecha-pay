@@ -30,7 +30,7 @@ async function getUserId(userToken: string) {
  * Check if the user owns the specified planId via the Subgraph.
  */
 async function verifyPlanOwnership(userToken: string, planId: string): Promise<boolean> {
-  if (planId === "all") return true;
+  if (planId === "all") return false;
 
   try {
     const userAddresses = await getUserAddresses(userToken);
@@ -121,8 +121,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate HTTPS url
-    if (!url.startsWith("https://")) {
-      return NextResponse.json({ error: "Destination URL must use HTTPS" }, { status: 400 });
+    try {
+      const parsedUrl = new URL(url.trim());
+      if (parsedUrl.protocol !== "https:") {
+        return NextResponse.json({ error: "Destination URL must use the HTTPS protocol" }, { status: 400 });
+      }
+    } catch (e) {
+      return NextResponse.json({ error: "Invalid Destination URL format" }, { status: 400 });
     }
 
     const userId = await getUserId(userToken);
@@ -197,8 +202,13 @@ export async function PUT(req: NextRequest) {
     }
 
     // Validate HTTPS url
-    if (!url.startsWith("https://")) {
-      return NextResponse.json({ error: "Destination URL must use HTTPS" }, { status: 400 });
+    try {
+      const parsedUrl = new URL(url.trim());
+      if (parsedUrl.protocol !== "https:") {
+        return NextResponse.json({ error: "Destination URL must use the HTTPS protocol" }, { status: 400 });
+      }
+    } catch (e) {
+      return NextResponse.json({ error: "Invalid Destination URL format" }, { status: 400 });
     }
 
     const userId = await getUserId(userToken);

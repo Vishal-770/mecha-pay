@@ -144,7 +144,7 @@ export default function WebhooksPage() {
   // Map of Plan ID -> Plan Title
   const planTitleMap = useMemo(() => {
     const map = new Map<string, string>();
-    map.set("all", "All Deployed Plans");
+    map.set("all", "All Deployed Plans (Legacy)");
     plans.forEach((p) => {
       const title =
         p.metadata?.name ?? p.metadata?.brand?.name ?? `Plan ${p.planId.slice(0, 10)}`;
@@ -160,10 +160,7 @@ export default function WebhooksPage() {
 
   // Available plans list that are not configured yet (for creation form)
   const availablePlanOptions = useMemo(() => {
-    const list = [];
-    if (!configuredPlanIds.has("all")) {
-      list.push({ id: "all", label: "All Deployed Plans" });
-    }
+    const list: { id: string; label: string }[] = [];
     plans.forEach((p) => {
       const planIdLower = p.planId.toLowerCase();
       if (!configuredPlanIds.has(planIdLower)) {
@@ -176,8 +173,16 @@ export default function WebhooksPage() {
 
   const handleCreateWebhook = async () => {
     if (!webhookUrl.trim() || !selectedPlanId) return;
-    if (!webhookUrl.startsWith("https://")) {
-      setErrorMsg("Destination URL must use HTTPS.");
+    
+    // Client-side URL validation
+    try {
+      const parsedUrl = new URL(webhookUrl.trim());
+      if (parsedUrl.protocol !== "https:") {
+        setErrorMsg("Destination URL must use the HTTPS protocol.");
+        return;
+      }
+    } catch (e) {
+      setErrorMsg("Please enter a valid absolute URL (e.g., https://api.yourdomain.com/webhooks).");
       return;
     }
 
@@ -223,8 +228,16 @@ export default function WebhooksPage() {
 
   const handleUpdateWebhook = async () => {
     if (!editWebhookId || !webhookUrl.trim() || !selectedPlanId) return;
-    if (!webhookUrl.startsWith("https://")) {
-      setErrorMsg("Destination URL must use HTTPS.");
+    
+    // Client-side URL validation
+    try {
+      const parsedUrl = new URL(webhookUrl.trim());
+      if (parsedUrl.protocol !== "https:") {
+        setErrorMsg("Destination URL must use the HTTPS protocol.");
+        return;
+      }
+    } catch (e) {
+      setErrorMsg("Please enter a valid absolute URL (e.g., https://api.yourdomain.com/webhooks).");
       return;
     }
 
