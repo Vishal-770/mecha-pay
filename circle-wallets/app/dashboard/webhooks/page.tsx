@@ -154,7 +154,7 @@ export default function WebhooksPage() {
     map.set("all", "All Deployed Plans (Legacy)");
     plans.forEach((p) => {
       const title =
-        p.metadata?.name ?? p.metadata?.brand?.name ?? `Plan ${p.planId.slice(0, 10)}`;
+        p.metadata?.name ?? p.metadata?.brand?.name ?? "Subscription Plan";
       map.set(p.planId.toLowerCase(), title);
     });
     return map;
@@ -171,7 +171,7 @@ export default function WebhooksPage() {
     plans.forEach((p) => {
       const planIdLower = p.planId.toLowerCase();
       if (!configuredPlanIds.has(planIdLower)) {
-        const name = p.metadata?.name ?? p.metadata?.brand?.name ?? `Plan ${p.planId.slice(0, 10)}`;
+        const name = p.metadata?.name ?? p.metadata?.brand?.name ?? "Subscription Plan";
         list.push({ id: p.planId, label: name });
       }
     });
@@ -515,7 +515,7 @@ export default function WebhooksPage() {
         ) : (
           <div className="space-y-8">
             {webhooks.map((wh) => {
-              const planTitle = planTitleMap.get(wh.planId.toLowerCase()) ?? `Plan ${wh.planId.slice(0, 10)}`;
+              const planTitle = planTitleMap.get(wh.planId.toLowerCase()) ?? "Subscription Plan";
               const isRevealed = !!revealedSecrets[wh.id];
               const isCopied = copiedId === wh.id;
 
@@ -531,11 +531,7 @@ export default function WebhooksPage() {
                         <span className="font-bold text-base truncate text-foreground">
                           {planTitle}
                         </span>
-                        {wh.planId === "all" ? (
-                          <Globe size={13} className="text-muted-foreground/50" />
-                        ) : (
-                          <Layers size={13} className="text-muted-foreground/50" />
-                        )}
+                        <Layers size={13} className="text-muted-foreground/50" />
                         <Badge
                           variant={wh.isActive ? "secondary" : "outline"}
                           className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-lg border-none ${
@@ -665,10 +661,7 @@ export default function WebhooksPage() {
               </label>
               <div className="h-10 bg-muted/40 border border-border/40 px-3 rounded-lg flex items-center justify-between">
                 <span className="text-xs font-bold text-foreground/80">
-                  {planTitleMap.get(selectedPlanId.toLowerCase()) ?? `Plan ${selectedPlanId.slice(0, 10)}`}
-                </span>
-                <span className="text-[9px] font-mono opacity-50 bg-muted px-1.5 py-0.5 rounded border border-border">
-                  {selectedPlanId === "all" ? "GLOBAL" : selectedPlanId.slice(0, 8)}
+                  {planTitleMap.get(selectedPlanId.toLowerCase()) ?? "Subscription Plan"}
                 </span>
               </div>
             </div>
@@ -743,7 +736,7 @@ export default function WebhooksPage() {
               This is permanent. Any subscribed notifications for{" "}
               <strong>
                 {webhookToDelete
-                  ? planTitleMap.get(webhookToDelete.planId.toLowerCase()) ?? webhookToDelete.planId
+                  ? planTitleMap.get(webhookToDelete.planId.toLowerCase()) ?? "Subscription Plan"
                   : ""}
               </strong>{" "}
               will immediately stop delivering to your destination URL.
