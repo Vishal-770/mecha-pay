@@ -34,6 +34,13 @@ import {
   Settings2,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type PlanTier = {
   tierId: string;
@@ -372,17 +379,21 @@ export default function WebhooksPage() {
                       All your deployed plans already have webhook endpoints.
                     </p>
                   ) : (
-                    <select
+                    <Select
                       value={selectedPlanId}
-                      onChange={(e) => setSelectedPlanId(e.target.value)}
-                      className="w-full bg-background border border-input h-10 px-3 rounded-lg text-xs font-medium focus:ring-1 focus:ring-primary focus-visible:outline-none"
+                      onValueChange={(val) => setSelectedPlanId(val || "")}
                     >
-                      {availablePlanOptions.map((opt) => (
-                        <option key={opt.id} value={opt.id}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full bg-background border border-input h-10 px-3 rounded-lg text-xs font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none">
+                        <SelectValue placeholder="Select a subscription plan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availablePlanOptions.map((opt) => (
+                          <SelectItem key={opt.id} value={opt.id} className="text-xs font-semibold">
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 </div>
 
