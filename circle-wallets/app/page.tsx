@@ -137,9 +137,9 @@ export default function LandingPage() {
 
         {/* Navbar Implementation - Clean */}
         <header 
-          className={`fixed top-0 left-0 right-0 z-50 w-full px-6 py-4 lg:px-10 lg:py-6 flex items-center justify-between transition-all duration-300 ease-in-out ${
+          className={`fixed top-0 left-0 right-0 z-50 w-full px-6 py-4 lg:px-10 lg:py-6 flex items-center justify-between transition-all duration-300 ease-in-out bg-transparent ${
             isNavVisible ? 'translate-y-0' : '-translate-y-full'
-          } ${lastScrollY > 50 ? 'bg-[#000000]/80 backdrop-blur-md shadow-2xl' : 'bg-transparent'}`}
+          }`}
         >
           <div className="flex items-center gap-3">
             <div className="relative w-9 h-9 rounded-xl overflow-hidden">
@@ -147,17 +147,6 @@ export default function LandingPage() {
             </div>
             <span className="text-xl font-bold tracking-tight text-[#ffffff]">Mecha Pay</span>
           </div>
-
-          <nav className="hidden lg:flex items-center bg-[#ffffff]/5 rounded-full px-2 py-1.5">
-            <Link href="/" className="flex items-center gap-2 px-4 py-2 text-xs font-semibold tracking-wide text-[#000000] bg-[#b6f09c] rounded-full">
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Home
-            </Link>
-            <Link href="#features" className="px-4 py-2 text-xs font-medium tracking-wide text-[#a1a1aa] hover:text-[#ffffff] transition-colors">Features</Link>
-            <Link href="#bridge" className="px-4 py-2 text-xs font-medium tracking-wide text-[#a1a1aa] hover:text-[#ffffff] transition-colors">Bridge</Link>
-            <Link href="/docs" className="px-4 py-2 text-xs font-medium tracking-wide text-[#a1a1aa] hover:text-[#ffffff] transition-colors">Docs</Link>
-            <Link href="/dashboard/marketplace" className="px-4 py-2 text-xs font-medium tracking-wide text-[#a1a1aa] hover:text-[#ffffff] transition-colors">Marketplace</Link>
-          </nav>
 
           <div className="flex items-center gap-3 lg:gap-5">
             <Link href="/login" className="flex h-10 items-center justify-center gap-2 rounded-full bg-[#ffffff]/10 px-6 text-sm font-semibold text-[#ffffff] hover:bg-[#ffffff] hover:text-[#000000] transition-colors">

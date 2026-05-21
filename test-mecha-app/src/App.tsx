@@ -1,7 +1,7 @@
 import { MechaProvider, MechaPricingTable, useMecha } from "mechapay-sdk";
 
 const PLAN_ID = "0xb074b0822015c916dd232e7f6e7cfd051ecfde5628a14cdb8b2f4050e40a6d1c";
-const USER_ID = "visha_test_user_001";
+const USER_ID = "visha_test_user_0012";
 
 function MembershipStatus() {
   const { status, remainingSeconds, loading } = useMecha(PLAN_ID, USER_ID);

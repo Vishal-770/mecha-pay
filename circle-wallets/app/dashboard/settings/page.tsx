@@ -1,164 +1,262 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ModeToggle } from "@/components/ModeToggle";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useCircleSDK } from "@/context/CircleSDKContext";
 import { cn } from "@/lib/utils";
-import { Moon, Sun, Monitor, Bell, Shield, User, LogOut } from "lucide-react";
+import { Moon, Sun, Monitor, LogOut, Copy, Check, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { clearSession } = useCircleSDK();
+  const { session, clearSession, getDeviceId } = useCircleSDK();
   const router = useRouter();
+
+  const [deviceId, setDeviceId] = useState<string>("Loading...");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [isSignOutConfirmOpen, setIsSignOutConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    getDeviceId()
+      .then((id) => setDeviceId(id))
+      .catch(() => setDeviceId(""));
+  }, [getDeviceId]);
 
   const handleSignOut = () => {
     clearSession();
     router.replace("/login");
   };
 
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(label);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const appId = process.env.NEXT_PUBLIC_CIRCLE_APP_ID;
+
   return (
-    <div className="space-y-10 pb-20">
-      <div>
-        <h1 className="text-4xl font-black uppercase italic tracking-tighter mb-2">Settings</h1>
-        <p className="text-muted-foreground font-bold italic uppercase tracking-widest text-[10px]">Command Center Preferences</p>
+    <div className="max-w-4xl mx-auto space-y-12 pb-20 pt-4">
+      {/* Page Header */}
+      <div className="border-b border-border/40 pb-6">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">Configure your developer environment, credentials, and preferences.</p>
       </div>
 
-      <div className="grid gap-8">
-        {/* Appearance Section */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
-              <Sun className="h-5 w-5" />
-            </div>
-            <h2 className="text-xl font-bold">Appearance</h2>
+      {/* Merchant Credentials Section - Render only if session exists */}
+      {session && (session.userToken || session.encryptionKey) && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Merchant Account</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Circle W3S session credentials and parameters.</p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="border-border/50 shadow-sm overflow-hidden">
-              <CardHeader>
-                <CardTitle className="text-base font-bold">Display Mode</CardTitle>
-                <CardDescription className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">Customize the interface look</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-3 gap-4">
+          <div className="divide-y divide-border/30 border-t border-b border-border/30">
+            {/* User Token Row */}
+            {session.userToken && (
+              <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-0.5 max-w-sm">
+                  <div className="text-sm font-medium text-foreground">User Token</div>
+                  <div className="text-xs text-muted-foreground">Authorized wallet token for your current merchant session.</div>
+                </div>
+                <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
+                  <span className="text-xs font-mono font-medium truncate text-foreground/80">{session.userToken}</span>
                   <button
-                    onClick={() => setTheme("light")}
-                    className={cn(
-                      "flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all",
-                      theme === "light" ? "border-primary bg-primary/5" : "border-transparent bg-muted/50 hover:bg-muted"
-                    )}
+                    onClick={() => copyToClipboard(session.userToken, "token")}
+                    className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                   >
-                    <Sun className={cn("h-6 w-6", theme === "light" ? "text-primary" : "text-muted-foreground")} />
-                    <span className="text-[10px] font-black uppercase">Light</span>
-                  </button>
-                  <button
-                    onClick={() => setTheme("dark")}
-                    className={cn(
-                      "flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all",
-                      theme === "dark" ? "border-primary bg-primary/5" : "border-transparent bg-muted/50 hover:bg-muted"
-                    )}
-                  >
-                    <Moon className={cn("h-6 w-6", theme === "dark" ? "text-primary" : "text-muted-foreground")} />
-                    <span className="text-[10px] font-black uppercase">Dark</span>
-                  </button>
-                  <button
-                    onClick={() => setTheme("system")}
-                    className={cn(
-                      "flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all",
-                      theme === "system" ? "border-primary bg-primary/5" : "border-transparent bg-muted/50 hover:bg-muted"
-                    )}
-                  >
-                    <Monitor className={cn("h-6 w-6", theme === "system" ? "text-primary" : "text-muted-foreground")} />
-                    <span className="text-[10px] font-black uppercase">System</span>
+                    {copiedKey === "token" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                   </button>
                 </div>
-                
-                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-bold">Quick Toggle</p>
-                    <p className="text-[10px] font-bold uppercase text-muted-foreground/60">Switch current theme</p>
-                  </div>
-                  <ModeToggle />
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            )}
 
-            <Card className="border-border/50 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base font-bold">Interface Polish</CardTitle>
-                <CardDescription className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">Control visual density</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-transparent">
-                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-background border border-border">
-                      <Bell className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <span className="text-sm font-bold">Notifications</span>
-                   </div>
-                   <div className="h-5 w-9 rounded-full bg-primary/20 p-1 flex items-center justify-end">
-                      <div className="h-3 w-3 rounded-full bg-primary" />
-                   </div>
+            {/* Encryption Key Row */}
+            {session.encryptionKey && (
+              <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-0.5 max-w-sm">
+                  <div className="text-sm font-medium text-foreground">Encryption Key</div>
+                  <div className="text-xs text-muted-foreground">Session specific cryptographic key for challenge signing.</div>
                 </div>
-                <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-transparent">
-                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-background border border-border">
-                      <Shield className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <span className="text-sm font-bold">Privacy Mode</span>
-                   </div>
-                   <div className="h-5 w-9 rounded-full bg-muted p-1 flex items-center justify-start">
-                      <div className="h-3 w-3 rounded-full bg-muted-foreground" />
-                   </div>
+                <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
+                  <span className="text-xs font-mono font-medium truncate text-foreground/80">{session.encryptionKey}</span>
+                  <button
+                    onClick={() => copyToClipboard(session.encryptionKey, "key")}
+                    className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                  >
+                    {copiedKey === "key" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            )}
           </div>
-        </section>
+        </div>
+      )}
 
-        {/* Security Section */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 rounded-lg bg-red-500/10 text-red-500">
-              <Shield className="h-5 w-5" />
-            </div>
-            <h2 className="text-xl font-bold">Account & Security</h2>
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="border-red-500/20 bg-red-500/[0.02] shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base font-bold text-red-500">Logout</CardTitle>
-                <CardDescription className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">Securely end your session</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  variant="destructive" 
-                  className="w-full h-12 font-black uppercase italic tracking-widest text-xs"
-                  onClick={handleSignOut}
+      {/* Developer API & SDK Configurations */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">API & SDK Environment</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Configuration details linked with the Circle environment.</p>
+        </div>
+
+        <div className="divide-y divide-border/30 border-t border-b border-border/30">
+          {/* Application ID - Render only if exists */}
+          {appId && (
+            <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-0.5 max-w-sm">
+                <div className="text-sm font-medium text-foreground">Circle Application ID</div>
+                <div className="text-xs text-muted-foreground">Unique identifier for this wallet integration application.</div>
+              </div>
+              <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
+                <span className="text-xs font-mono font-medium truncate text-foreground/80">{appId}</span>
+                <button
+                  onClick={() => copyToClipboard(appId, "appId")}
+                  className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out from Command
-                </Button>
-              </CardContent>
-            </Card>
+                  {copiedKey === "appId" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+          )}
 
-            <Card className="border-border/50 shadow-sm border-dashed flex flex-col justify-center">
-              <CardContent className="flex flex-col items-center justify-center py-6 text-center gap-2">
-                <p className="font-black text-[10px] uppercase italic text-muted-foreground/40">Mecha Pay Protocol v1.0.4</p>
-                <div className="flex gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary/40" />
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary/20" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
+          {/* Device ID */}
+          {deviceId && (
+            <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-0.5 max-w-sm">
+                <div className="text-sm font-medium text-foreground">Device ID</div>
+                <div className="text-xs text-muted-foreground">Unique client-side device identifier registered with Circle.</div>
+              </div>
+              <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
+                <span className="text-xs font-mono font-medium truncate text-foreground/80">{deviceId}</span>
+                <button
+                  onClick={() => copyToClipboard(deviceId, "deviceId")}
+                  className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                >
+                  {copiedKey === "deviceId" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Preferences Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Preferences</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Customize interface theme behavior.</p>
+        </div>
+
+        <div className="py-4 border-t border-b border-border/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <div className="text-sm font-medium text-foreground">Appearance Mode</div>
+            <div className="text-xs text-muted-foreground">Select how the dashboard theme should be displayed.</div>
+          </div>
+
+          {/* Segmented Control Selector */}
+          <div className="flex bg-muted/60 p-1 rounded-xl border border-border/30 shrink-0 self-start sm:self-auto">
+            <button
+              onClick={() => setTheme("light")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all",
+                theme === "light" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Sun className="h-3.5 w-3.5" />
+              Light
+            </button>
+            <button
+              onClick={() => setTheme("dark")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all",
+                theme === "dark" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Moon className="h-3.5 w-3.5" />
+              Dark
+            </button>
+            <button
+              onClick={() => setTheme("system")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all",
+                theme === "system" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Monitor className="h-3.5 w-3.5" />
+              System
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Security Actions Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-red-500">Security</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Danger zone operations for your session configuration.</p>
+        </div>
+
+        <div className="py-6 border-t border-b border-border/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <div className="text-sm font-medium text-foreground">Sign Out Session</div>
+            <div className="text-xs text-muted-foreground">Instantly invalidate current developer and wallet tokens on this device.</div>
+          </div>
+          <Button
+            variant="ghost"
+            className="w-full sm:w-auto px-5 py-2 font-bold text-xs rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 hover:text-red-400 border border-red-500/20 hover:border-red-500/30 shadow-sm transition-all shrink-0"
+            onClick={() => setIsSignOutConfirmOpen(true)}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
+      </div>
+
+      {/* Sign Out Confirmation Dialog */}
+      <Dialog
+        open={isSignOutConfirmOpen}
+        onOpenChange={(open) => setIsSignOutConfirmOpen(open)}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+              <AlertTriangle className="size-4 text-destructive" />
+              Confirm Sign Out
+            </DialogTitle>
+            <DialogDescription className="text-xs leading-relaxed">
+              Are you sure you want to sign out? This will instantly invalidate your current developer and wallet tokens on this device, and you will need to re-authenticate to gain access.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsSignOutConfirmOpen(false)}
+              className="font-bold text-xs rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              className="font-bold text-xs rounded-xl bg-red-600 hover:bg-red-500 text-white border-none transition-all px-4"
+            >
+              Sign Out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
+
