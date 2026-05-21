@@ -30,7 +30,8 @@ import {
   ChevronRight,
   Settings,
   Terminal,
-  BookOpen
+  BookOpen,
+  Webhook
 } from "lucide-react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { cn } from "@/lib/utils";
@@ -70,6 +71,7 @@ const navItems = [
   { href: "/dashboard/plans/create", label: "Create Plan", icon: PlusSquare },
   { href: "/dashboard/subscriptions", label: "My Subscriptions", icon: Activity },
   { href: "/dashboard/developer", label: "Developer", icon: Terminal },
+  { href: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },
   { href: "/docs", label: "Documentation", icon: BookOpen },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
