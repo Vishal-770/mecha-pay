@@ -13,7 +13,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
-    "mechapay-react": "link:../packages/mecha-react",
+    "mechapay-react": "0.1.13",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "tailwind-merge": "^3.5.0"
