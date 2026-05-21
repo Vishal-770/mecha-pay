@@ -68,6 +68,7 @@
                 ]
               },
               "sdk/hooks/use-mecha",
+              "sdk/hooks/use-mecha-perks",
               "sdk/theming",
               "sdk/types",
               "sdk/example-app"

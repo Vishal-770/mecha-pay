@@ -49,7 +49,11 @@ function FeatureGatedContent() {
 </ResponseField>
 
 <ResponseField name="tierId" type="string | undefined">
-  The ID of the specific tier the user is subscribed to (if active).
+  The ID of the specific tier the user is subscribed to (if active). Included for backward compatibility.
+</ResponseField>
+
+<ResponseField name="tierIds" type="string[]">
+  An array containing all active/bought tier IDs the user is currently subscribed to under this plan.
 </ResponseField>
 
 <ResponseField name="loading" type="boolean">

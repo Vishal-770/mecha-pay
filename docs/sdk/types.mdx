@@ -47,6 +47,7 @@ export interface MechaSubscription {
   status: "ACTIVE" | "EXPIRED" | "NONE";
   remainingSeconds: number;
   tierId?: string;
+  tierIds: string[];
   loading: boolean;
   error: string | null;
 }
@@ -78,4 +79,17 @@ export interface MechaAppearance {
     tierLabel?: React.CSSProperties;
   };
 }
+
+## Perk
+
+Represents an individual perk/entitlement resolved across active subscription tiers.
+
+```typescript
+export interface Perk {
+  title: string;
+  description: string;
+  tierId: string;
+  tierName: string;
+}
+```
 ```

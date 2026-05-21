@@ -41,5 +41,42 @@ function PremiumFeature() {
 | :--- | :--- | :--- |
 | `status` | `'ACTIVE' | 'EXPIRED' | 'NONE'` | The current subscription status. |
 | `remainingSeconds` | `number` | Time left until the subscription expires. |
+| `tierId` | `string | undefined` | The active subscription tier ID (backward-compatible). |
+| `tierIds` | `string[]` | Array of all active subscription tier IDs under this plan. |
 | `loading` | `boolean` | Whether the SDK is currently fetching data. |
 | `error` | `any` | Any error encountered during the sync. |
+
+## useMechaPerks
+
+The `useMechaPerks` hook resolves and aggregates all perks, features, and active entitlements across all active subscription tiers.
+
+### Usage
+
+```tsx
+import { useMechaPerks } from 'mechapay-sdk';
+
+function PremiumDashboard() {
+  const { perks, loading, error } = useMechaPerks(PLAN_ID, USER_ID);
+
+  if (loading) return <div>Synchronizing entitlements...</div>;
+  if (error) return <div>Error loading perks: {error}</div>;
+
+  return (
+    <ul>
+      {perks?.map((perk, i) => (
+        <li key={i}>
+          <strong>{perk.title}</strong>: {perk.description} (from Tier: {perk.tierName})
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Returns
+
+| Value | Type | Description |
+| :--- | :--- | :--- |
+| `perks` | `Perk[] | null` | List of all active features/entitlements from active subscription tiers. |
+| `loading` | `boolean` | Whether the SDK is currently fetching data. |
+| `error` | `any` | Any error encountered during synchronization. |

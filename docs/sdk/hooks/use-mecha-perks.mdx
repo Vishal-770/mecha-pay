@@ -1,0 +1,75 @@
+---
+title: "useMechaPerks"
+description: "React hook to retrieve and flat-map features across all active subscription tiers."
+---
+
+The `useMechaPerks` hook resolves and aggregates all perks, features, and active entitlements associated with the user's active subscriptions (across multiple tiers). It eliminates duplicate perks automatically, making it perfect for checking feature access rights programmatically.
+
+## Usage
+
+```tsx
+import { useMechaPerks } from 'mechapay-sdk';
+
+function PremiumFeatureDashboard() {
+  const { perks, loading, error } = useMechaPerks(
+    "0x_PLAN_ID", 
+    "USER_ID"
+  );
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage message={error} />;
+
+  // Check if user has access to a specific perk title
+  const hasAccessToAnalytics = perks?.some(p => p.title === "Advanced Analytics");
+
+  return (
+    <div>
+      <h1>Your Entitlements</h1>
+      <ul>
+        {perks?.map((perk, i) => (
+          <li key={i}>
+            <strong>{perk.title}</strong>: {perk.description} (from Tier: {perk.tierName})
+          </li>
+        ))}
+      </ul>
+      
+      {hasAccessToAnalytics && (
+        <button>Open Analytics Dashboard</button>
+      )}
+    </div>
+  );
+}
+```
+
+## Parameters
+
+<ParamField path="planId" type="string" required>
+  The ID of the plan to check.
+</ParamField>
+
+<ParamField path="userId" type="string" required>
+  The user's unique identifier.
+</ParamField>
+
+## Returns
+
+<ResponseField name="perks" type="Perk[] | null">
+  A list of all active features/entitlements from the user's active tiers, or `null` if the user has no active subscriptions.
+  
+  ```typescript
+  interface Perk {
+    title: string;
+    description: string;
+    tierId: string;
+    tierName: string;
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="loading" type="boolean">
+  `true` while the hook is fetching initial plan or subscription data.
+</ResponseField>
+
+<ResponseField name="error" type="string | null">
+  Contains any error message encountered during synchronization.
+</ResponseField>
