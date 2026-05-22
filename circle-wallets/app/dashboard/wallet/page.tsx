@@ -525,7 +525,7 @@ export default function WalletPage() {
           <h3 className="text-sm font-semibold text-card-foreground">All Tokens</h3>
           <div className="mt-3 divide-y divide-border">
             {wallet!.tokenBalances.map((token) => (
-              <div key={token.symbol} className="flex items-center justify-between py-3">
+              <div key={token.tokenId || `${token.symbol}-${token.name}`} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                     {token.symbol.slice(0, 2)}

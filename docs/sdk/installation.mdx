@@ -8,11 +8,11 @@ description: "Install and configure the Mecha Pay SDK in your project."
 Install the SDK using your favorite package manager:
 
 ```bash
-npm install mechapay-sdk
+npm install mechapay-react
 # or
-yarn add mechapay-sdk
+yarn add mechapay-react
 # or
-pnpm add mechapay-sdk
+pnpm add mechapay-react
 ```
 
 ## Configuration
@@ -20,7 +20,7 @@ pnpm add mechapay-sdk
 To use the SDK, you must wrap your application (usually in `App.tsx` or `main.tsx`) with the `MechaProvider`. This component provides the necessary context for all other SDK components and hooks.
 
 ```tsx
-import { MechaProvider } from 'mechapay-sdk';
+import { MechaProvider } from 'mechapay-react';
 
 function App() {
   return (
@@ -38,6 +38,7 @@ function App() {
 
 | Prop | Type | Description |
 | :--- | :--- | :--- |
-| `apiKey` | `string` | Your Mecha Pay Developer API Key. |
-| `portalUrl` | `string` | The URL of the Mecha Pay dashboard (e.g., `https://mecha-pay.vercel.app`). |
-| `theme` | `object` | (Optional) Custom theme configuration for UI components. |
+| `apiKey` | `string` | **Required.** Your Mecha Pay Developer API Key. |
+| `portalUrl` | `string` | **Optional.** The URL of the Mecha Pay dashboard (e.g., `https://mecha-pay.vercel.app`). |
+
+*(Note: Custom appearance, styling, and dark/light mode configurations are passed directly to individual components like `MechaPricingTable` via their `appearance` prop).*

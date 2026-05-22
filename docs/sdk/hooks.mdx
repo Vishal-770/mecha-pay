@@ -10,7 +10,7 @@ The `useMecha` hook is the primary way to check a user's subscription status pro
 ### Usage
 
 ```tsx
-import { useMecha } from 'mechapay-sdk';
+import { useMecha } from 'mechapay-react';
 
 function PremiumFeature() {
   const { status, remainingSeconds, loading, error } = useMecha(PLAN_ID, USER_ID);
@@ -53,7 +53,7 @@ The `useMechaPerks` hook resolves and aggregates all perks, features, and active
 ### Usage
 
 ```tsx
-import { useMechaPerks } from 'mechapay-sdk';
+import { useMechaPerks } from 'mechapay-react';
 
 function PremiumDashboard() {
   const { perks, loading, error } = useMechaPerks(PLAN_ID, USER_ID);

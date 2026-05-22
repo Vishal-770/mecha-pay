@@ -2,32 +2,20 @@
  * POST /api/create-pin
  *
  * Creates a challenge that lets the user set their PIN, security questions,
- * AND initialise their first wallet(s) in a single step.
+ * AND initialise their first wallet(s) in a single step — as an SCA.
  *
- * The client then calls sdk.execute(challengeId) to show the Circle
- * PIN / security-question UI.
+ * We call the Circle REST API directly (POST /v1/w3s/user/initialize) instead
+ * of the SDK's createUserPinWithWallets because the SDK types don't expose
+ * accountType and may silently strip it from the request.
  *
  * Body:    { userToken: string; blockchains?: string[] }
  * Returns: { challengeId: string }
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { initiateUserControlledWalletsClient } from "@circle-fin/user-controlled-wallets";
 
-let circleClient: ReturnType<
-  typeof initiateUserControlledWalletsClient
-> | null = null;
-
-function getCircleClient() {
-  if (!circleClient) {
-    circleClient = initiateUserControlledWalletsClient({
-      apiKey: process.env.CIRCLE_API_KEY!,
-    });
-  }
-  return circleClient;
-}
-
-const DEFAULT_BLOCKCHAINS = ["ARC-TESTNET"] as const;
+const CIRCLE_BASE_URL = "https://api.circle.com";
+const DEFAULT_BLOCKCHAINS = ["ARC-TESTNET"];
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,23 +33,46 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const client = getCircleClient();
-
-    // Combined PIN setup + wallet creation challenge.
-    const response = await client.createUserPinWithWallets({
-      userToken,
-      blockchains: blockchains as Parameters<
-        typeof client.createUserPinWithWallets
-      >[0]["blockchains"],
-    });
-
-    const challengeId = response.data?.challengeId;
-
-    if (!challengeId) {
+    const apiKey = process.env.CIRCLE_API_KEY;
+    if (!apiKey) {
       return NextResponse.json(
-        { error: "No challengeId returned from Circle" },
+        { error: "CIRCLE_API_KEY not configured" },
         { status: 500 },
       );
+    }
+
+    // Use the Circle REST API directly to guarantee accountType: "SCA" is sent.
+    // POST /v1/w3s/user/initialize handles both PIN setup + wallet creation
+    // in one step (equivalent to createUserPinWithWallets in the SDK).
+    const circleRes = await fetch(
+      `${CIRCLE_BASE_URL}/v1/w3s/user/initialize`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "X-User-Token": userToken,
+        },
+        body: JSON.stringify({
+          idempotencyKey: crypto.randomUUID(),
+          accountType: "SCA",
+          blockchains,
+        }),
+      },
+    );
+
+    const circleJson = await circleRes.json() as {
+      data?: { challengeId?: string };
+      code?: number;
+      message?: string;
+    };
+
+    const challengeId = circleJson.data?.challengeId;
+
+    if (!challengeId) {
+      const msg = circleJson.message ?? "No challengeId returned from Circle";
+      console.error("[/api/create-pin] Circle response:", circleJson);
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
 
     return NextResponse.json({ challengeId });

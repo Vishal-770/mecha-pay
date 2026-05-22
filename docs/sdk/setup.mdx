@@ -3,18 +3,18 @@ title: "Setup & Installation"
 description: "Get up and running with the Mecha Pay React SDK in minutes."
 ---
 
-The Mecha Pay React SDK (`mechapay-sdk`) provides a professional, high-fidelity set of hooks and components to integrate the Mecha Protocol into your React ecosystem.
+The Mecha Pay React SDK (`mechapay-react`) provides a professional, high-fidelity set of hooks and components to integrate the Mecha Protocol into your React ecosystem.
 
 ## Installation
 
 Install the package using your preferred package manager:
 
 ```bash
-npm install mechapay-sdk
+npm install mechapay-react
 # or
-yarn add mechapay-sdk
+yarn add mechapay-react
 # or
-pnpm add mechapay-sdk
+pnpm add mechapay-react
 ```
 
 ## Peer Dependencies
@@ -24,9 +24,7 @@ Ensure you have the following peer dependencies installed (standard for most mod
 ```json
 {
   "react": ">=18",
-  "react-dom": ">=18",
-  "framer-motion": ">=10",
-  "lucide-react": ">=0.280.0"
+  "react-dom": ">=18"
 }
 ```
 
@@ -35,7 +33,7 @@ Ensure you have the following peer dependencies installed (standard for most mod
 To use the SDK, you must wrap your root application component with the `MechaProvider`. This initializes the connection to the Mecha Protocol and ensures that all nested components can access your configuration.
 
 ```tsx
-import { MechaProvider } from 'mechapay-sdk';
+import { MechaProvider } from 'mechapay-react';
 
 function Root() {
   return (

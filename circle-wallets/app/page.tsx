@@ -295,7 +295,7 @@ export default function LandingPage() {
           <div className="flex-1 w-full max-w-xl mx-auto flex items-center justify-center relative perspective-[2000px]">
           <Terminal className="bg-[#050505] border border-[#ffffff]/10 shadow-2xl h-[400px] w-full max-w-xl">
             <TypingAnimation delay={500} duration={30} className="text-zinc-500 text-xs sm:text-sm font-mono">
-              &gt; npm install mechapay-sdk
+              &gt; npm install mechapay-react
             </TypingAnimation>
             <AnimatedSpan delay={1500} className="text-[#b6f09c] text-xs sm:text-sm font-mono mt-2 block">
               ✔ Package installed successfully
@@ -306,7 +306,7 @@ export default function LandingPage() {
             </TypingAnimation>
             
             <AnimatedSpan delay={3500} className="text-zinc-300 text-xs sm:text-sm font-mono mt-2 block whitespace-pre-wrap leading-relaxed">
-              <span className="text-[#ff7b72]">import</span> {'{'} <span className="text-[#d2a8ff]">MechaPricingTable</span> {'}'} <span className="text-[#ff7b72]">from</span> <span className="text-[#a5d6ff]">'mechapay-sdk'</span>;
+              <span className="text-[#ff7b72]">import</span> {'{'} <span className="text-[#d2a8ff]">MechaPricingTable</span> {'}'} <span className="text-[#ff7b72]">from</span> <span className="text-[#a5d6ff]">'mechapay-react'</span>;
               <br/><br/>
               <span className="text-[#ff7b72]">export default function</span> <span className="text-[#d2a8ff]">Page</span>() {'{'}
               <br/>
@@ -335,10 +335,10 @@ export default function LandingPage() {
             Integrate with <br/><span className="text-[#b6f09c]">Mecha SDK.</span>
           </h2>
           <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2 lg:mt-4">
-            Mecha Pay provides a powerful <span className="text-[#ffffff] font-bold">React SDK</span> (`mechapay-sdk`) for seamless on-chain subscription management. Import pre-built UI components like <span className="text-[#ffffff] font-bold">MechaPricingTable</span> or use the <span className="text-[#ffffff] font-bold">useMecha</span> hook for real-time feature gating.
+            Mecha Pay provides a powerful <span className="text-[#ffffff] font-bold">React SDK</span> (`mechapay-react`) for seamless on-chain subscription management. Import pre-built UI components like <span className="text-[#ffffff] font-bold">MechaPricingTable</span> or use the <span className="text-[#ffffff] font-bold">useMecha</span> hook for real-time feature gating.
           </p>
           <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2">
-            Get started by installing the <span className="font-mono text-zinc-300 text-sm bg-[#ffffff]/10 px-2 py-1 rounded">mechapay-sdk</span> package and connecting your merchant account in minutes.
+            Get started by installing the <span className="font-mono text-zinc-300 text-sm bg-[#ffffff]/10 px-2 py-1 rounded">mechapay-react</span> package and connecting your merchant account in minutes.
           </p>
           <div className="flex gap-4 mt-6">
             <Link href="/docs" className="flex h-14 w-full sm:w-auto px-8 items-center justify-center gap-2 rounded-full bg-[#b6f09c] text-sm font-bold text-[#000000] hover:opacity-90 transition-opacity">

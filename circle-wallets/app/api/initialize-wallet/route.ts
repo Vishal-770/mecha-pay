@@ -5,27 +5,18 @@
  * The client then calls sdk.execute(challengeId) to complete the
  * wallet creation flow (user sets PIN / biometrics in the Circle UI).
  *
+ * We call the Circle REST API directly (not the SDK) to guarantee
+ * accountType: "SCA" is included in the request — the SDK TypeScript
+ * types don't expose accountType so the SDK may silently drop it.
+ *
  * Body:    { userToken: string; blockchains?: string[] }
  * Returns: { challengeId: string }
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { initiateUserControlledWalletsClient } from "@circle-fin/user-controlled-wallets";
 
-let circleClient: ReturnType<
-  typeof initiateUserControlledWalletsClient
-> | null = null;
-
-function getCircleClient() {
-  if (!circleClient) {
-    circleClient = initiateUserControlledWalletsClient({
-      apiKey: process.env.CIRCLE_API_KEY!,
-    });
-  }
-  return circleClient;
-}
-
-const DEFAULT_BLOCKCHAINS = ["ARC-TESTNET"] as const;
+const CIRCLE_BASE_URL = "https://api.circle.com";
+const DEFAULT_BLOCKCHAINS = ["ARC-TESTNET"];
 
 export async function POST(req: NextRequest) {
   try {
@@ -43,23 +34,44 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const client = getCircleClient();
-
-    // createWallet returns a challengeId the client SDK must execute.
-    const response = await client.createWallet({
-      userToken,
-      blockchains: blockchains as Parameters<
-        typeof client.createWallet
-      >[0]["blockchains"],
-    });
-
-    const challengeId = response.data?.challengeId;
-
-    if (!challengeId) {
+    const apiKey = process.env.CIRCLE_API_KEY;
+    if (!apiKey) {
       return NextResponse.json(
-        { error: "No challengeId returned from Circle" },
+        { error: "CIRCLE_API_KEY not configured" },
         { status: 500 },
       );
+    }
+
+    // Call Circle REST API directly to ensure accountType: "SCA" is sent.
+    // The SDK's TypeScript types don't expose accountType so we bypass the SDK.
+    const circleRes = await fetch(
+      `${CIRCLE_BASE_URL}/v1/w3s/user/initialize`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "X-User-Token": userToken,
+        },
+        body: JSON.stringify({
+          idempotencyKey: crypto.randomUUID(),
+          accountType: "SCA",
+          blockchains,
+        }),
+      },
+    );
+
+    const circleJson = await circleRes.json() as {
+      data?: { challengeId?: string };
+      code?: number;
+      message?: string;
+    };
+
+    const challengeId = circleJson.data?.challengeId;
+
+    if (!challengeId) {
+      const msg = circleJson.message ?? "No challengeId returned from Circle";
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
 
     return NextResponse.json({ challengeId });

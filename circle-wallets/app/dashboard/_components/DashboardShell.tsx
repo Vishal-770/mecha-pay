@@ -49,6 +49,7 @@ type WalletInfo = {
   id: string;
   address: string;
   blockchain: string;
+  accountType?: string;
   tokenBalances: TokenBalance[];
 };
 

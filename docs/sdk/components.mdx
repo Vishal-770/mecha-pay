@@ -5,12 +5,12 @@ description: "Premium, zero-config components for your subscription flow."
 
 ## MechaPricingTable
 
-The `MechaPricingTable` is a high-fidelity component that automatically fetches your plan data and displays a stunning, interactive pricing interface. It handles currency conversion, tier selection, and the entire checkout flow.
+The `MechaPricingTable` is a high-fidelity component that automatically fetches your plan data and displays a stunning, interactive pricing interface. It handles tier selection, user status checking, and integrates directly with the checkout flow.
 
 ### Usage
 
 ```tsx
-import { MechaPricingTable } from 'mechapay-sdk';
+import { MechaPricingTable } from 'mechapay-react';
 
 function PricingPage() {
   return (
@@ -26,24 +26,14 @@ function PricingPage() {
 
 | Prop | Type | Description |
 | :--- | :--- | :--- |
-| `planId` | `string` | The on-chain ID of the plan to display. |
-| `userId` | `string` | Your internal user ID (will be passed as `buyerData` to the contract). |
-| `onSuccess` | `function` | Callback triggered after a successful subscription. |
-| `variant` | `'minimal' | 'flat' | 'elevated'` | The visual style of the pricing table. |
-
-## MechaMembershipCard
-
-Displays the current subscription status of a user, including time remaining and tier details.
-
-```tsx
-import { MechaMembershipCard } from 'mechapay-sdk';
-
-function ProfilePage() {
-  return (
-    <MechaMembershipCard 
-      planId="0x..." 
-      userId="user_123" 
-    />
-  );
-}
-```
+| `planId` | `string` | **Required.** The on-chain ID of the plan to display. |
+| `userId` | `string` | **Optional.** Your internal user ID (used to fetch current active subscriptions and passes to the checkout flow). |
+| `redirectUrl` | `string` | **Optional.** The URL to redirect the user to after completing a payment. Defaults to the current window location. |
+| `appearance` | `MechaAppearance` | **Optional.** Custom theme variables and direct CSS elements style overrides. |
+| `recommendedTierId` | `string` | **Optional.** The ID of the tier to highlight as recommended (defaults to the second tier in the plan). |
+| `hideBranding` | `boolean` | **Optional.** Set to `true` to hide the "Powered by Mecha Pay" footer. |
+| `customLabels` | `MechaLabels` | **Optional.** Custom text labels for Switch/Upgrade/Downgrade/Active states. |
+| `classNames` | `MechaClassNames` | **Optional.** Fine-grained Tailwind CSS class name overrides for the table elements. |
+| `renderHeader` | `function` | **Optional.** A custom header renderer function: `(plan, subscription) => React.ReactNode`. |
+| `renderFooter` | `function` | **Optional.** A custom footer renderer function: `() => React.ReactNode`. |
+| `renderTierButton` | `function` | **Optional.** A custom renderer for the CTA button of each tier card: `(tier, state, handleSelect) => React.ReactNode`. |
