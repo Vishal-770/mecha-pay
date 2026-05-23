@@ -137,6 +137,27 @@
   }
 }
 
+/* ── Custom Neat Professional Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+/* For Firefox and standard browser environments */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
