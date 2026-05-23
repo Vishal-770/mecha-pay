@@ -483,7 +483,7 @@ export default function AutoPayDetailPage() {
                 onValueChange={(val) => setSelectedTierId(val ?? "")}
                 items={activeTiers.map((t) => ({ value: t.tierId, label: t.label }))}
               >
-                <SelectTrigger className="w-full flex w-full justify-between items-center h-11 px-0 border-b border-border bg-transparent text-xs font-bold font-sans rounded-none transition-colors focus:border-foreground">
+                <SelectTrigger className="w-full flex w-full justify-between items-center h-11 px-3 border-b border-border bg-transparent text-xs font-bold font-sans rounded-none transition-colors focus:border-foreground cursor-pointer">
                   <SelectValue placeholder="Select a pricing tier" />
                 </SelectTrigger>
                 <SelectContent className="rounded-none border border-border">
