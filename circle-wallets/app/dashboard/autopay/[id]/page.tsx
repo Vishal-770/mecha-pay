@@ -527,9 +527,6 @@ export default function AutoPayDetailPage() {
                 <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground block">
                   Metadata / Buyer Data (String)
                 </label>
-                <span className="text-[9px] text-muted-foreground font-mono font-bold uppercase tracking-widest flex items-center gap-1.5 bg-muted px-2 py-0.5 rounded-none border border-border">
-                  <Lock className="h-3 w-3 shrink-0" /> System Locked
-                </span>
               </div>
               <p className="text-xs font-mono text-foreground font-bold select-all py-3 border-b border-border/10">
                 {sub.lastBuyerData || "No parameters registered"}
