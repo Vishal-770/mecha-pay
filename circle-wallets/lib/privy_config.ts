@@ -2,6 +2,9 @@ import {
   baseSepolia,
   avalancheFuji,
   arbitrumSepolia,
+  optimismSepolia,
+  polygonAmoy,
+  unichainSepolia,
   sepolia,
 } from "viem/chains";
 
@@ -26,60 +29,6 @@ export const customSepolia = {
   },
 } as const;
 
-export const seiTestnet = {
-  id: 1328,
-  name: "Sei Testnet",
-  nativeCurrency: { name: "SEI", symbol: "SEI", decimals: 18 },
-  rpcUrls: {
-    default: {
-      http: [
-        "https://evm-rpc-testnet.sei-apis.com",
-        "https://sei-testnet-public.nodies.app",
-        "https://sei-testnet-2-rpc.brocha.in",
-      ],
-    },
-  },
-  blockExplorers: {
-    default: { name: "Seitrace", url: "https://seitrace.com/atlantic-2" },
-  },
-} as const;
-
-export const worldChainSepolia = {
-  id: 4801,
-  name: "World Chain Sepolia",
-  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: {
-    default: { http: ["https://worldchain-sepolia.g.alchemy.com/public"] },
-  },
-  blockExplorers: {
-    default: { name: "Worldscan", url: "https://worldscan.org" },
-  },
-} as const;
-
-export const inkTestnet = {
-  id: 763373,
-  name: "Ink Testnet",
-  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: {
-    default: { http: ["https://rpc-gel-sepolia.inkonchain.com"] },
-  },
-  blockExplorers: {
-    default: { name: "Ink Explorer", url: "https://explorer-sepolia.inkonchain.com" },
-  },
-} as const;
-
-export const xdcApothem = {
-  id: 51,
-  name: "XDC Apothem",
-  nativeCurrency: { name: "XDC", symbol: "XDC", decimals: 18 },
-  rpcUrls: {
-    default: { http: ["https://erpc.apothem.network"] },
-  },
-  blockExplorers: {
-    default: { name: "XDCScan", url: "https://apothem.xdcscan.io" },
-  },
-} as const;
-
 export const monadTestnet = {
   id: 10143,
   name: "Monad Testnet",
@@ -89,18 +38,6 @@ export const monadTestnet = {
   },
   blockExplorers: {
     default: { name: "MonadScan", url: "https://testnet.monadexplorer.com" },
-  },
-} as const;
-
-export const codexTestnet = {
-  id: 812242,
-  name: "Codex Testnet",
-  nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
-  rpcUrls: {
-    default: { http: ["https://rpc.codex-stg.xyz"] },
-  },
-  blockExplorers: {
-    default: { name: "Codex Explorer", url: "https://explorer.codex-stg.xyz" },
   },
 } as const;
 
@@ -119,12 +56,10 @@ export const config = {
     arbitrumSepolia,
     avalancheFuji,
     customSepolia,
-    seiTestnet,
-    worldChainSepolia,
-    inkTestnet,
-    xdcApothem,
+    optimismSepolia,
+    polygonAmoy,
+    unichainSepolia,
     monadTestnet,
-    codexTestnet,
   ],
 };
 

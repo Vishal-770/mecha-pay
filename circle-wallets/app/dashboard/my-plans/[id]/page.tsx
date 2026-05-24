@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { formatUnits } from "ethers";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { useCircleSDK } from "@/context/CircleSDKContext";
+import { encodeFunctionData } from "viem";
 
 import { SUBSCRIPTION_GATEWAY_ADDRESS } from "@/lib/subscription";
 import {
@@ -165,31 +166,46 @@ export default function MyPlanDetailPage() {
   const [search, setSearch] = useState("");
   const [toggling, setToggling] = useState(false);
   
-  const { executeChallenge } = useCircleSDK();
-  const { sessionUserToken } = useDashboardContext();
+  const { executeTransaction } = useCircleSDK();
 
   const handleToggleStatus = async () => {
-    if (!data?.plan || !wallet?.id || !sessionUserToken) return;
+    if (!data?.plan || !wallet?.address) return;
     setToggling(true);
     setError(null);
 
     try {
       const active = !data.plan.active;
-      const res = await fetch("/api/subscription/update-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userToken: sessionUserToken,
-          walletId: wallet.id,
-          planId: data.plan.planId,
-          active,
-        }),
+      
+      const subscriptionGatewayAbi = [
+        {
+          name: "setPlanStatus",
+          type: "function",
+          stateMutability: "nonpayable",
+          inputs: [
+            { name: "planId", type: "bytes32" },
+            { name: "active", type: "bool" }
+          ],
+          outputs: []
+        }
+      ] as const;
+
+      const txData = encodeFunctionData({
+        abi: subscriptionGatewayAbi,
+        functionName: "setPlanStatus",
+        args: [data.plan.planId as `0x${string}`, active],
       });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to update status");
+      await executeTransaction(
+        [
+          {
+            to: SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`,
+            data: txData,
+          }
+        ],
+        false, // sponsorGas
+        "Arc_Testnet" // chainKey
+      );
 
-      await executeChallenge(json.challengeId);
       setData({ ...data, plan: { ...data.plan, active } });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTheme } from "next-themes";
 import { useCircleSDK } from "@/context/CircleSDKContext";
 import { useDashboardContext } from "../_components/DashboardShell";
 import { cn } from "@/lib/utils";
-import { Moon, Sun, Monitor, LogOut, Copy, Check, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Moon, Sun, Monitor, LogOut, Copy, Check, AlertTriangle, ShieldCheck, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import {
@@ -19,20 +19,13 @@ import {
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { session, clearSession, getDeviceId } = useCircleSDK();
+  const { session, clearSession } = useCircleSDK();
   const router = useRouter();
 
   const { wallet } = useDashboardContext();
 
-  const [deviceId, setDeviceId] = useState<string>("Loading...");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isSignOutConfirmOpen, setIsSignOutConfirmOpen] = useState(false);
-
-  useEffect(() => {
-    getDeviceId()
-      .then((id) => setDeviceId(id))
-      .catch(() => setDeviceId(""));
-  }, [getDeviceId]);
 
   const handleSignOut = () => {
     clearSession();
@@ -55,48 +48,70 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground mt-1">Configure your developer environment, credentials, and preferences.</p>
       </div>
 
-      {/* Merchant Credentials Section - Render only if session exists */}
-      {session && (session.userToken || session.encryptionKey) && (
+      {/* Modular Smart Account Credentials Section */}
+      {session && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Merchant Account</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Circle W3S session credentials and parameters.</p>
+            <h2 className="text-lg font-semibold text-foreground">Modular Smart Account</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Biometric passkey authentication session details.</p>
           </div>
 
           <div className="divide-y divide-border/30 border-t border-b border-border/30">
-            {/* User Token Row */}
-            {session.userToken && (
+            {/* Username Row */}
+            {session.username && (
               <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-0.5 max-w-sm">
-                  <div className="text-sm font-medium text-foreground">User Token</div>
-                  <div className="text-xs text-muted-foreground">Authorized wallet token for your current merchant session.</div>
+                  <div className="text-sm font-medium text-foreground">Registered Username</div>
+                  <div className="text-xs text-muted-foreground">The biometric identity name linked with this passkey credential.</div>
                 </div>
                 <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
-                  <span className="text-xs font-mono font-medium truncate text-foreground/80">{session.userToken}</span>
+                  <div className="flex items-center gap-2">
+                    <User className="size-3.5 text-muted-foreground" />
+                    <span className="text-xs font-mono font-medium text-foreground/80">{session.username}</span>
+                  </div>
                   <button
-                    onClick={() => copyToClipboard(session.userToken, "token")}
+                    onClick={() => copyToClipboard(session.username, "username")}
                     className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                   >
-                    {copiedKey === "token" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    {copiedKey === "username" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Encryption Key Row */}
-            {session.encryptionKey && (
+            {/* Smart Wallet Address Row */}
+            {session.walletAddress && (
               <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-0.5 max-w-sm">
-                  <div className="text-sm font-medium text-foreground">Encryption Key</div>
-                  <div className="text-xs text-muted-foreground">Session specific cryptographic key for challenge signing.</div>
+                  <div className="text-sm font-medium text-foreground">Smart Wallet Address</div>
+                  <div className="text-xs text-muted-foreground">The public address of your biometric-secured Modular Smart Wallet on Arc.</div>
                 </div>
                 <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
-                  <span className="text-xs font-mono font-medium truncate text-foreground/80">{session.encryptionKey}</span>
+                  <span className="text-xs font-mono font-medium truncate text-foreground/80">{session.walletAddress}</span>
                   <button
-                    onClick={() => copyToClipboard(session.encryptionKey, "key")}
+                    onClick={() => copyToClipboard(session.walletAddress, "walletAddress")}
                     className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                   >
-                    {copiedKey === "key" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    {copiedKey === "walletAddress" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Credential ID Row */}
+            {session.credential?.id && (
+              <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-0.5 max-w-sm">
+                  <div className="text-sm font-medium text-foreground">Passkey Credential ID</div>
+                  <div className="text-xs text-muted-foreground">The unique cryptographic WebAuthn credential ID registered to your device.</div>
+                </div>
+                <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
+                  <span className="text-xs font-mono font-medium truncate text-foreground/80">{session.credential.id}</span>
+                  <button
+                    onClick={() => copyToClipboard(session.credential.id, "credentialId")}
+                    className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                  >
+                    {copiedKey === "credentialId" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -112,7 +127,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-4 py-2 rounded-lg max-w-lg w-full md:w-auto justify-center md:justify-start shrink-0">
                   <ShieldCheck className="h-4 w-4" />
                   <span className="text-xs font-bold uppercase tracking-wider">
-                    {wallet.accountType || "EOA"}
+                    {wallet.accountType || "Modular Smart Account (MSCA)"}
                   </span>
                 </div>
               </div>
@@ -143,25 +158,6 @@ export default function SettingsPage() {
                   className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 >
                   {copiedKey === "appId" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Device ID */}
-          {deviceId && (
-            <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="space-y-0.5 max-w-sm">
-                <div className="text-sm font-medium text-foreground">Device ID</div>
-                <div className="text-xs text-muted-foreground">Unique client-side device identifier registered with Circle.</div>
-              </div>
-              <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
-                <span className="text-xs font-mono font-medium truncate text-foreground/80">{deviceId}</span>
-                <button
-                  onClick={() => copyToClipboard(deviceId, "deviceId")}
-                  className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                >
-                  {copiedKey === "deviceId" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                 </button>
               </div>
             </div>
@@ -277,5 +273,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-

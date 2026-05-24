@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { useCircleSDK } from "@/context/CircleSDKContext";
+import { encodeFunctionData, parseUnits, type Hex } from "viem";
 
 function truncateAddress(addr: string) {
   if (!addr || addr.length < 12) return addr;
@@ -54,8 +55,8 @@ function TxBadge({ state }: { state: string }) {
 }
 
 export default function WalletPage() {
-  const { wallet, sessionUserToken, refreshWallets } = useDashboardContext();
-  const { executeChallenge } = useCircleSDK();
+  const { wallet, refreshWallets } = useDashboardContext();
+  const { executeTransaction } = useCircleSDK();
 
   // ── Send form state
   const [recipient, setRecipient] = useState("");
@@ -109,28 +110,24 @@ export default function WalletPage() {
     return parseFloat(usdcToken.amount) || 0;
   }, [usdcToken]);
 
-  const maxSendable = useMemo(() => Math.max(usdcBalance - 1, 0), [usdcBalance]);
+  // Gas is sponsored via paymaster, so the user can send the full amount without holding extra!
+  const maxSendable = useMemo(() => usdcBalance, [usdcBalance]);
 
   // ── Load transactions
-  const loadTransactions = useCallback(async () => {
-    if (!wallet?.id || !sessionUserToken) return;
+  const loadTransactions = useCallback(() => {
+    if (!wallet?.address) return;
     setTxLoading(true);
     setTxError(null);
     try {
-      const res = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userToken: sessionUserToken, walletIds: [wallet.id] }),
-      });
-      const json = (await res.json()) as { transactions?: Transaction[]; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed to load transactions");
-      setTransactions(json.transactions ?? []);
+      const localKey = `mecha_pay_txs_${wallet.address.toLowerCase()}`;
+      const stored = localStorage.getItem(localKey);
+      setTransactions(stored ? JSON.parse(stored) : []);
     } catch (err) {
       setTxError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setTxLoading(false);
     }
-  }, [wallet?.id, sessionUserToken]);
+  }, [wallet?.address]);
 
   useEffect(() => {
     void loadTransactions();
@@ -139,7 +136,7 @@ export default function WalletPage() {
   // ── Refresh everything
   const handleRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refreshWallets(), loadTransactions()]);
+    await Promise.all([refreshWallets(), Promise.resolve(loadTransactions())]);
     setRefreshing(false);
   };
 
@@ -179,7 +176,7 @@ export default function WalletPage() {
   };
 
   const handleSend = async () => {
-    if (!wallet?.id || !usdcToken?.tokenId || !recipient || !amount) {
+    if (!wallet?.address || !wallet?.id || !usdcToken || !recipient || !amount) {
       setSendError("Fill in all fields first");
       return;
     }
@@ -189,7 +186,7 @@ export default function WalletPage() {
       return;
     }
     if (numAmount > maxSendable) {
-      setSendError(`Maximum sendable is ${maxSendable.toFixed(6)} USDC (keeping 1 USDC for gas)`);
+      setSendError(`Maximum sendable is ${maxSendable.toFixed(6)} USDC`);
       return;
     }
     if (!/^0x[0-9a-fA-F]{40}$/.test(recipient)) {
@@ -202,25 +199,72 @@ export default function WalletPage() {
     setSending(true);
 
     try {
-      const res = await fetch("/api/send-usdc", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userToken: sessionUserToken,
-          walletId: wallet.id,
-          tokenId: usdcToken.tokenId,
-          destinationAddress: recipient,
-          amount: numAmount.toFixed(6),
-        }),
-      });
-      const json = (await res.json()) as { challengeId?: string; error?: string };
-      if (!res.ok || !json.challengeId) throw new Error(json.error ?? "Transfer failed");
+      let calls: { to: `0x${string}`; data: `0x${string}`; value?: bigint }[] = [];
 
-      await executeChallenge(json.challengeId);
-      setSendSuccess(`Sent ${numAmount.toFixed(6)} USDC to ${truncateAddress(recipient)}`);
+      if (wallet.id === "Arc_Testnet") {
+        // Native USDC on Arc uses 18 decimals
+        calls = [
+          {
+            to: recipient as `0x${string}`,
+            data: "0x" as `0x${string}`,
+            value: parseUnits(amount, 18),
+          },
+        ];
+      } else {
+        // ERC-20 USDC on other chains uses 6 decimals
+        const erc20Abi = [
+          {
+            constant: false,
+            inputs: [
+              { name: "_to", type: "address" },
+              { name: "_value", type: "uint256" },
+            ],
+            name: "transfer",
+            outputs: [{ name: "", type: "bool" }],
+            type: "function",
+          },
+        ] as const;
+
+        calls = [
+          {
+            to: usdcToken.tokenId as `0x${string}`,
+            data: encodeFunctionData({
+              abi: erc20Abi,
+              functionName: "transfer",
+              args: [recipient as `0x${string}`, parseUnits(amount, 6)],
+            }),
+            value: 0n,
+          },
+        ];
+      }
+
+      // Execute Direct sponsored client-side transaction
+      const result = await executeTransaction(calls, true, wallet.id);
+
+      setSendSuccess(`Sent ${numAmount.toFixed(6)} USDC to ${truncateAddress(recipient)} (Tx: ${result.txHash.slice(0, 10)}...)`);
       setRecipient("");
       setAmount("");
-      await Promise.all([refreshWallets(), loadTransactions()]);
+
+      // Add to local transactions list
+      const newTx: Transaction = {
+        id: result.txHash,
+        state: "COMPLETE",
+        transactionType: "OUTBOUND",
+        sourceAddress: wallet.address,
+        destinationAddress: recipient,
+        amounts: [numAmount.toFixed(6)],
+        createDate: new Date().toISOString(),
+        txHash: result.txHash,
+      };
+
+      const localKey = `mecha_pay_txs_${wallet.address.toLowerCase()}`;
+      const existing = localStorage.getItem(localKey);
+      const list = existing ? (JSON.parse(existing) as Transaction[]) : [];
+      list.unshift(newTx);
+      localStorage.setItem(localKey, JSON.stringify(list.slice(0, 50)));
+
+      // Refresh balances & tx list
+      await Promise.all([refreshWallets(), Promise.resolve(loadTransactions())]);
     } catch (err) {
       setSendError(err instanceof Error ? err.message : "Unknown error");
     } finally {

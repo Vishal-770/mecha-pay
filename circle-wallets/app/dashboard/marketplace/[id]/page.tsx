@@ -6,7 +6,8 @@ import { useParams } from "next/navigation";
 import { formatUnits } from "ethers";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { useCircleSDK } from "@/context/CircleSDKContext";
-import { SUBSCRIPTION_GATEWAY_ADDRESS } from "@/lib/subscription";
+import { SUBSCRIPTION_GATEWAY_ADDRESS, ARC_USDC_ADDRESS } from "@/lib/subscription";
+import { encodeFunctionData } from "viem";
 
 import { 
   ArrowLeft, 
@@ -163,8 +164,8 @@ const SectionHeader = ({ title, subtitle, icon: Icon }: any) => (
 
 export default function MarketplaceDetailPage() {
   const params = useParams<{ id: string }>();
-  const { executeChallenge } = useCircleSDK();
-  const { wallet, userCircleId, sessionUserToken } = useDashboardContext();
+  const { executeTransaction } = useCircleSDK();
+  const { wallet, userCircleId } = useDashboardContext();
 
   const [data, setData] = useState<PlanResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -205,7 +206,7 @@ export default function MarketplaceDetailPage() {
   }, [params.id, wallet?.address]);
 
   useEffect(() => {
-    if (!data?.plan || !wallet?.address || !sessionUserToken) return;
+    if (!data?.plan || !wallet?.address) return;
     let mounted = true;
     const run = async () => {
       try {
@@ -215,7 +216,7 @@ export default function MarketplaceDetailPage() {
           body: JSON.stringify({
             subscriber: wallet.address,
             planId: data.plan.planId,
-            userToken: sessionUserToken,
+            userToken: userCircleId,
           }),
         });
         const json = (await res.json()) as EligibilityResponse;
@@ -228,7 +229,7 @@ export default function MarketplaceDetailPage() {
     };
     void run();
     return () => { mounted = false; };
-  }, [data?.plan, wallet?.address]);
+  }, [data?.plan, wallet?.address, userCircleId]);
 
   const selectedTier = useMemo(() => {
     if (!data?.plan || !selectedTierId) return null;
@@ -246,7 +247,7 @@ export default function MarketplaceDetailPage() {
   }, [data?.plan?.metadata, selectedTier]);
 
   const handleBuy = async () => {
-    if (!wallet?.id || !userCircleId || !userAddress) {
+    if (!wallet?.address || !userCircleId || !userAddress) {
       setError("Wallet connection required before subscribing");
       return;
     }
@@ -270,7 +271,7 @@ export default function MarketplaceDetailPage() {
         body: JSON.stringify({
           subscriber: userAddress,
           planId: data.plan.planId,
-          userToken: sessionUserToken,
+          userToken: userCircleId,
         }),
       });
       const latestEligibility = (await eligRes.json()) as EligibilityResponse;
@@ -280,52 +281,64 @@ export default function MarketplaceDetailPage() {
         );
       }
 
-      const allowanceRes = await fetch("/api/subscription/allowance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ owner: wallet.address }),
-      });
-      const allowanceJson = (await allowanceRes.json()) as { allowance?: string; error?: string };
-      if (!allowanceRes.ok || !allowanceJson.allowance) {
-        throw new Error(allowanceJson.error ?? "Allowance verification failed");
-      }
-
-      const allowance = BigInt(allowanceJson.allowance);
-      const required = BigInt(selectedTier.price);
-
-      if (allowance < required) {
-        const approveRes = await fetch("/api/subscription/approve-usdc", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userToken: sessionUserToken,
-            walletId: wallet.id,
-            amount: formatUnits(required, 6),
-          }),
-        });
-        const approveJson = (await approveRes.json()) as { challengeId?: string; error?: string };
-        if (!approveRes.ok || !approveJson.challengeId) {
-          throw new Error(approveJson.error ?? "USDC Approval failed");
+      const erc20Abi = [
+        {
+          name: "approve",
+          type: "function",
+          stateMutability: "nonpayable",
+          inputs: [
+            { name: "spender", type: "address" },
+            { name: "amount", type: "uint256" }
+          ],
+          outputs: [{ name: "", type: "bool" }]
         }
-        await executeChallenge(approveJson.challengeId);
-      }
+      ] as const;
 
-      const subscribeRes = await fetch("/api/subscription/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userToken: sessionUserToken,
-          walletId: wallet.id,
-          planId: data.plan.planId,
-          tierId: selectedTier.tierId,
-          buyerData: userCircleId,
-        }),
+      const subscriptionGatewayAbi = [
+        {
+          name: "subscribe",
+          type: "function",
+          stateMutability: "nonpayable",
+          inputs: [
+            { name: "planId", type: "bytes32" },
+            { name: "tierId", type: "uint256" },
+            { name: "buyerData", type: "string" }
+          ],
+          outputs: []
+        }
+      ] as const;
+
+      const requiredAmount = BigInt(selectedTier.price);
+      
+      const approveData = encodeFunctionData({
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`, requiredAmount],
       });
-      const subscribeJson = (await subscribeRes.json()) as { challengeId?: string; error?: string };
-      if (!subscribeRes.ok || !subscribeJson.challengeId) {
-        throw new Error(subscribeJson.error ?? "Registration failed");
-      }
-      await executeChallenge(subscribeJson.challengeId);
+
+      const subscribeData = encodeFunctionData({
+        abi: subscriptionGatewayAbi,
+        functionName: "subscribe",
+        args: [
+          data.plan.planId as `0x${string}`,
+          BigInt(selectedTier.tierId),
+          userCircleId
+        ],
+      });
+
+      const calls = [
+        {
+          to: ARC_USDC_ADDRESS as `0x${string}`,
+          data: approveData,
+        },
+        {
+          to: SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`,
+          data: subscribeData,
+        }
+      ];
+
+      await executeTransaction(calls, false, "Arc_Testnet");
+
       setSuccessMsg(`Successfully subscribed to ${selectedTier.label}`);
       setEligibility({ eligible: false, reason: "ACTIVE", remainingSeconds: Number(data.plan.duration) });
     } catch (err) {

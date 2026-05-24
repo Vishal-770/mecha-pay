@@ -16,6 +16,8 @@ import { Edit3, Plus, Trash2 } from "lucide-react";
 import { useCircleSDK } from "@/context/CircleSDKContext";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { Separator } from "@/components/ui/separator";
+import { encodeFunctionData } from "viem";
+import { SUBSCRIPTION_GATEWAY_ADDRESS, normalizeIpfsUri } from "@/lib/subscription";
 
 type EditPlanDialogProps = {
   planId: string;
@@ -36,8 +38,8 @@ type TierState = {
 };
 
 export function EditPlanDialog({ planId, durationSeconds, metadata, onSuccess }: EditPlanDialogProps) {
-  const { executeChallenge } = useCircleSDK();
-  const { wallet, sessionUserToken } = useDashboardContext();
+  const { executeTransaction } = useCircleSDK();
+  const { wallet } = useDashboardContext();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,8 +71,8 @@ export function EditPlanDialog({ planId, durationSeconds, metadata, onSuccess }:
   };
 
   const handleSave = async () => {
-    if (!wallet?.id || !sessionUserToken) {
-      setError("Wallet not connected");
+    if (!wallet?.address) {
+      setError("Active smart account wallet not found");
       return;
     }
 
@@ -98,24 +100,40 @@ export function EditPlanDialog({ planId, durationSeconds, metadata, onSuccess }:
       const uploadJson = await uploadRes.json();
       if (!uploadRes.ok) throw new Error(uploadJson.error || "Failed to upload metadata");
 
-      // 3. Request Circle Challenge to update plan
-      const updateRes = await fetch("/api/subscription/update-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userToken: sessionUserToken,
-          walletId: wallet.id,
-          planId,
-          durationSeconds: Number(durationDays) * 86400,
-          ipfsHash: uploadJson.ipfsHash,
-        }),
+      // 3. Directly update metadata on contract
+      const subscriptionGatewayAbi = [
+        {
+          name: "updatePlanMetadata",
+          type: "function",
+          stateMutability: "nonpayable",
+          inputs: [
+            { name: "planId", type: "bytes32" },
+            { name: "durationSeconds", type: "uint32" },
+            { name: "ipfsHash", type: "string" }
+          ],
+          outputs: []
+        }
+      ] as const;
+
+      const newDurationSeconds = Number(durationDays) * 86400;
+      const normalizedIpfs = normalizeIpfsUri(uploadJson.ipfsHash);
+
+      const txData = encodeFunctionData({
+        abi: subscriptionGatewayAbi,
+        functionName: "updatePlanMetadata",
+        args: [planId as `0x${string}`, newDurationSeconds, normalizedIpfs],
       });
 
-      const updateJson = await updateRes.json();
-      if (!updateRes.ok) throw new Error(updateJson.error || "Failed to initiate update");
-
-      // 4. Execute the challenge
-      await executeChallenge(updateJson.challengeId);
+      await executeTransaction(
+        [
+          {
+            to: SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`,
+            data: txData,
+          }
+        ],
+        false, // sponsorGas
+        "Arc_Testnet" // chainKey
+      );
 
       setOpen(false);
       if (onSuccess) onSuccess();

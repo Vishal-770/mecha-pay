@@ -3,37 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCircleSDK } from "@/context/CircleSDKContext";
-
-/**
- * Google "G" SVG icon (inline, no external dependency required).
- */
-function GoogleIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      aria-hidden="true"
-    >
-      <path
-        fill="#4285F4"
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-      />
-      <path
-        fill="#34A853"
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-      />
-      <path
-        fill="#EA4335"
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-      />
-    </svg>
-  );
-}
+import { KeyRound, Wallet, Loader2, ShieldAlert } from "lucide-react";
 
 /**
  * Minimalist professional background with grid and subtle gradient
@@ -61,7 +31,6 @@ function BackgroundPattern() {
 }
 
 export default function LoginPage() {
-  // useSearchParams requires a Suspense boundary in the Next.js App Router.
   return (
     <Suspense fallback={<LoginSkeleton />}>
       <LoginContent />
@@ -69,12 +38,15 @@ export default function LoginPage() {
   );
 }
 
-import Loader from "@/components/Loader";
-
 function LoginSkeleton() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <Loader />
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="text-sm font-semibold uppercase italic tracking-wider text-muted-foreground animate-pulse">
+          Loading Wallet Matrix...
+        </span>
+      </div>
     </div>
   );
 }
@@ -82,79 +54,87 @@ function LoginSkeleton() {
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  
   const {
     session,
     isReady,
-    getDeviceId,
-    setLoginTokens,
-    performLogin,
-    loginError,
+    registerPasskey,
+    loginWithPasskey,
   } = useCircleSDK();
 
+  const [usernameInput, setUsernameInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState<"register" | "login" | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Extract redirect URL from query params
   const redirectTo = searchParams.get("redirect");
 
-  // If already authenticated, go to redirect URL or default to setup-pin
+  // If already authenticated, go to redirect URL or default to dashboard
   useEffect(() => {
     if (session) {
-      const destination = redirectTo || "/setup-pin";
+      const destination = redirectTo || "/dashboard";
       router.replace(destination);
     }
   }, [session, router, redirectTo]);
 
-  // Surface errors coming back from the /auth/callback or /api/oauth redirect.
+  // Pre-fill username from local storage if available
   useEffect(() => {
-    const err = searchParams.get("error");
-    if (err) setErrorMsg(decodeURIComponent(err));
-  }, [searchParams]);
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("circle_username");
+      if (stored) {
+        setUsernameInput(stored);
+      }
+    }
+  }, []);
 
-  // Surface errors from the SDK onLoginComplete callback.
-  useEffect(() => {
-    if (loginError) setErrorMsg(loginError);
-  }, [loginError]);
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault();
+    if (!usernameInput.trim()) {
+      setErrorMsg("Please enter a username.");
+      return;
+    }
 
-  async function handleGoogleLogin() {
     setErrorMsg(null);
     setIsLoading(true);
+    setActiveAction("register");
 
     try {
-      // Store redirect URL in sessionStorage before OAuth flow (survives navigation)
-      if (redirectTo) {
-        sessionStorage.setItem("circle_auth_redirect_url", redirectTo);
-      }
-
-      // Step 1 â€“ Get the browser-unique device ID from the Circle SDK.
-      const deviceId = await getDeviceId();
-
-      // Step 2 â€“ Ask our server to create device tokens bound to this device.
-      const res = await fetch("/api/create-device-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId }),
-      });
-
-      if (!res.ok) {
-        const { error } = (await res.json()) as { error?: string };
-        throw new Error(error ?? "Failed to create device token");
-      }
-
-      const { deviceToken, deviceEncryptionKey } = (await res.json()) as {
-        deviceToken: string;
-        deviceEncryptionKey: string;
-      };
-
-      // Step 3 – Give the SDK the device tokens so it can complete the OAuth flow.
-      setLoginTokens(deviceToken, deviceEncryptionKey);
-
-      // Step 4 â€“ Redirect to Google OAuth.  The browser will navigate away.
-      performLogin();
+      await registerPasskey(usernameInput);
+      router.replace(redirectTo || "/dashboard");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unknown error";
-      setErrorMsg(msg);
+      console.error(err);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.toLowerCase().includes("duplicate") || msg.toLowerCase().includes("already")) {
+        setErrorMsg("Username taken on this device. Try unlocking instead.");
+      } else {
+        setErrorMsg(msg || "Failed to register passkey. Try again.");
+      }
       setIsLoading(false);
+      setActiveAction(null);
+    }
+  }
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!usernameInput.trim()) {
+      setErrorMsg("Please enter a username.");
+      return;
+    }
+
+    setErrorMsg(null);
+    setIsLoading(true);
+    setActiveAction("login");
+
+    try {
+      await loginWithPasskey(usernameInput);
+      router.replace(redirectTo || "/dashboard");
+    } catch (err) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrorMsg(msg || "Biometrics unlock failed. Make sure your passkey is registered.");
+      setIsLoading(false);
+      setActiveAction(null);
     }
   }
 
@@ -162,7 +142,7 @@ function LoginContent() {
     <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-12 overflow-hidden">
       <BackgroundPattern />
       
-      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
+      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center font-mulish">
         {/* Left side - Branding */}
         <div className="hidden lg:block space-y-10 px-8">
           <div className="flex items-center gap-4">
@@ -173,15 +153,15 @@ function LoginContent() {
                 className="w-full h-full object-contain grayscale"
               />
             </div>
-            <h1 className="text-3xl font-bold text-foreground tracking-tighter">
+            <h1 className="text-3xl font-black uppercase italic tracking-tighter text-foreground">
               MECHA PAY
             </h1>
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-5xl font-bold text-foreground leading-[1.1] tracking-tight">
+            <h2 className="text-5xl font-black uppercase italic text-foreground leading-[1.1] tracking-tight">
               The Protocol for <br />
-              <span className="text-muted-foreground">Modern Payments.</span>
+              <span className="text-muted-foreground not-italic font-bold">Modern Payments.</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-md leading-relaxed">
               An engineering-grade infrastructure for USDC-native memberships, powered by Circle and the Arc blockchain.
@@ -195,7 +175,7 @@ function LoginContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Bank-grade encryption</p>
+              <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Bank-grade passkeys</p>
             </div>
 
             <div className="flex items-center gap-4 group">
@@ -204,7 +184,7 @@ function LoginContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Sub-second confirmation</p>
+              <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Gas-sponsored execution</p>
             </div>
 
             <div className="flex items-center gap-4 group">
@@ -213,7 +193,7 @@ function LoginContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
               </div>
-              <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Multi-chain liquidity</p>
+              <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Unified multi-chain balance</p>
             </div>
           </div>
         </div>
@@ -230,91 +210,113 @@ function LoginContent() {
                   className="w-full h-full object-contain grayscale"
                 />
               </div>
-              <h2 className="text-xl font-bold text-card-foreground tracking-tighter uppercase">Mecha Pay</h2>
+              <h2 className="text-xl font-black uppercase italic tracking-tighter text-card-foreground">MECHA PAY</h2>
             </div>
 
             <div className="space-y-6">
               <div className="text-center lg:text-left space-y-2">
-                <h2 className="text-2xl font-bold text-card-foreground">Welcome back</h2>
-                <p className="text-muted-foreground">
-                  Sign in to access your payment dashboard
+                <h2 className="text-2xl font-bold text-card-foreground">Secure Access</h2>
+                <p className="text-muted-foreground text-sm">
+                  Register or unlock your smart account with biometric passkeys
                 </p>
               </div>
 
               {/* Error banner */}
               {errorMsg && (
-                <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3.5 text-sm text-destructive flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{errorMsg}</span>
+                <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3.5 text-xs text-destructive flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span className="font-semibold">{errorMsg}</span>
                 </div>
               )}
 
-              {/* Google login button */}
-              <button
-                onClick={handleGoogleLogin}
-                disabled={!isReady || isLoading}
-                className="group relative w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-background px-6 py-4 text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 to-chart-2/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                {isLoading ? (
-                  <svg
-                    className="h-5 w-5 animate-spin text-muted-foreground"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v8H4z"
-                    />
-                  </svg>
-                ) : (
-                  <GoogleIcon />
-                )}
-                <span className="relative">
-                  {isLoading ? "Redirecting to Google..." : "Continue with Google"}
-                </span>
-              </button>
+              {/* Username Input */}
+              <div className="space-y-2">
+                <label htmlFor="username" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  placeholder="e.g. alice, merchant.mecha"
+                  value={usernameInput}
+                  onChange={(e) => {
+                    setUsernameInput(e.target.value);
+                    setErrorMsg(null);
+                  }}
+                  disabled={isLoading}
+                  autoComplete="username"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                />
+              </div>
 
-              <div className="relative">
+              <div className="flex flex-col gap-3 pt-2">
+                {/* Unlock Account (Login) */}
+                <button
+                  onClick={handleLogin}
+                  disabled={!isReady || isLoading || !usernameInput.trim()}
+                  className="group relative w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-background px-6 py-4 text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isLoading && activeAction === "login" ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Wallet className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  <span>Unlock Smart Account</span>
+                </button>
+
+                <div className="relative my-1">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider">
+                    <span className="bg-card px-3 text-muted-foreground">New Device?</span>
+                  </div>
+                </div>
+
+                {/* Create Account (Register) */}
+                <button
+                  onClick={handleRegister}
+                  disabled={!isReady || isLoading || !usernameInput.trim()}
+                  className="w-full flex items-center justify-center gap-3 rounded-xl bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground shadow-md transition-all duration-200 hover:bg-primary/95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isLoading && activeAction === "register" ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-primary-foreground" />
+                  ) : (
+                    <KeyRound className="h-5 w-5 text-primary-foreground" />
+                  )}
+                  <span>Register Device Passkey</span>
+                </button>
+              </div>
+
+              <div className="relative pt-2">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-border" />
                 </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="bg-card px-4 text-muted-foreground">
-                    Secure authentication powered by Circle
+                <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[0.15em]">
+                  <span className="bg-card px-4 text-muted-foreground/60">
+                    Sponsorized & Secured by Circle MSCA
                   </span>
                 </div>
               </div>
 
-              <p className="text-center text-xs text-muted-foreground leading-relaxed">
-                By signing in you agree to Circle&apos;s{" "}
+              <p className="text-center text-[10px] text-muted-foreground leading-relaxed">
+                By entering and unlocking you agree to Mecha Pay&apos;s{" "}
                 <a
                   href="https://www.circle.com/en/legal/user-terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-primary hover:underline transition-colors"
+                  className="font-bold text-primary hover:underline transition-colors"
                 >
-                  Terms of Service
+                  User Terms
                 </a>
                 {" "}and{" "}
                 <a
                   href="https://www.circle.com/en/legal/privacy-policy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-primary hover:underline transition-colors"
+                  className="font-bold text-primary hover:underline transition-colors"
                 >
-                  Privacy Policy
+                  Privacy Rules
                 </a>
               </p>
             </div>

@@ -5,287 +5,328 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useReducer,
-  useRef,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
-import { W3SSdk } from "@circle-fin/w3s-pw-web-sdk";
+import {
+  WebAuthnMode,
+  toCircleSmartAccount,
+  toModularTransport,
+  toPasskeyTransport,
+  toWebAuthnCredential,
+  getUserOperationGasPrice,
+} from "@circle-fin/modular-wallets-core";
+import {
+  createPublicClient,
+  type Hex,
+  type Transport,
+  type Client,
+} from "viem";
+import {
+  toWebAuthnAccount,
+  createBundlerClient,
+  type P256Credential,
+} from "viem/account-abstraction";
+import { SUPPORTED_CHAINS, arcTestnet } from "@/lib/bridge_config";
 
-// SocialLoginProvider enum value (the type is not re-exported by the package).
-const GOOGLE_PROVIDER = "Google" as const;
+// ─── Constants & Configurations ──────────────────────────────────────────────
 
-// Minimal type aliases so we don't import unexported internal types.
-type W3SConfigs = ConstructorParameters<typeof W3SSdk>[0];
-type W3SLoginCallback = ConstructorParameters<typeof W3SSdk>[1];
-type W3SSocialLoginResult = {
-  userToken: string;
-  encryptionKey: string;
-  refreshToken: string;
+const DEFAULT_CLIENT_URL = "https://modular-sdk.circle.com/v1/rpc/w3s/buidl";
+
+const CHAIN_PATH_MAP: Record<string, string> = {
+  Arc_Testnet: "/arcTestnet",
+  Base_Sepolia: "/baseSepolia",
+  Arbitrum_Sepolia: "/arbitrumSepolia",
+  Avalanche_Fuji: "/avalancheFuji",
+  Optimism_Sepolia: "/optimismSepolia",
+  Polygon_Amoy_Testnet: "/polygonAmoy",
+  Unichain_Sepolia: "/unichainSepolia",
+  Monad_Testnet: "/monadTestnet",
 };
 
-type W3SChallengeResult = unknown;
-
-// ─── Types ──────────────────────────────────────────────────────────────────
-
 export interface SdkSession {
-  userToken: string;
-  encryptionKey: string;
-  refreshToken?: string;
+  username: string;
+  credential: P256Credential;
+  walletAddress: string;
 }
 
 interface CircleSDKContextValue {
-  sdk: W3SSdk | null;
   isReady: boolean;
+  isInitializing: boolean;
   session: SdkSession | null;
-  setSession: (session: SdkSession) => void;
+  walletAddress: string | null;
+  username: string | null;
+  registerPasskey: (username: string) => Promise<void>;
+  loginWithPasskey: (username?: string) => Promise<void>;
   clearSession: () => void;
-  setLoginTokens: (deviceToken: string, deviceEncryptionKey: string) => void;
-  getDeviceId: () => Promise<string>;
-  performLogin: () => void;
-  executeChallenge: (challengeId: string) => Promise<W3SChallengeResult>;
-  loginError: string | null;
+  executeTransaction: (
+    calls: { to: Hex; data: Hex; value?: bigint }[],
+    sponsorGas?: boolean,
+    chainKey?: string
+  ) => Promise<{ userOpHash: Hex; txHash: Hex }>;
+  readOnChain: (
+    abi: any,
+    address: Hex,
+    functionName: string,
+    args: any[],
+    chainKey?: string
+  ) => Promise<any>;
 }
-
-// ─── Storage helpers ─────────────────────────────────────────────────────────
-
-const SESSION_KEY = "circle_session";
-const PENDING_KEY = "circle_pending_login";
-
-function readSession(): SdkSession | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as SdkSession) : null;
-  } catch {
-    return null;
-  }
-}
-
-// ─── SDK factory ─────────────────────────────────────────────────────────────
-
-function buildConfigs(
-  deviceToken?: string,
-  deviceEncryptionKey?: string,
-  session?: SdkSession | null,
-): W3SConfigs {
-  const base: W3SConfigs = {
-    appSettings: {
-      appId: process.env.NEXT_PUBLIC_CIRCLE_APP_ID!,
-    },
-  };
-
-  if (session) {
-    base.authentication = {
-      userToken: session.userToken,
-      encryptionKey: session.encryptionKey,
-    };
-  }
-
-  if (deviceToken && deviceEncryptionKey) {
-    base.loginConfigs = {
-      deviceToken,
-      deviceEncryptionKey,
-      google: {
-        clientId: process.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID!,
-        redirectUri: `${typeof window !== "undefined" ? window.location.origin : ""}/api/oauth`,
-        selectAccountPrompt: true,
-      },
-    };
-  }
-
-  return base;
-}
-
-// ─── SDK state reducer ───────────────────────────────────────────────────────
-
-interface SdkReducerState {
-  sdk: W3SSdk | null;
-  isReady: boolean;
-}
-
-type SdkReducerAction = { type: "init"; sdk: W3SSdk } | { type: "reset" };
-
-function sdkReducer(
-  _state: SdkReducerState,
-  action: SdkReducerAction,
-): SdkReducerState {
-  switch (action.type) {
-    case "init":
-      return { sdk: action.sdk, isReady: true };
-    case "reset":
-      return { sdk: null, isReady: false };
-  }
-}
-
-// ─── Context ─────────────────────────────────────────────────────────────────
 
 const CircleSDKContext = createContext<CircleSDKContextValue | null>(null);
 
+// ─── Provider ────────────────────────────────────────────────────────────────
+
 export function CircleSDKProvider({ children }: { children: ReactNode }) {
-  const sdkRef = useRef<W3SSdk | null>(null);
-  const [{ sdk: sdkSnapshot, isReady }, dispatchSdk] = useReducer(sdkReducer, {
-    sdk: null,
-    isReady: false,
-  });
-  const [session, setSessionState] = useState<SdkSession | null>(() =>
-    readSession(),
-  );
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const clientKey = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_KEY || "";
+  const clientUrl = process.env.NEXT_PUBLIC_CIRCLE_CLIENT_URL || DEFAULT_CLIENT_URL;
+  const isConfigured = !!clientKey;
 
-  const onLoginComplete = useCallback<NonNullable<W3SLoginCallback>>(
-    (
-      err: { message: string } | undefined,
-      result: W3SSocialLoginResult | undefined,
-    ) => {
-      if (err) {
-        console.error("[Circle SDK] onLoginComplete error:", err);
-        setLoginError(err.message);
-        return;
-      }
-      const r = result as W3SSocialLoginResult | undefined;
-      if (r?.userToken && r?.encryptionKey) {
-        const newSession: SdkSession = {
-          userToken: r.userToken,
-          encryptionKey: r.encryptionKey,
-          refreshToken: r.refreshToken,
-        };
-        setSessionState(newSession);
-        localStorage.setItem(SESSION_KEY, JSON.stringify(newSession));
-        sessionStorage.removeItem(PENDING_KEY);
+  const [username, setUsername] = useState<string | null>(null);
+  const [credential, setCredential] = useState<P256Credential | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  
+  const [isReady, setIsReady] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
 
-        // Update the SDK with the new authentication tokens so that
-        // executeChallenge() can show the PIN / security-question UI.
-        if (sdkRef.current) {
-          const configs = buildConfigs(undefined, undefined, newSession);
-          sdkRef.current.updateConfigs(configs, undefined);
-          console.log(
-            "[Circle SDK] SDK authentication updated with new session.",
-          );
-        }
+  const passkeyTransport = useMemo(() => {
+    if (!isConfigured) return null;
+    return toPasskeyTransport(clientUrl, clientKey);
+  }, [clientUrl, clientKey, isConfigured]);
 
-        console.log("[Circle SDK] Login complete – session stored.");
-      }
-    },
-    [],
-  );
+  // Helper to get Viem clients for a chain.
+  // Always uses toModularTransport — Circle's bundler only supports the sponsored (paymaster: true) path.
+  const getClients = useCallback((chainKey: string = "Arc_Testnet") => {
+    if (!isConfigured) throw new Error("Circle client key is not configured.");
+    
+    const path = CHAIN_PATH_MAP[chainKey] || "/arcTestnet";
+    const chainMeta = SUPPORTED_CHAINS.find((c) => c.identifier === chainKey);
+    const chain = chainMeta ? chainMeta.viemChain : arcTestnet;
 
-  const initSdk = useCallback(
-    (
-      currentSession: SdkSession | null,
-      deviceToken?: string,
-      deviceEncryptionKey?: string,
-    ) => {
-      const configs = buildConfigs(
-        deviceToken,
-        deviceEncryptionKey,
-        currentSession,
-      );
-      let instance: W3SSdk;
-      if (sdkRef.current) {
-        sdkRef.current.updateConfigs(
-          configs,
-          onLoginComplete as W3SLoginCallback,
-        );
-        instance = sdkRef.current;
-      } else {
-        instance = new W3SSdk(configs, onLoginComplete as W3SLoginCallback);
-        sdkRef.current = instance;
-      }
-      dispatchSdk({ type: "init", sdk: instance });
-    },
-    [onLoginComplete],
-  );
+    const transportUrl = `${clientUrl}${path}`;
+    const transport = toModularTransport(transportUrl, clientKey) as Transport;
 
+    const publicClient = createPublicClient({ chain, transport });
+    const bundlerClient = createBundlerClient({ chain, transport });
+
+    return { publicClient, bundlerClient, chain };
+  }, [clientUrl, clientKey, isConfigured]);
+
+  // Load session from storage and resolve on mount
   useEffect(() => {
-    const stored = readSession();
-    try {
-      const raw = sessionStorage.getItem(PENDING_KEY);
-      if (raw) {
-        const { deviceToken, deviceEncryptionKey } = JSON.parse(raw) as {
-          deviceToken: string;
-          deviceEncryptionKey: string;
-        };
-        initSdk(stored, deviceToken, deviceEncryptionKey);
+    let active = true;
+
+    async function initSession() {
+      if (typeof window === "undefined") return;
+
+      const storedUsername = localStorage.getItem("circle_username") || "";
+      const storedCred = localStorage.getItem("circle_credential");
+
+      if (!storedUsername || !storedCred || !isConfigured) {
+        if (active) {
+          setIsReady(true);
+        }
         return;
       }
-    } catch {
-      /* ignore */
-    }
-    initSdk(stored);
-  }, [initSdk]);
 
-  const setSession = useCallback(
-    (newSession: SdkSession) => {
-      setSessionState(newSession);
-      localStorage.setItem(SESSION_KEY, JSON.stringify(newSession));
-      initSdk(newSession);
-    },
-    [initSdk],
-  );
+      let parsedCred: P256Credential | null = null;
+      try {
+        parsedCred = JSON.parse(storedCred);
+      } catch (err) {
+        console.error("Failed to parse stored credential:", err);
+      }
+
+      if (!parsedCred) {
+        if (active) {
+          setIsReady(true);
+        }
+        return;
+      }
+
+      setIsInitializing(true);
+      try {
+        const { publicClient } = getClients("Arc_Testnet");
+        const acct = await toCircleSmartAccount({
+          client: publicClient as Client,
+          owner: toWebAuthnAccount({ credential: parsedCred }),
+          name: storedUsername,
+        });
+
+        if (active) {
+          setUsername(storedUsername);
+          setCredential(parsedCred);
+          setWalletAddress(acct.address);
+        }
+      } catch (err) {
+        console.error("Failed to resolve modular wallet on mount:", err);
+        // Clean up bad session
+        localStorage.removeItem("circle_credential");
+        localStorage.removeItem("circle_username");
+      } finally {
+        if (active) {
+          setIsInitializing(false);
+          setIsReady(true);
+        }
+      }
+    }
+
+    void initSession();
+
+    return () => {
+      active = false;
+    };
+  }, [isConfigured, getClients]);
+
+  // Passkey actions
+  const registerPasskey = useCallback(async (newUser: string) => {
+    if (!passkeyTransport) throw new Error("Passkey transport not initialized.");
+    const trimmed = newUser.trim();
+    if (!trimmed) throw new Error("Username cannot be empty.");
+
+    const cred = await toWebAuthnCredential({
+      transport: passkeyTransport,
+      mode: WebAuthnMode.Register,
+      username: trimmed,
+    });
+
+    const { publicClient } = getClients("Arc_Testnet");
+    const acct = await toCircleSmartAccount({
+      client: publicClient as Client,
+      owner: toWebAuthnAccount({ credential: cred }),
+      name: trimmed,
+    });
+
+    localStorage.setItem("circle_credential", JSON.stringify(cred));
+    localStorage.setItem("circle_username", trimmed);
+    
+    setCredential(cred);
+    setUsername(trimmed);
+    setWalletAddress(acct.address);
+    setIsReady(true);
+  }, [passkeyTransport, getClients]);
+
+  const loginWithPasskey = useCallback(async (existingUser?: string) => {
+    if (!passkeyTransport) throw new Error("Passkey transport not initialized.");
+    
+    const resolvedUser = existingUser?.trim() || localStorage.getItem("circle_username") || "";
+    if (!resolvedUser) throw new Error("Username is required to find passkey.");
+
+    const cred = await toWebAuthnCredential({
+      transport: passkeyTransport,
+      mode: WebAuthnMode.Login,
+    });
+
+    const { publicClient } = getClients("Arc_Testnet");
+    const acct = await toCircleSmartAccount({
+      client: publicClient as Client,
+      owner: toWebAuthnAccount({ credential: cred }),
+      name: resolvedUser,
+    });
+
+    localStorage.setItem("circle_credential", JSON.stringify(cred));
+    localStorage.setItem("circle_username", resolvedUser);
+
+    setCredential(cred);
+    setUsername(resolvedUser);
+    setWalletAddress(acct.address);
+    setIsReady(true);
+  }, [passkeyTransport, getClients]);
 
   const clearSession = useCallback(() => {
-    setSessionState(null);
-    localStorage.removeItem(SESSION_KEY);
-    initSdk(null);
-  }, [initSdk]);
-
-  const setLoginTokens = useCallback(
-    (deviceToken: string, deviceEncryptionKey: string) => {
-      sessionStorage.setItem(
-        PENDING_KEY,
-        JSON.stringify({ deviceToken, deviceEncryptionKey }),
-      );
-      initSdk(session, deviceToken, deviceEncryptionKey);
-    },
-    [initSdk, session],
-  );
-
-  const getDeviceId = useCallback(async (): Promise<string> => {
-    if (!sdkRef.current) throw new Error("SDK not ready");
-    return sdkRef.current.getDeviceId();
+    localStorage.removeItem("circle_credential");
+    localStorage.removeItem("circle_username");
+    setCredential(null);
+    setUsername(null);
+    setWalletAddress(null);
   }, []);
 
-  const performLogin = useCallback(() => {
-    if (!sdkRef.current) {
-      console.error("[Circle SDK] SDK not initialised.");
-      return;
+  // Client-Side Transaction Submitting.
+  // Matches Circle's official reference: sendUserOperation with account, calls, paymaster:true only.
+  // Circle's bundler auto-handles all gas estimation when paymaster:true is set.
+  const executeTransaction = useCallback(async (
+    calls: { to: Hex; data: Hex; value?: bigint }[],
+    _sponsorGas: boolean = true,
+    chainKey: string = "Arc_Testnet"
+  ) => {
+    if (!credential || !username) {
+      throw new Error("No active smart account session. Register or login first.");
     }
-    setLoginError(null);
-    void (sdkRef.current.performLogin as (p: string) => Promise<void>)(
-      GOOGLE_PROVIDER,
-    );
-  }, []);
 
-  const executeChallenge = useCallback(
-    (challengeId: string): Promise<W3SChallengeResult> => {
-      if (!sdkRef.current) return Promise.reject(new Error("SDK not ready"));
-      return new Promise<W3SChallengeResult>((resolve, reject) => {
-        sdkRef.current!.execute(challengeId, (error, result) => {
-          if (error) {
-            reject(new Error(error.message ?? "Challenge execution failed"));
-          } else {
-            console.log("[Circle SDK] Challenge complete:", result);
-            resolve(result);
-          }
-        });
-      });
-    },
-    [],
-  );
+    const { publicClient, bundlerClient } = getClients(chainKey);
+
+    const smartAccount = await toCircleSmartAccount({
+      client: publicClient as Client,
+      owner: toWebAuthnAccount({ credential }),
+      name: username,
+    });
+
+    // Use Circle's gas price oracle — Arc Testnet bundler requires >= 1 gwei maxPriorityFeePerGas.
+    // Viem's default fee estimation returns ~0.002 gwei which the bundler rejects.
+    // We only set gas PRICES here; gas LIMITS are left to the bundler to auto-estimate.
+    const gasPrices = await getUserOperationGasPrice(publicClient as Client);
+    const maxFeePerGas = BigInt(gasPrices.medium.maxFeePerGas);
+    const maxPriorityFeePerGas = BigInt(gasPrices.medium.maxPriorityFeePerGas);
+
+    const userOpHash = await bundlerClient.sendUserOperation({
+      account: smartAccount,
+      calls,
+      paymaster: true,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+      // Do NOT set verificationGasLimit / callGasLimit / preVerificationGas manually.
+      // Manual overrides invalidate the bundler's paymasterData signature (causes AA23).
+    });
+
+    const { receipt } = await bundlerClient.waitForUserOperationReceipt({
+      hash: userOpHash,
+    });
+
+    return {
+      userOpHash,
+      txHash: receipt.transactionHash,
+    };
+  }, [credential, username, getClients]);
+
+  // Client-Side Contract Reading Helper
+  const readOnChain = useCallback(async (
+    abi: any,
+    address: Hex,
+    functionName: string,
+    args: any[],
+    chainKey: string = "Arc_Testnet"
+  ) => {
+    const { publicClient } = getClients(chainKey);
+    return publicClient.readContract({
+      abi,
+      address,
+      functionName,
+      args,
+    });
+  }, [getClients]);
+
+  const session = useMemo<SdkSession | null>(() => {
+    if (!username || !credential || !walletAddress) return null;
+    return {
+      username,
+      credential,
+      walletAddress,
+    };
+  }, [username, credential, walletAddress]);
 
   return (
     <CircleSDKContext.Provider
       value={{
-        sdk: sdkSnapshot,
         isReady,
+        isInitializing,
         session,
-        setSession,
+        walletAddress,
+        username,
+        registerPasskey,
+        loginWithPasskey,
         clearSession,
-        setLoginTokens,
-        getDeviceId,
-        performLogin,
-        executeChallenge,
-        loginError,
+        executeTransaction,
+        readOnChain,
       }}
     >
       {children}
@@ -293,11 +334,10 @@ export function CircleSDKProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// ─── Hook ────────────────────────────────────────────────────────────────────
-
-export function useCircleSDK(): CircleSDKContextValue {
+export function useCircleSDK() {
   const ctx = useContext(CircleSDKContext);
-  if (!ctx)
+  if (!ctx) {
     throw new Error("useCircleSDK must be used inside <CircleSDKProvider>");
+  }
   return ctx;
 }

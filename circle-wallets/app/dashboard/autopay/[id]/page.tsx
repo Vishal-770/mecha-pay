@@ -617,7 +617,7 @@ export default function AutoPayDetailPage() {
                 <div className="pt-2">
                   <button
                     onClick={() => setShowRevokeModal(true)}
-                    className="h-9 px-4 text-xs font-mono font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all duration-150 rounded-none w-full md:w-auto cursor-pointer"
+                    className="h-9 px-4 text-xs font-mono font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 transition-all duration-150 rounded-none w-full md:w-auto cursor-pointer"
                   >
                     Revoke Consent & Signature
                   </button>

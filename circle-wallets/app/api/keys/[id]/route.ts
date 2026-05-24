@@ -1,27 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { ObjectId } from "mongodb";
-import { initiateUserControlledWalletsClient } from "@circle-fin/user-controlled-wallets";
-
-let circleClient: ReturnType<typeof initiateUserControlledWalletsClient> | null = null;
-
-function getCircleClient() {
-  if (!circleClient) {
-    circleClient = initiateUserControlledWalletsClient({
-      apiKey: process.env.CIRCLE_API_KEY!,
-    });
-  }
-  return circleClient;
-}
-
-/**
- * Identify the user via Circle SDK.
- */
-async function getUserId(userToken: string) {
-  const client = getCircleClient();
-  const response = await client.getUserStatus({ userToken });
-  return response.data?.id ?? null;
-}
 
 export async function DELETE(
   req: NextRequest,
@@ -35,10 +14,7 @@ export async function DELETE(
       return NextResponse.json({ error: "userToken is required" }, { status: 400 });
     }
 
-    const userId = await getUserId(userToken);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = userToken;
 
     const { db } = await connectToDatabase();
 

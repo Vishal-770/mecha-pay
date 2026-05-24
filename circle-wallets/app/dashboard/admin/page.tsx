@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { useCircleSDK } from "@/context/CircleSDKContext";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { createPublicClient, http, getAddress, isAddress } from "viem";
+import { createPublicClient, http, getAddress, isAddress, encodeFunctionData } from "viem";
+
 import { 
   ShieldCheck, 
   Settings, 
@@ -55,8 +56,8 @@ const ERC20_ABI = [
 ] as const;
 
 export default function AdminDashboardPage() {
-  const { wallet, sessionUserToken } = useDashboardContext();
-  const { executeChallenge } = useCircleSDK();
+  const { wallet } = useDashboardContext();
+  const { executeTransaction } = useCircleSDK();
   const { user, authenticated, logout, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const connectedEOA = wallets[0]?.address; // The most recently connected/linked EOA
@@ -119,14 +120,15 @@ export default function AdminDashboardPage() {
     // Scan all linked accounts and wallets for ANY matching address
     const target = contractOwnerAddr.toLowerCase();
     
-    const wallets = (user.linkedAccounts || [])
+    const walletsList = (user.linkedAccounts || [])
       .filter(acc => acc.type === 'wallet')
       .map(acc => (acc as any).address?.toLowerCase());
 
-    if (connectedEOA) wallets.push(connectedEOA.toLowerCase());
-    if (user.wallet?.address) wallets.push(user.wallet.address.toLowerCase());
+    if (connectedEOA) walletsList.push(connectedEOA.toLowerCase());
+    if (user.wallet?.address) walletsList.push(user.wallet.address.toLowerCase());
+    if (wallet?.address) walletsList.push(wallet.address.toLowerCase());
 
-    return wallets.some(addr => addr === target);
+    return walletsList.some(addr => addr === target);
   })();
 
   const fetchStats = async () => {
@@ -175,25 +177,40 @@ export default function AdminDashboardPage() {
   }, [isOwner, wallet?.address]);
 
   const handleUpdateFee = async () => {
-    if (!sessionUserToken || !wallet?.id || !newFee) return;
+    if (!wallet?.address || !newFee) return;
     setProcessing(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/set-fee", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userToken: sessionUserToken,
-          walletId: wallet.id,
-          newFeeBps: Number(newFee)
-        }),
+      const subscriptionGatewayAbi = [
+        {
+          name: "setFee",
+          type: "function",
+          stateMutability: "nonpayable",
+          inputs: [{ name: "newFeeBps", type: "uint256" }],
+          outputs: []
+        }
+      ] as const;
+
+      const txData = encodeFunctionData({
+        abi: subscriptionGatewayAbi,
+        functionName: "setFee",
+        args: [BigInt(newFee)],
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to update fee");
-      
-      await executeChallenge(json.challengeId);
+
+      await executeTransaction(
+        [
+          {
+            to: SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`,
+            data: txData,
+          }
+        ],
+        false, // sponsorGas
+        "Arc_Testnet" // chainKey
+      );
+
       setProtocolFee(Number(newFee));
       setNewFee("");
+      void fetchStats();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
     } finally {
@@ -202,26 +219,44 @@ export default function AdminDashboardPage() {
   };
 
   const handleWithdraw = async () => {
-    if (!sessionUserToken || !wallet?.id || !withdrawAddress || !withdrawAmount) return;
+    if (!wallet?.address || !withdrawAddress || !withdrawAmount) return;
     setProcessing(true);
     setError(null);
     try {
-      const amountIn6 = (Number(withdrawAmount) * 1e6).toString();
-      const res = await fetch("/api/admin/withdraw", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userToken: sessionUserToken,
-          walletId: wallet.id,
-          to: withdrawAddress,
-          amount: amountIn6
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Withdrawal failed");
+      const amountIn6 = BigInt(Math.round(Number(withdrawAmount) * 1e6));
       
-      await executeChallenge(json.challengeId);
+      const subscriptionGatewayAbi = [
+        {
+          name: "withdrawFees",
+          type: "function",
+          stateMutability: "nonpayable",
+          inputs: [
+            { name: "to", type: "address" },
+            { name: "amount", type: "uint256" }
+          ],
+          outputs: []
+        }
+      ] as const;
+
+      const txData = encodeFunctionData({
+        abi: subscriptionGatewayAbi,
+        functionName: "withdrawFees",
+        args: [withdrawAddress as `0x${string}`, amountIn6],
+      });
+
+      await executeTransaction(
+        [
+          {
+            to: SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`,
+            data: txData,
+          }
+        ],
+        false, // sponsorGas
+        "Arc_Testnet" // chainKey
+      );
+
       setWithdrawAmount("");
+      void fetchStats();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Withdrawal failed");
     } finally {

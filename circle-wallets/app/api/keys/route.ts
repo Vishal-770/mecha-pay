@@ -1,28 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { generateApiKey, hashApiKey } from "@/lib/api-keys";
-import { initiateUserControlledWalletsClient } from "@circle-fin/user-controlled-wallets";
 import { toLowerHex } from "@/lib/subgraph";
-
-let circleClient: ReturnType<typeof initiateUserControlledWalletsClient> | null = null;
-
-function getCircleClient() {
-  if (!circleClient) {
-    circleClient = initiateUserControlledWalletsClient({
-      apiKey: process.env.CIRCLE_API_KEY!,
-    });
-  }
-  return circleClient;
-}
-
-/**
- * Identify the user via Circle SDK.
- */
-async function getUserId(userToken: string) {
-  const client = getCircleClient();
-  const response = await client.getUserStatus({ userToken });
-  return response.data?.id ?? null;
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -31,19 +10,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "userToken is required" }, { status: 400 });
     }
 
-    const userId = await getUserId(userToken);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = userToken;
 
     const { db } = await connectToDatabase();
-    
+
     const keys = await db.collection("api_keys")
       .find({ userId, revokedAt: null })
       .sort({ createdAt: -1 })
       .toArray();
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       keys: keys.map(k => ({
         id: k._id.toString(),
         name: k.name,
@@ -68,10 +44,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "userToken and name are required" }, { status: 400 });
     }
 
-    const userId = await getUserId(userToken);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = userToken;
 
     const rawKey = generateApiKey();
     const hashedKey = hashApiKey(rawKey);
@@ -92,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     const result = await db.collection("api_keys").insertOne(newKey);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       id: result.insertedId.toString(),
       rawKey // WE SHOW THIS ONLY ONCE
     });

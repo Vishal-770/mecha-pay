@@ -1,29 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { initiateUserControlledWalletsClient } from "@circle-fin/user-controlled-wallets";
 import { ObjectId } from "mongodb";
 import { querySubgraph } from "@/lib/subgraph";
 import { getUserAddresses } from "@/lib/auth-util";
 import crypto from "crypto";
 
-let circleClient: ReturnType<typeof initiateUserControlledWalletsClient> | null = null;
-
-function getCircleClient() {
-  if (!circleClient) {
-    circleClient = initiateUserControlledWalletsClient({
-      apiKey: process.env.CIRCLE_API_KEY!,
-    });
-  }
-  return circleClient;
-}
-
-/**
- * Identify the user via Circle SDK.
- */
+// Identify user using their Smart Account session ID (e.g. username or address)
 async function getUserId(userToken: string) {
-  const client = getCircleClient();
-  const response = await client.getUserStatus({ userToken });
-  return response.data?.id ?? null;
+  if (!userToken) return null;
+  return userToken.toLowerCase();
 }
 
 /**

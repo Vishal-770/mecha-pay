@@ -32,10 +32,13 @@ import {
   Terminal,
   BookOpen,
   Webhook,
-  ExternalLink
+  ExternalLink,
+  RefreshCw
 } from "lucide-react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { cn } from "@/lib/utils";
+import { createPublicClient, http, formatUnits } from "viem";
+import { SUPPORTED_CHAINS } from "@/lib/bridge_config";
 
 type TokenBalance = {
   amount: string;
@@ -72,11 +75,22 @@ const navItems = [
   { href: "/dashboard/my-plans", label: "My Plans", icon: FileText },
   { href: "/dashboard/plans/create", label: "Create Plan", icon: PlusSquare },
   { href: "/dashboard/subscriptions", label: "My Subscriptions", icon: Activity },
+  { href: "/dashboard/autopay", label: "AutoPay", icon: RefreshCw },
   { href: "/dashboard/developer", label: "Developer", icon: Terminal },
   { href: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },
   { href: "/docs", label: "Documentation", icon: BookOpen },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
+
+const erc20Abi = [
+  {
+    constant: true,
+    inputs: [{ name: "_owner", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ name: "balance", type: "uint256" }],
+    type: "function",
+  },
+] as const;
 
 function NavLink({ href, label, icon: Icon, onClick }: { href: string; label: string; icon: any; onClick?: () => void }) {
   const pathname = usePathname();
@@ -109,56 +123,119 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [allWallets, setAllWallets] = useState<WalletInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedChain, setSelectedChain] = useState<string>("Arc_Testnet");
+
+  const fetchBalances = useCallback(async (selectedChainId: string, address: string) => {
+    const balancePromises = SUPPORTED_CHAINS.map(async (chain) => {
+      // Only fetch selected chain or Arc Testnet to keep it extremely fast
+      if (chain.identifier !== selectedChainId && chain.identifier !== "Arc_Testnet") {
+        return { identifier: chain.identifier, balances: [] };
+      }
+
+      try {
+        const publicClient = createPublicClient({
+          chain: chain.viemChain,
+          transport: http(chain.viemChain.rpcUrls.default.http[0]),
+        });
+
+        if (chain.identifier === "Arc_Testnet") {
+          // Native USDC on Arc
+          const balance = await publicClient.getBalance({ address: address as `0x${string}` });
+          return {
+            identifier: chain.identifier,
+            balances: [
+              {
+                amount: formatUnits(balance, 18),
+                symbol: "USDC",
+                name: "USD Coin",
+                tokenId: "native-usdc",
+                isNative: true,
+              },
+            ],
+          };
+        } else {
+          // Other EVM chain: fetch native + USDC
+          const [nativeBalance, usdcBalance] = await Promise.all([
+            publicClient.getBalance({ address: address as `0x${string}` }),
+            chain.usdcAddress
+              ? publicClient.readContract({
+                  address: chain.usdcAddress as `0x${string}`,
+                  abi: erc20Abi,
+                  functionName: "balanceOf",
+                  args: [address as `0x${string}`],
+                }).catch(() => 0n)
+              : Promise.resolve(0n),
+          ]);
+
+          const balances: TokenBalance[] = [
+            {
+              amount: formatUnits(nativeBalance, 18),
+              symbol: chain.nativeSymbol,
+              name: chain.nativeSymbol,
+              tokenId: "native",
+              isNative: true,
+            },
+          ];
+
+          if (chain.usdcAddress) {
+            balances.unshift({
+              amount: formatUnits(usdcBalance as bigint, chain.decimals),
+              symbol: "USDC",
+              name: "USD Coin",
+              tokenId: chain.usdcAddress,
+              isNative: false,
+            });
+          }
+
+          return { identifier: chain.identifier, balances };
+        }
+      } catch (err) {
+        console.error(`Failed to fetch balance for chain ${chain.name}:`, err);
+        return { identifier: chain.identifier, balances: [] };
+      }
+    });
+
+    const results = await Promise.all(balancePromises);
+    const newBalancesMap: Record<string, TokenBalance[]> = {};
+    results.forEach((r) => {
+      newBalancesMap[r.identifier] = r.balances;
+    });
+    return newBalancesMap;
+  }, []);
 
   const refreshWallets = useCallback(async () => {
-    if (!session?.userToken) return;
+    if (!session?.walletAddress) return;
 
     setLoading(true);
     try {
-      const [walletRes, userRes] = await Promise.all([
-        fetch("/api/wallets", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userToken: session.userToken }),
-        }),
-        fetch("/api/user-status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userToken: session.userToken }),
-        }),
-      ]);
-
-      const walletJson = (await walletRes.json()) as {
-        wallets?: WalletInfo[];
-      };
-      const userJson = (await userRes.json()) as {
-        id?: string;
-      };
-
-      const walletsList = walletJson.wallets ?? [];
-      setAllWallets(walletsList);
-
-      // Default selection logic: Prefer existing selection, then Arc, then first available
-      setWallet(prev => {
-        if (prev) {
-          const stillExists = walletsList.find(w => w.id === prev.id);
-          if (stillExists) return stillExists;
-        }
-        return walletsList.find((entry) => entry.blockchain === "ARC-TESTNET") ??
-               walletsList[0] ??
-               null;
+      const balances = await fetchBalances(selectedChain, session.walletAddress);
+      
+      const walletsList = SUPPORTED_CHAINS.map((chain) => {
+        const blockchainStr = chain.identifier === "Arc_Testnet" ? "ARC-TESTNET" : chain.identifier.replace("_", "-").toUpperCase();
+        return {
+          id: chain.identifier,
+          address: session.walletAddress,
+          blockchain: blockchainStr,
+          accountType: "SCA",
+          tokenBalances: balances[chain.identifier] || [],
+        };
       });
 
-      setUserCircleId(userJson.id ?? null);
+      setAllWallets(walletsList);
+      setUserCircleId(session.username);
+
+      const activeWallet = walletsList.find((w) => w.id === selectedChain) || walletsList[0] || null;
+      setWallet(activeWallet);
+    } catch (err) {
+      console.error("Failed to refresh wallets on-chain:", err);
     } finally {
       setLoading(false);
     }
-  }, [session?.userToken]);
+  }, [session, selectedChain, fetchBalances]);
 
   const selectWallet = useCallback((walletId: string) => {
-    const selected = allWallets.find(w => w.id === walletId);
-    if (selected) setWallet(selected);
-  }, [allWallets]);
+    setSelectedChain(walletId);
+  }, []);
 
   useEffect(() => {
     if (!isReady) return;
@@ -167,7 +244,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       return;
     }
     void refreshWallets();
-  }, [isReady, session, router, refreshWallets]);
+  }, [isReady, session, selectedChain, router]);
 
   // Close sidebar on route change
   useEffect(() => {
@@ -175,16 +252,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   const value = useMemo<DashboardContextValue | null>(() => {
-    if (!session?.userToken) return null;
+    if (!session?.walletAddress) return null;
     return {
-      sessionUserToken: session.userToken,
+      sessionUserToken: session.username,
       wallet,
       allWallets,
       userCircleId,
       refreshWallets,
       selectWallet,
     };
-  }, [session?.userToken, wallet, allWallets, userCircleId, refreshWallets, selectWallet]);
+  }, [session?.walletAddress, wallet, allWallets, userCircleId, refreshWallets, selectWallet]);
 
   if (!isReady || !session || loading || !value) {
     return (

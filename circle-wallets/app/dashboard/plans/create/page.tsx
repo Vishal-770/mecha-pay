@@ -7,7 +7,10 @@ import {
   type SubscriptionFeature,
   type SubscriptionUiMetadata,
   validateSubscriptionMetadata,
+  SUBSCRIPTION_GATEWAY_ADDRESS,
+  normalizeIpfsUri,
 } from "@/lib/subscription";
+import { encodeFunctionData, parseUnits } from "viem";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { 
@@ -195,8 +198,8 @@ const Card = ({ children, className }: { children: React.ReactNode; className?: 
 // --- Main Page ---
 
 export default function CreatePlanPage() {
-  const { executeChallenge } = useCircleSDK();
-  const { sessionUserToken, wallet } = useDashboardContext();
+  const { executeTransaction } = useCircleSDK();
+  const { wallet } = useDashboardContext();
 
   const [step, setStep] = useState(1);
   const [brandName, setBrandName] = useState("");
@@ -220,8 +223,8 @@ export default function CreatePlanPage() {
   );
 
   const handleSubmit = async () => {
-    if (!wallet?.id) {
-      setError("ARC wallet not found");
+    if (!wallet?.address) {
+      setError("Active smart account wallet not found");
       return;
     }
 
@@ -269,28 +272,43 @@ export default function CreatePlanPage() {
         throw new Error(uploadJson.error ?? "Failed to upload metadata");
       }
 
-      const createResponse = await fetch("/api/subscription/create-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userToken: sessionUserToken,
-          walletId: wallet.id,
-          durationSeconds: durationNum * 24 * 60 * 60,
-          ipfsHash: uploadJson.ipfsHash,
-          tiers: tiers.map(t => ({ price: t.price, label: t.label })),
-        }),
+      const prices = tiers.map((t) => parseUnits(t.price, 6));
+      const labels = tiers.map((t) => t.label);
+      const durationSeconds = durationNum * 24 * 60 * 60;
+      const normalizedIpfs = normalizeIpfsUri(uploadJson.ipfsHash);
+
+      const subscriptionGatewayAbi = [
+        {
+          name: "createPlan",
+          type: "function",
+          stateMutability: "nonpayable",
+          inputs: [
+            { name: "durationSeconds", type: "uint32" },
+            { name: "ipfsHash", type: "string" },
+            { name: "prices", type: "uint256[]" },
+            { name: "labels", type: "string[]" }
+          ],
+          outputs: []
+        }
+      ] as const;
+
+      const txData = encodeFunctionData({
+        abi: subscriptionGatewayAbi,
+        functionName: "createPlan",
+        args: [durationSeconds, normalizedIpfs, prices, labels],
       });
 
-      const createJson = (await createResponse.json()) as {
-        challengeId?: string;
-        error?: string;
-      };
+      await executeTransaction(
+        [
+          {
+            to: SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`,
+            data: txData,
+          }
+        ],
+        false, // sponsorGas
+        "Arc_Testnet" // chainKey
+      );
 
-      if (!createResponse.ok || !createJson.challengeId) {
-        throw new Error(createJson.error ?? "Failed to create plan challenge");
-      }
-
-      await executeChallenge(createJson.challengeId);
       setSuccess("Advanced tiered plan deployment initiated.");
       setBrandName("");
       setBrandWebsite("");

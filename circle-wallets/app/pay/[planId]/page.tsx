@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCircleSDK } from "@/context/CircleSDKContext";
-import { formatUnits } from "ethers";
+import { formatUnits, parseUnits, createPublicClient, http, encodeFunctionData } from "viem";
+import { arcTestnet } from "@/lib/bridge_config";
+import { SUBSCRIPTION_GATEWAY_ADDRESS, ARC_USDC_ADDRESS } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import {
   ShieldCheck,
@@ -61,7 +63,7 @@ interface Plan {
   } | null;
 }
 
-type TierTxStatus = "idle" | "approving" | "subscribing" | "success" | "error";
+type TierTxStatus = "idle" | "subscribing" | "success" | "error";
 
 /* ── Helpers ── */
 function humanDuration(s: string) {
@@ -75,7 +77,7 @@ function humanDuration(s: string) {
 
 const trunc   = (v: string) => `${v.slice(0, 6)}…${v.slice(-4)}`;
 const fmt6    = (v: string) =>
-  Number(formatUnits(v, 6)).toLocaleString("en-US", {
+  Number(formatUnits(BigInt(v), 6)).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -85,7 +87,7 @@ export default function PaymentPage() {
   const params       = useParams();
   const searchParams = useSearchParams();
   const router       = useRouter();
-  const { session, executeChallenge, isReady, clearSession } = useCircleSDK();
+  const { session, executeTransaction, isReady, clearSession } = useCircleSDK();
 
   const planId      = params.planId as string;
   const userId      = searchParams.get("userId") ?? "";
@@ -154,30 +156,28 @@ export default function PaymentPage() {
 
   /* ── Load wallet ── */
   const refreshWallet = useCallback(async () => {
-    if (!session?.userToken) return;
+    if (!session?.walletAddress) return;
     setWalletLoading(true);
     try {
-      const res = await fetch("/api/wallets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userToken: session.userToken }),
+      const publicClient = createPublicClient({
+        chain: arcTestnet,
+        transport: http(arcTestnet.rpcUrls.default.http[0]),
       });
-      const data = await res.json();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const arc = data.wallets?.find((w: any) => w.blockchain === "ARC-TESTNET");
-      if (arc) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const usdc = arc.tokenBalances?.find((t: any) => t.symbol.toUpperCase() === "USDC")
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?? arc.tokenBalances?.find((t: any) => t.symbol.toUpperCase().includes("USDC"))
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?? arc.tokenBalances?.find((t: any) => t.isNative);
-        setWallet({ id: arc.id, address: arc.address, balance: usdc?.amount ?? "0" });
-      }
-    } catch { /* ignore */ } finally {
+      // Native USDC on Arc uses 18 decimals
+      const balance = await publicClient.getBalance({
+        address: session.walletAddress as `0x${string}`,
+      });
+      setWallet({
+        id: "Arc_Testnet",
+        address: session.walletAddress,
+        balance: formatUnits(balance, 18),
+      });
+    } catch (err) {
+      console.error("Failed to load modular wallet balance on Arc:", err);
+    } finally {
       setWalletLoading(false);
     }
-  }, [session?.userToken]);
+  }, [session?.walletAddress]);
 
   useEffect(() => { if (session) void refreshWallet(); }, [session, refreshWallet]);
 
@@ -213,54 +213,66 @@ export default function PaymentPage() {
 
     const tid = tier.id;
     setTierError(p => ({ ...p, [tid]: "" }));
-    setTierStatus(p => ({ ...p, [tid]: "approving" }));
+    setTierStatus(p => ({ ...p, [tid]: "subscribing" }));
 
     try {
-      // 0. Check Allowance
-      const allowanceRes = await fetch("/api/subscription/allowance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ owner: wallet.address }),
-      });
-      const allowanceData = await allowanceRes.json();
-      const currentAllowance = BigInt(allowanceData.allowance ?? "0");
-      const requiredAmount = BigInt(tier.price);
-
-      // 1. Approve USDC (only if needed)
-      if (currentAllowance < requiredAmount) {
-        setTierStatus(p => ({ ...p, [tid]: "approving" }));
-        const approveRes = await fetch("/api/payment/approve-usdc", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userToken: session.userToken,
-            walletId: wallet.id,
-            amount: formatUnits(tier.price, 6),
-          }),
-        });
-        if (approveRes.ok) {
-          const { challengeId } = await approveRes.json();
-          await executeChallenge(challengeId);
+      const erc20Abi = [
+        {
+          name: "approve",
+          type: "function",
+          stateMutability: "nonpayable",
+          inputs: [
+            { name: "spender", type: "address" },
+            { name: "amount", type: "uint256" }
+          ],
+          outputs: [{ name: "", type: "bool" }]
         }
-      }
+      ] as const;
 
-      // 2. Subscribe
-      setTierStatus(p => ({ ...p, [tid]: "subscribing" }));
-      const subRes = await fetch("/api/payment/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userToken: session.userToken,
-          walletId: wallet.id,
-          planId: plan.planId,
-          userId: userId || wallet.address,
-          tierId: tier.tierId,
-        }),
+      const subscriptionGatewayAbi = [
+        {
+          name: "subscribe",
+          type: "function",
+          stateMutability: "nonpayable",
+          inputs: [
+            { name: "planId", type: "bytes32" },
+            { name: "tierId", type: "uint256" },
+            { name: "buyerData", type: "string" }
+          ],
+          outputs: []
+        }
+      ] as const;
+
+      const requiredAmount = BigInt(tier.price);
+      
+      const approveData = encodeFunctionData({
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`, requiredAmount],
       });
 
-      if (!subRes.ok) throw new Error("Subscription execution failed");
-      const { challengeId: subChallenge } = await subRes.json();
-      await executeChallenge(subChallenge);
+      const subscribeData = encodeFunctionData({
+        abi: subscriptionGatewayAbi,
+        functionName: "subscribe",
+        args: [
+          plan.planId as `0x${string}`,
+          BigInt(tier.tierId),
+          userId || wallet.address
+        ],
+      });
+
+      const calls = [
+        {
+          to: ARC_USDC_ADDRESS as `0x${string}`,
+          data: approveData,
+        },
+        {
+          to: SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`,
+          data: subscribeData,
+        }
+      ];
+
+      await executeTransaction(calls, false, "Arc_Testnet");
 
       // Aggressive Polling for Indexer Sync
       setTierStatus(p => ({ ...p, [tid]: "success" }));
@@ -269,7 +281,10 @@ export default function PaymentPage() {
       const poll = setInterval(async () => {
         attempts++;
         try {
-          const res = await fetch(`/api/subscription/my-subscriptions/${planId}?subscriber=${wallet.address}`);
+          const queryParam = userId
+            ? `userId=${encodeURIComponent(userId)}`
+            : `subscriber=${encodeURIComponent(wallet.address)}`;
+          const res = await fetch(`/api/subscription/my-subscriptions/${planId}?${queryParam}`);
           if (res.ok) {
             const data = await res.json();
             if (data.subscription?.status === "ACTIVE") {
@@ -533,20 +548,20 @@ export default function PaymentPage() {
                 </div>
                 <div className="pt-2">
                   <Sheet>
-                    <SheetTrigger asChild>
-                      <button className="text-[10px] font-bold uppercase tracking-wider text-primary hover:underline text-left flex items-center gap-1.5 transition-colors cursor-pointer">
-                        Bridge USDC <ChevronRight className="h-3.5 w-3.5" />
-                      </button>
-                    </SheetTrigger>
-                    <SheetContent className="w-full sm:max-w-md overflow-y-auto bg-background border-l border-border/30">
-                      <SheetHeader>
-                        <SheetTitle>Bridge USDC</SheetTitle>
-                        <SheetDescription className="text-xs">Bridge canonical USDC instantly to your Arc blockchain wallet set.</SheetDescription>
-                      </SheetHeader>
-                      <div className="mt-6">
-                        <BridgeUSDC isCompact={true} defaultDestChain="Arc_Testnet" />
-                      </div>
-                    </SheetContent>
+                     <SheetTrigger asChild>
+                       <button className="text-[10px] font-bold uppercase tracking-wider text-primary hover:underline text-left flex items-center gap-1.5 transition-colors cursor-pointer">
+                         Bridge USDC <ChevronRight className="h-3.5 w-3.5" />
+                       </button>
+                     </SheetTrigger>
+                     <SheetContent className="w-full sm:max-w-md overflow-y-auto bg-background border-l border-border/30">
+                       <SheetHeader>
+                         <SheetTitle>Bridge USDC</SheetTitle>
+                         <SheetDescription className="text-xs">Bridge canonical USDC instantly to your Arc blockchain wallet set.</SheetDescription>
+                       </SheetHeader>
+                       <div className="mt-6">
+                         <BridgeUSDC isCompact={true} defaultDestChain="Arc_Testnet" />
+                       </div>
+                     </SheetContent>
                   </Sheet>
                 </div>
               </div>
@@ -594,9 +609,9 @@ export default function PaymentPage() {
                 const st = tierStatus[tier.id] ?? "idle";
                 const err = tierError[tier.id];
                 const isInsuf = wallet
-                  ? Number(wallet.balance) < Number(formatUnits(tier.price, 6))
+                  ? Number(wallet.balance) < Number(formatUnits(BigInt(tier.price), 6))
                   : false;
-                const busy = st === "approving" || st === "subscribing";
+                const busy = st === "subscribing";
                 const succeeded = st === "success";
 
                 const metaTier = plan?.metadata?.tiers?.find(mt => mt.label === tier.label);
@@ -645,6 +660,12 @@ export default function PaymentPage() {
                               </div>
                             </div>
                           ))}
+                        </div>
+                      )}
+
+                      {err && (
+                        <div className="text-xs text-destructive flex items-center gap-1.5">
+                          <AlertCircle className="h-3.5 w-3.5" /> {err}
                         </div>
                       )}
                     </div>

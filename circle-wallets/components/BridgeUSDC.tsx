@@ -29,9 +29,8 @@ import {
   optimismSepolia,
   polygonAmoy,
   unichainSepolia,
-  lineaSepolia,
 } from "viem/chains";
-import { arcTestnet, customSepolia, seiTestnet, worldChainSepolia, inkTestnet, xdcApothem, monadTestnet, codexTestnet } from "@/lib/privy_config";
+import { arcTestnet, customSepolia, monadTestnet } from "@/lib/privy_config";
 import { useQuery } from "@tanstack/react-query";
 import { cn, formatBalance } from "@/lib/utils";
 import { useCircleSDK } from "@/context/CircleSDKContext";
@@ -129,13 +128,7 @@ type BridgeChain =
   | "Optimism_Sepolia"
   | "Polygon_Amoy_Testnet"
   | "Unichain_Sepolia"
-  | "Linea_Sepolia"
-  | "Sei_Testnet"
-  | "World_Chain_Sepolia"
-  | "Ink_Testnet"
-  | "XDC_Apothem"
-  | "Monad_Testnet"
-  | "Codex_Testnet";
+  | "Monad_Testnet";
 
 const SUPPORTED_CHAINS = [
   {
@@ -242,51 +235,6 @@ const SUPPORTED_CHAINS = [
     icon: "https://ethglobal.storage/static/faucet/unichain.png",
   },
   {
-    name: "Linea Sepolia",
-    identifier: "Linea_Sepolia" as BridgeChain,
-    viemChain: lineaSepolia,
-    usdcAddress: "0xFEce4462D57bD51A6A552365A011b95f0E16d9B7",
-    decimals: 6,
-    symbol: "Linea",
-    icon: "https://ethglobal.storage/static/faucet/linea-sepolia.png",
-  },
-  {
-    name: "Sei Testnet",
-    identifier: "Sei_Testnet" as BridgeChain,
-    viemChain: seiTestnet,
-    usdcAddress: "0x4fCF1784B31630811181f670Aea7A7bEF803eaED",
-    decimals: 6,
-    symbol: "Sei",
-    icon: "/sei-logo.png",
-  },
-  {
-    name: "World Chain Sepolia",
-    identifier: "World_Chain_Sepolia" as BridgeChain,
-    viemChain: worldChainSepolia,
-    usdcAddress: "0x66145f38cBAC35Ca6F1Dfb4914dF98F1614aeA88",
-    decimals: 6,
-    symbol: "WLD",
-    icon: "https://ethglobal.storage/static/faucet/world-chain-sepolia.png",
-  },
-  {
-    name: "Ink Testnet",
-    identifier: "Ink_Testnet" as BridgeChain,
-    viemChain: inkTestnet,
-    usdcAddress: "0xFabab97dCE620294D2B0b0e46C68964e326300Ac",
-    decimals: 6,
-    symbol: "Ink",
-    icon: "https://inkonchain.com/logo/ink-mark-light.webp",
-  },
-  {
-    name: "XDC Apothem",
-    identifier: "XDC_Apothem" as BridgeChain,
-    viemChain: xdcApothem,
-    usdcAddress: "0xb5AB69F7bBada22B28e79C8FFAECe55eF1c771D4",
-    decimals: 6,
-    symbol: "XDC",
-    icon: "/xdc-faucet-logo.png",
-  },
-  {
     name: "Monad Testnet",
     identifier: "Monad_Testnet" as BridgeChain,
     viemChain: monadTestnet,
@@ -294,15 +242,6 @@ const SUPPORTED_CHAINS = [
     decimals: 6,
     symbol: "MON",
     icon: "https://ethglobal.storage/static/faucet/monad-testnet.png",
-  },
-  {
-    name: "Codex Testnet",
-    identifier: "Codex_Testnet" as BridgeChain,
-    viemChain: codexTestnet,
-    usdcAddress: "0x6d7f141b6819C2c9CC2f818e6ad549E7Ca090F8f",
-    decimals: 6,
-    symbol: "ETH",
-    icon: "/codex-logo.png",
   },
 ];
 
@@ -383,37 +322,13 @@ const CCTP_CONFIG: Record<BridgeChain, { messenger: string; domain: number }> =
       messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
       domain: 10,
     },
-    Linea_Sepolia: {
-      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
-      domain: 11,
-    },
     Arc_Testnet: {
       messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
       domain: 26,
     },
-    Sei_Testnet: {
-      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
-      domain: 16,
-    },
-    World_Chain_Sepolia: {
-      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
-      domain: 14,
-    },
-    Ink_Testnet: {
-      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
-      domain: 21,
-    },
-    XDC_Apothem: {
-      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
-      domain: 18,
-    },
     Monad_Testnet: {
       messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
       domain: 15,
-    },
-    Codex_Testnet: {
-      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
-      domain: 12,
     },
   };
 
@@ -425,7 +340,7 @@ export default function BridgeUSDC({
   defaultDestChain?: BridgeChain;
 }) {
   const { user, authenticated, login, logout } = usePrivy();
-  const { session, executeChallenge } = useCircleSDK();
+  const { session, executeTransaction } = useCircleSDK();
   const { wallets } = useWallets();
   const [amount, setAmount] = useState("1.00");
   const [status, setStatus] = useState<
@@ -433,9 +348,17 @@ export default function BridgeUSDC({
   >("idle");
   const [steps, setSteps] = useState<UIStep[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [arcCircleWallet, setArcCircleWallet] =
-    useState<CircleWalletSummary | null>(null);
-  const [isLoadingCircleWallet, setIsLoadingCircleWallet] = useState(false);
+  
+  const arcCircleWallet = useMemo(() => {
+    if (!session?.walletAddress) return null;
+    return {
+      id: "Arc_Testnet",
+      address: session.walletAddress,
+      blockchain: ARC_BLOCKCHAIN,
+    };
+  }, [session?.walletAddress]);
+  const isLoadingCircleWallet = false;
+  
   // Synchronous guard — prevents double-burn on fast double-clicks
   const isBridging = useRef(false);
 
@@ -556,40 +479,7 @@ export default function BridgeUSDC({
   const destinationAddress =
     destKey === "Arc_Testnet" ? arcCircleWallet?.address : address;
 
-  useEffect(() => {
-    const fetchArcWallet = async () => {
-      if (!session?.userToken) {
-        setArcCircleWallet(null);
-        return;
-      }
 
-      setIsLoadingCircleWallet(true);
-      try {
-        const response = await fetch("/api/wallets", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userToken: session.userToken }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to load Circle wallets");
-        }
-
-        const data = await response.json();
-        const arcWallet = (data.wallets ?? []).find(
-          (wallet: CircleWalletSummary) => wallet.blockchain === ARC_BLOCKCHAIN,
-        );
-        setArcCircleWallet(arcWallet ?? null);
-      } catch (walletError) {
-        console.error("Failed to fetch Arc Circle wallet:", walletError);
-        setArcCircleWallet(null);
-      } finally {
-        setIsLoadingCircleWallet(false);
-      }
-    };
-
-    void fetchArcWallet();
-  }, [session?.userToken]);
 
   useEffect(() => {
     if (sourceKey === destKey) {
@@ -959,12 +849,12 @@ export default function BridgeUSDC({
     }
 
     if (!arcCircleWallet && (sourceKey === "Arc_Testnet" || destKey === "Arc_Testnet")) {
-      setError("Arc Circle wallet not found. Please complete Circle wallet setup first.");
+      setError("Arc Circle wallet not found. Please register or login first.");
       isBridging.current = false;
       return;
     }
 
-    if (!session?.userToken && (sourceKey === "Arc_Testnet" || destKey === "Arc_Testnet")) {
+    if (!session && (sourceKey === "Arc_Testnet" || destKey === "Arc_Testnet")) {
       setError("Circle session is required for Arc wallet signing.");
       isBridging.current = false;
       return;
@@ -1000,56 +890,54 @@ export default function BridgeUSDC({
       let feeQuoteSourceLabel = "n/a";
 
       if (sourceKey === "Arc_Testnet") {
-        if (!arcCircleWallet || !session?.userToken) {
-          throw new Error("Arc Circle wallet session is required for Arc source bridge.");
+        if (!session) {
+          throw new Error("Arc smart account session is required for Arc source bridge.");
         }
 
-        setSteps([{ name: "Approve", state: "bridging" }]);
-        const approveChallengeId = await requestCircleChallenge(
-          "/api/bridge/prepare-approve",
-          {
-            userToken: session.userToken,
-            walletId: arcCircleWallet.id,
-            amount,
-          },
-        );
-        const approveResult = await executeChallenge(approveChallengeId);
-        const approveTxHash = extractTxHash(approveResult);
+        setSteps([{ name: "Approve & Burn", state: "bridging" }]);
 
-        setSteps([
-          {
-            name: "Approve",
-            state: "success",
-            data: approveTxHash
-              ? {
-                  explorerUrl: `${sourceChain.viemChain.blockExplorers?.default.url}/tx/${approveTxHash}`,
-                }
-              : undefined,
-          },
-          { name: "Burn", state: "bridging" },
-        ]);
+        const approveCall = {
+          to: sourceChain.usdcAddress as `0x${string}`,
+          data: encodeFunctionData({
+            abi: [
+              {
+                name: "approve",
+                type: "function",
+                inputs: [
+                  { name: "spender", type: "address" },
+                  { name: "amount", type: "uint256" },
+                ],
+              },
+            ],
+            functionName: "approve",
+            args: [messenger as `0x${string}`, amountInUsdc],
+          }),
+        };
 
-        const burnChallengeId = await requestCircleChallenge(
-          "/api/bridge/prepare-burn",
-          {
-            userToken: session.userToken,
-            walletId: arcCircleWallet.id,
-            amount,
-            destinationChain: destKey,
-            recipientAddress: destinationAddress,
-          },
-        );
-        const burnResult = await executeChallenge(burnChallengeId);
-        let extractedBurnTxHash = extractTxHash(burnResult);
-        if (!extractedBurnTxHash) {
-          extractedBurnTxHash = await resolveChallengeTxHash(
-            burnChallengeId,
-            session.userToken,
-          );
-        }
-        burnTxHash = extractedBurnTxHash;
-        burnMaxFeeHuman = "circle-managed";
-        feeQuoteSourceLabel = "circle-managed";
+        const burnCall = {
+          to: messenger as `0x${string}`,
+          data: encodeFunctionData({
+            abi: TOKEN_MESSENGER_ABI,
+            functionName: "depositForBurn",
+            args: [
+              amountInUsdc,
+              destinationDomain,
+              recipientBytes32,
+              sourceChain.usdcAddress as `0x${string}`,
+              "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
+              0n, // maxFee
+              1000, // minFinalityThreshold
+            ],
+          }),
+        };
+
+        // Submit the batched call directly on Arc_Testnet
+        const result = await executeTransaction([approveCall, burnCall], false, "Arc_Testnet");
+        
+        burnTxHash = result.txHash;
+        burnMaxFeeHuman = "0";
+        feeQuoteSourceLabel = "sponsored";
+        burnDataV2 = burnCall.data;
       } else {
         const provider = (await wallet.getEthereumProvider()) as unknown as WalletRequestProvider;
 
@@ -1358,31 +1246,32 @@ export default function BridgeUSDC({
 
       setSteps((prev) => [...prev, { name: "Minting on Destination", state: "bridging" }]);
       if (destKey === "Arc_Testnet") {
-        if (!arcCircleWallet || !session?.userToken) {
-          throw new Error("Arc Circle wallet session is required for destination mint.");
+        if (!session) {
+          throw new Error("Arc smart account session is required for destination mint.");
         }
-        const mintChallengeId = await requestCircleChallenge(
-          "/api/bridge/prepare-mint",
-          {
-            userToken: session.userToken,
-            walletId: arcCircleWallet.id,
-            message: attestedMessageBytes,
-            attestation,
-          },
-        );
-        const mintResult = await executeChallenge(mintChallengeId);
-        const mintTxHash = extractTxHash(mintResult);
+
+        const receiveData = encodeFunctionData({
+          abi: RECEIVE_MESSAGE_ABI,
+          functionName: "receiveMessage",
+          args: [attestedMessageBytes, attestation as `0x${string}`],
+        });
+
+        const mintCall = {
+          to: MESSAGE_TRANSMITTER_ADDRESS as `0x${string}`,
+          data: receiveData,
+        };
+
+        const result = await executeTransaction([mintCall], false, "Arc_Testnet");
+        const mintTxHash = result.txHash;
 
         setSteps((prev) => [
           ...prev.slice(0, -1),
           {
             name: "Minting on Destination",
             state: "success",
-            data: mintTxHash
-              ? {
-                  explorerUrl: `${destChain.viemChain.blockExplorers?.default.url}/tx/${mintTxHash}`,
-                }
-              : undefined,
+            data: {
+              explorerUrl: `${destChain.viemChain.blockExplorers?.default.url}/tx/${mintTxHash}`,
+            },
           },
         ]);
       } else {
@@ -1659,27 +1548,24 @@ export default function BridgeUSDC({
                       onValueChange={(val) =>
                         handleSourceChange(val as BridgeChain)
                       }
-                      disabled={status === "bridging"}
+                      disabled={status === "bridging" || sourceKey === "Arc_Testnet"}
                     >
                       <SelectTrigger className="w-[180px] border-none shadow-none bg-transparent hover:bg-accent font-bold text-lg h-auto py-1 px-2 text-left">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {SUPPORTED_CHAINS.map((c) => (
+                        {SUPPORTED_CHAINS.filter((c) =>
+                          sourceKey === "Arc_Testnet"
+                            ? c.identifier === "Arc_Testnet"
+                            : c.identifier !== "Arc_Testnet"
+                        ).map((c) => (
                           <SelectItem key={c.identifier} value={c.identifier}>
                             <div className="flex items-center gap-2">
                               {c.icon && (
                                 <img 
                                   src={c.icon} 
                                   alt="" 
-                                  className={cn(
-                                    "h-4 w-4 rounded-full object-contain",
-                                    (c.identifier === "Sei_Testnet" || 
-                                     c.identifier === "World_Chain_Sepolia" || 
-                                     c.identifier === "Linea_Sepolia") && "dark:invert",
-                                    (c.identifier === "XDC_Apothem" || 
-                                     c.identifier === "Codex_Testnet") && "invert dark:invert-0"
-                                  )} 
+                                  className="h-4 w-4 rounded-full object-contain" 
                                 />
                               )}
                               <span>{c.name}</span>
@@ -1792,14 +1678,7 @@ export default function BridgeUSDC({
                                 <img 
                                   src={c.icon} 
                                   alt="" 
-                                  className={cn(
-                                    "h-4 w-4 rounded-full object-contain",
-                                    (c.identifier === "Sei_Testnet" || 
-                                     c.identifier === "World_Chain_Sepolia" || 
-                                     c.identifier === "Linea_Sepolia") && "dark:invert",
-                                    (c.identifier === "XDC_Apothem" || 
-                                     c.identifier === "Codex_Testnet") && "invert dark:invert-0"
-                                  )} 
+                                  className="h-4 w-4 rounded-full object-contain" 
                                 />
                               )}
                               <span>{c.name}</span>
