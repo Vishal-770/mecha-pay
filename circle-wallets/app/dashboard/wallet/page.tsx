@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import { useCircleSDK } from "@/context/CircleSDKContext";
-import { encodeFunctionData, parseUnits, type Hex } from "viem";
+import { encodeFunctionData, formatUnits, parseUnits } from "viem";
 
 function truncateAddress(addr: string) {
   if (!addr || addr.length < 12) return addr;
@@ -32,12 +32,37 @@ type Transaction = {
   destinationAddress?: string;
   contractAddress?: string;
   amounts?: string[];
+  tokenSymbol?: string;
+  sourceType?: "normal" | "token" | "internal";
   tokenIds?: string[];
   networkFee?: string;
   firstConfirmDate?: string;
   createDate?: string;
   txHash?: string;
 };
+
+type ArcScanTx = {
+  hash?: string;
+  blockNumber?: string;
+  nonce?: string;
+  from?: string;
+  to?: string;
+  value?: string;
+  timeStamp?: string;
+  isError?: string;
+  tokenDecimal?: string;
+  tokenSymbol?: string;
+  contractAddress?: string;
+};
+function normalizeAmount(value: string, decimals = 6) {
+  const num = Number(value || 0);
+  if (!Number.isFinite(num)) return "0.000000";
+  return num.toFixed(decimals);
+}
+
+
+const ARC_SCAN_API = "https://testnet.arcscan.app/api";
+const ARC_TX_PAGE_SIZE = 10;
 
 function TxBadge({ state }: { state: string }) {
   const upper = state.toUpperCase();
@@ -56,7 +81,7 @@ function TxBadge({ state }: { state: string }) {
 
 export default function WalletPage() {
   const { wallet, refreshWallets } = useDashboardContext();
-  const { executeTransaction } = useCircleSDK();
+  const { executeTransaction, walletAddress: scaAddress } = useCircleSDK();
 
   // ── Send form state
   const [recipient, setRecipient] = useState("");
@@ -73,64 +98,209 @@ export default function WalletPage() {
   const [txLoading, setTxLoading] = useState(false);
   const [txError, setTxError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [txPage, setTxPage] = useState(1);
+  const [txHasMore, setTxHasMore] = useState(false);
 
-  const usdcToken = useMemo(() => {
-    if (!wallet?.tokenBalances) return undefined;
-    
-    // 1. Try exact match
-    let token = wallet.tokenBalances.find((t) => t.symbol.toUpperCase() === "USDC");
-    if (token) return token;
+  const tokenBalances = wallet?.tokenBalances ?? [];
 
-    // 2. Try fuzzy match (USDC.e, USD Coin, etc)
-    token = wallet.tokenBalances.find((t) => 
-      t.symbol.toUpperCase().includes("USDC") || 
-      t.name.toUpperCase().includes("USD COIN")
+  // 1) Exact match, 2) fuzzy match, 3) Arc native
+  let usdcToken = tokenBalances.find((t) => t.symbol.toUpperCase() === "USDC");
+  if (!usdcToken) {
+    usdcToken = tokenBalances.find(
+      (t) => t.symbol.toUpperCase().includes("USDC") || t.name.toUpperCase().includes("USD COIN")
     );
-    if (token) return token;
+  }
+  if (!usdcToken && wallet?.blockchain === "ARC-TESTNET") {
+    usdcToken = tokenBalances.find((t) => t.isNative);
+  }
 
-    // 3. If on Arc, the native token IS USDC
-    if (wallet.blockchain === "ARC-TESTNET") {
-      token = wallet.tokenBalances.find(t => t.isNative);
-      if (token) return token;
-    }
-
-    return undefined;
-  }, [wallet?.tokenBalances, wallet?.blockchain]);
-
-  const nativeToken = useMemo(
-    () =>
-      wallet?.tokenBalances.find(
-        (t) => t.isNative || t.symbol.toUpperCase() === "ARC" || t.symbol.toUpperCase() === "ETH" || t.symbol.toUpperCase() === "MATIC"
-      ),
-    [wallet?.tokenBalances],
+  const nativeToken = tokenBalances.find(
+    (t) => t.isNative || t.symbol.toUpperCase() === "ARC" || t.symbol.toUpperCase() === "ETH" || t.symbol.toUpperCase() === "MATIC"
   );
 
-  const usdcBalance = useMemo(() => {
-    if (!usdcToken) return 0;
-    return parseFloat(usdcToken.amount) || 0;
-  }, [usdcToken]);
+  const usdcBalance = usdcToken ? parseFloat(usdcToken.amount) || 0 : 0;
 
   // Gas is sponsored via paymaster, so the user can send the full amount without holding extra!
   const maxSendable = useMemo(() => usdcBalance, [usdcBalance]);
 
   // ── Load transactions
-  const loadTransactions = useCallback(() => {
-    if (!wallet?.address) return;
-    setTxLoading(true);
-    setTxError(null);
-    try {
-      const localKey = `mecha_pay_txs_${wallet.address.toLowerCase()}`;
-      const stored = localStorage.getItem(localKey);
-      setTransactions(stored ? JSON.parse(stored) : []);
-    } catch (err) {
-      setTxError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setTxLoading(false);
+  const txAddress = scaAddress ?? wallet?.address;
+
+  const mapArcTx = useCallback(
+    (tx: ArcScanTx): Transaction => {
+      const from = (tx.from ?? "").toLowerCase();
+      const self = txAddress?.toLowerCase() ?? "";
+      const isOut = self && from === self;
+
+      const value = tx.value ? formatUnits(BigInt(tx.value), 18) : "0";
+      const valueNorm = normalizeAmount(value, 6);
+      const timestampMs = tx.timeStamp ? Number(tx.timeStamp) * 1000 : Date.now();
+      const iso = new Date(timestampMs).toISOString();
+
+      return {
+        id: tx.hash ?? `${tx.blockNumber}-${tx.nonce}`,
+        state: tx.isError === "1" ? "FAILED" : "CONFIRMED",
+        transactionType: isOut ? "OUTBOUND" : "INBOUND",
+        sourceAddress: tx.from,
+        destinationAddress: tx.to,
+        amounts: [valueNorm],
+        tokenSymbol: "USDC",
+        sourceType: "normal",
+        createDate: iso,
+        firstConfirmDate: iso,
+        txHash: tx.hash,
+      };
+    },
+    [txAddress]
+  );
+
+  const mapArcTokenTx = useCallback(
+    (tx: ArcScanTx): Transaction => {
+      const from = (tx.from ?? "").toLowerCase();
+      const self = txAddress?.toLowerCase() ?? "";
+      const isOut = self && from === self;
+
+      const decimals = tx.tokenDecimal ? Number(tx.tokenDecimal) : 18;
+      const value = tx.value ? formatUnits(BigInt(tx.value), decimals) : "0";
+      const valueNorm = normalizeAmount(value, Math.min(decimals, 6));
+      const timestampMs = tx.timeStamp ? Number(tx.timeStamp) * 1000 : Date.now();
+      const iso = new Date(timestampMs).toISOString();
+
+      return {
+        id: tx.hash ?? `${tx.blockNumber}-${tx.nonce}`,
+        state: tx.isError === "1" ? "FAILED" : "CONFIRMED",
+        transactionType: isOut ? "OUTBOUND" : "INBOUND",
+        sourceAddress: tx.from,
+        destinationAddress: tx.to,
+        contractAddress: tx.contractAddress,
+        amounts: [valueNorm],
+        tokenSymbol: tx.tokenSymbol ?? "TOKEN",
+        sourceType: "token",
+        createDate: iso,
+        firstConfirmDate: iso,
+        txHash: tx.hash,
+      };
+    },
+    [txAddress]
+  );
+
+
+  const dedupeTransactions = useCallback((list: Transaction[]) => {
+    const map = new Map<string, Transaction>();
+    for (const tx of list) {
+      const key = [
+        (tx.txHash ?? tx.id).toLowerCase(),
+        (tx.sourceAddress ?? "").toLowerCase(),
+        (tx.destinationAddress ?? "").toLowerCase(),
+        normalizeAmount(tx.amounts?.[0] ?? "0", 6),
+        (tx.tokenSymbol ?? "").toLowerCase(),
+        tx.transactionType?.toLowerCase() ?? "",
+      ].join("|");
+
+      if (!map.has(key)) {
+        map.set(key, tx);
+        continue;
+      }
+
+      const existing = map.get(key)!;
+      const rank = (t?: Transaction) =>
+        t?.sourceType === "token" ? 3 : t?.sourceType === "normal" ? 2 : 1;
+
+      if (rank(tx) > rank(existing)) {
+        map.set(key, tx);
+      }
     }
-  }, [wallet?.address]);
+    return Array.from(map.values());
+  }, []);
+
+  const sortTransactions = useCallback((list: Transaction[]) => {
+    const unique = dedupeTransactions(list);
+    return unique.sort((a, b) => {
+      const aTime = new Date(a.firstConfirmDate ?? a.createDate ?? 0).getTime();
+      const bTime = new Date(b.firstConfirmDate ?? b.createDate ?? 0).getTime();
+      return bTime - aTime;
+    });
+  }, [dedupeTransactions]);
+
+  const fetchArcTransactions = useCallback(
+    async (page: number, append: boolean) => {
+      if (!txAddress) return;
+
+      await Promise.resolve();
+      setTxLoading(true);
+      setTxError(null);
+
+      try {
+        const buildUrl = (action: string) => {
+          const url = new URL(ARC_SCAN_API);
+          url.searchParams.set("module", "account");
+          url.searchParams.set("action", action);
+          url.searchParams.set("address", txAddress);
+          url.searchParams.set("page", String(page));
+          url.searchParams.set("offset", String(ARC_TX_PAGE_SIZE));
+          url.searchParams.set("sort", "desc");
+          return url.toString();
+        };
+
+        const [normalRes, tokenRes] = await Promise.all([
+          fetch(buildUrl("txlist")),
+          fetch(buildUrl("tokentx")),
+        ]);
+
+        if (!normalRes.ok || !tokenRes.ok) {
+          throw new Error("ArcScan API error while fetching transactions");
+        }
+
+        const [normalData, tokenData] = await Promise.all([
+          normalRes.json(),
+          tokenRes.json(),
+        ]);
+
+        const normalList = Array.isArray(normalData?.result) ? normalData.result : [];
+        const tokenList = Array.isArray(tokenData?.result) ? tokenData.result : [];
+
+        const mapped = [
+          ...normalList.map(mapArcTx),
+          ...tokenList.map(mapArcTokenTx),
+        ];
+
+        setTransactions((prev) => {
+          const base = append ? prev : [];
+          const combined = sortTransactions([...base, ...mapped]);
+          if (page === 1 && !append) {
+            console.log("ArcScan transactions (deduped)", combined);
+          }
+          return combined;
+        });
+
+        setTxPage(page);
+        setTxHasMore(
+          normalList.length === ARC_TX_PAGE_SIZE ||
+          tokenList.length === ARC_TX_PAGE_SIZE
+        );
+      } catch (err) {
+        setTxError(err instanceof Error ? err.message : "Unknown error");
+        if (!append) setTransactions([]);
+      } finally {
+        setTxLoading(false);
+      }
+    },
+    [mapArcTokenTx, mapArcTx, sortTransactions, txAddress]
+  );
+
+  const loadTransactions = useCallback(() => {
+    void fetchArcTransactions(1, false);
+  }, [fetchArcTransactions]);
+
+  const loadMoreTransactions = useCallback(() => {
+    void fetchArcTransactions(txPage + 1, true);
+  }, [fetchArcTransactions, txPage]);
 
   useEffect(() => {
-    void loadTransactions();
+    const id = setTimeout(() => {
+      void loadTransactions();
+    }, 0);
+    return () => clearTimeout(id);
   }, [loadTransactions]);
 
   // ── Refresh everything
@@ -245,24 +415,6 @@ export default function WalletPage() {
       setRecipient("");
       setAmount("");
 
-      // Add to local transactions list
-      const newTx: Transaction = {
-        id: result.txHash,
-        state: "COMPLETE",
-        transactionType: "OUTBOUND",
-        sourceAddress: wallet.address,
-        destinationAddress: recipient,
-        amounts: [numAmount.toFixed(6)],
-        createDate: new Date().toISOString(),
-        txHash: result.txHash,
-      };
-
-      const localKey = `mecha_pay_txs_${wallet.address.toLowerCase()}`;
-      const existing = localStorage.getItem(localKey);
-      const list = existing ? (JSON.parse(existing) as Transaction[]) : [];
-      list.unshift(newTx);
-      localStorage.setItem(localKey, JSON.stringify(list.slice(0, 50)));
-
       // Refresh balances & tx list
       await Promise.all([refreshWallets(), Promise.resolve(loadTransactions())]);
     } catch (err) {
@@ -275,7 +427,7 @@ export default function WalletPage() {
   return (
     <section className="space-y-6">
       {/* Header + Refresh */}
-      <div className="rounded-3xl border border-border bg-gradient-to-br from-card to-muted p-6 shadow-sm">
+      <div className="rounded-3xl border border-border bg-linear-to-br from-card to-muted p-6 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -340,7 +492,7 @@ export default function WalletPage() {
 
       {/* Balances */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-chart-2 p-6 text-primary-foreground shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-primary to-chart-2 p-6 text-primary-foreground shadow-lg">
           <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-primary-foreground/5" />
           <div className="absolute -bottom-8 -right-2 h-24 w-24 rounded-full bg-primary-foreground/5" />
           <p className="text-xs font-medium uppercase tracking-widest opacity-90">USDC Balance</p>
@@ -350,7 +502,7 @@ export default function WalletPage() {
             <p className="mt-3 text-xs opacity-70">Max sendable: {maxSendable.toFixed(6)} USDC</p>
           )}
         </div>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-secondary to-muted p-6 text-secondary-foreground shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-secondary to-muted p-6 text-secondary-foreground shadow-lg">
           <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-foreground/5" />
           <div className="absolute -bottom-8 -right-2 h-24 w-24 rounded-full bg-foreground/5" />
           <p className="text-xs font-medium uppercase tracking-widest opacity-90">Native Balance</p>
@@ -511,13 +663,14 @@ export default function WalletPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {transactions.map((tx) => {
+                  {transactions.map((tx, idx) => {
                     const isOut = tx.transactionType?.toUpperCase() === "OUTBOUND";
                     // amounts is string[] from Circle API
                     const rawAmt = tx.amounts?.[0];
+                    const symbol = tx.tokenSymbol ?? "USDC";
                     const amountStr =
                       rawAmt != null && rawAmt !== ""
-                        ? `${parseFloat(rawAmt).toFixed(4)} USDC`
+                        ? `${parseFloat(rawAmt).toFixed(4)} ${symbol}`
                         : "—";
                     // For contract interactions (subscriptions, approvals) destinationAddress
                     // may be absent — fall back to contractAddress
@@ -525,8 +678,22 @@ export default function WalletPage() {
                       ? (tx.destinationAddress ?? tx.contractAddress)
                       : tx.sourceAddress;
 
+                    const rowKey = [
+                      tx.id,
+                      tx.txHash,
+                      tx.sourceAddress,
+                      tx.destinationAddress,
+                      tx.amounts?.[0],
+                      tx.tokenSymbol,
+                      tx.transactionType,
+                      tx.sourceType,
+                      idx,
+                    ]
+                      .filter(Boolean)
+                      .join("|");
+
                     return (
-                      <tr key={tx.id} className="hover:bg-accent/50">
+                      <tr key={rowKey} className="hover:bg-accent/50">
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
                             <span
@@ -558,6 +725,18 @@ export default function WalletPage() {
                   })}
                 </tbody>
               </table>
+
+              {txHasMore && (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    onClick={() => void loadMoreTransactions()}
+                    disabled={txLoading}
+                    className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition hover:bg-accent disabled:opacity-50"
+                  >
+                    {txLoading ? "Loading…" : "Load more"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

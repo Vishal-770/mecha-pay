@@ -42,6 +42,36 @@ export const monadTestnet = {
   },
 } as const;
 
+export const hyperEvmTestnet = {
+  id: 998,
+  name: "HyperEVM Testnet",
+  nativeCurrency: { name: "HYPE", symbol: "HYPE", decimals: 18 },
+  rpcUrls: { default: { http: ["https://api.hyperliquid-testnet.xyz/evm"] } },
+  blockExplorers: {
+    default: { name: "HyperEVM Explorer", url: "https://testnet.hyperliquid.xyz" },
+  },
+} as const;
+
+export const seiAtlantic2 = {
+  id: 713715,
+  name: "Sei Atlantic-2",
+  nativeCurrency: { name: "SEI", symbol: "SEI", decimals: 18 },
+  rpcUrls: { default: { http: ["https://evm-rpc-testnet.sei-apis.com"] } },
+  blockExplorers: {
+    default: { name: "Sei Explorer", url: "https://seitrace.com" },
+  },
+} as const;
+
+export const sonicBlazeTestnet = {
+  id: 57054,
+  name: "Sonic Testnet",
+  nativeCurrency: { name: "S", symbol: "S", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.blaze.soniclabs.com"] } },
+  blockExplorers: {
+    default: { name: "Sonic Explorer", url: "https://testnet.sonicscan.org" },
+  },
+} as const;
+
 // ── Bridge chain identifiers ──────────────────────────────────────────────────
 
 export type BridgeChain =
@@ -53,7 +83,10 @@ export type BridgeChain =
   | "Optimism_Sepolia"
   | "Polygon_Amoy_Testnet"
   | "Unichain_Sepolia"
-  | "Monad_Testnet";
+  | "Monad_Testnet"
+  | "HyperEVM_Testnet"
+  | "Sei_Testnet"
+  | "Sonic_Testnet";
 
 // ── Supported chains with metadata ───────────────────────────────────────────
 
@@ -65,12 +98,18 @@ export const SUPPORTED_CHAINS = [
     usdcAddress: null, // native USDC on Arc
     decimals: 18,
     nativeSymbol: "USDC",
-    icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
+    icon: "/arc-logo.png",
   },
   {
     name: "Base Sepolia",
     identifier: "Base_Sepolia" as BridgeChain,
-    viemChain: baseSepolia,
+    viemChain: {
+      ...baseSepolia,
+      rpcUrls: {
+        ...baseSepolia.rpcUrls,
+        default: { http: ["https://base-sepolia-rpc.publicnode.com"] },
+      },
+    },
     usdcAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
     decimals: 6,
     nativeSymbol: "ETH",
@@ -81,6 +120,10 @@ export const SUPPORTED_CHAINS = [
     identifier: "Arbitrum_Sepolia" as BridgeChain,
     viemChain: {
       ...arbitrumSepolia,
+      rpcUrls: {
+        ...arbitrumSepolia.rpcUrls,
+        default: { http: ["https://arbitrum-sepolia-rpc.publicnode.com"] },
+      },
       fees: {
         ...arbitrumSepolia.fees,
         async estimateFeesPerGas() {
@@ -99,7 +142,13 @@ export const SUPPORTED_CHAINS = [
   {
     name: "Avalanche Fuji",
     identifier: "Avalanche_Fuji" as BridgeChain,
-    viemChain: avalancheFuji,
+    viemChain: {
+      ...avalancheFuji,
+      rpcUrls: {
+        ...avalancheFuji.rpcUrls,
+        default: { http: ["https://avalanche-fuji-c-chain-rpc.publicnode.com"] },
+      },
+    },
     usdcAddress: "0x5425890298aed601595a70AB815c96711a31Bc65",
     decimals: 6,
     nativeSymbol: "AVAX",
@@ -117,7 +166,13 @@ export const SUPPORTED_CHAINS = [
   {
     name: "OP Sepolia",
     identifier: "Optimism_Sepolia" as BridgeChain,
-    viemChain: optimismSepolia,
+    viemChain: {
+      ...optimismSepolia,
+      rpcUrls: {
+        ...optimismSepolia.rpcUrls,
+        default: { http: ["https://optimism-sepolia-rpc.publicnode.com"] },
+      },
+    },
     usdcAddress: "0x5fd84259d66Cd46123540766Be93DFE6D43130D7",
     decimals: 6,
     nativeSymbol: "ETH",
@@ -128,6 +183,10 @@ export const SUPPORTED_CHAINS = [
     identifier: "Polygon_Amoy_Testnet" as BridgeChain,
     viemChain: {
       ...polygonAmoy,
+      rpcUrls: {
+        ...polygonAmoy.rpcUrls,
+        default: { http: ["https://polygon-amoy-bor-rpc.publicnode.com"] },
+      },
       fees: {
         ...polygonAmoy.fees,
         async estimateFeesPerGas() {
@@ -146,7 +205,13 @@ export const SUPPORTED_CHAINS = [
   {
     name: "Unichain Sepolia",
     identifier: "Unichain_Sepolia" as BridgeChain,
-    viemChain: unichainSepolia,
+    viemChain: {
+      ...unichainSepolia,
+      rpcUrls: {
+        ...unichainSepolia.rpcUrls,
+        default: { http: ["https://unichain-sepolia-rpc.publicnode.com"] },
+      },
+    },
     usdcAddress: "0x31d0220469e10c4E71834a79b1f276d740d3768F",
     decimals: 6,
     nativeSymbol: "ETH",
@@ -160,6 +225,33 @@ export const SUPPORTED_CHAINS = [
     decimals: 6,
     nativeSymbol: "MON",
     icon: "https://ethglobal.storage/static/faucet/monad-testnet.png",
+  },
+  {
+    name: "HyperEVM Testnet",
+    identifier: "HyperEVM_Testnet" as BridgeChain,
+    viemChain: hyperEvmTestnet,
+    usdcAddress: null, // USDC not yet widely available on HyperEVM testnet
+    decimals: 6,
+    nativeSymbol: "HYPE",
+    icon: "./hyperliquid.png",
+  },
+  {
+    name: "Sei Atlantic-2",
+    identifier: "Sei_Testnet" as BridgeChain,
+    viemChain: seiAtlantic2,
+    usdcAddress: "0x3f88DeCCef29F9D5a2a12C3dCdF3bDA2F28Da1C0",
+    decimals: 6,
+    nativeSymbol: "SEI",
+    icon: "https://cryptologos.cc/logos/sei-sei-logo.png",
+  },
+  {
+    name: "Sonic Testnet",
+    identifier: "Sonic_Testnet" as BridgeChain,
+    viemChain: sonicBlazeTestnet,
+    usdcAddress: "0x29219dd400f2Bf60E5a23d13Be72B486D4038894",
+    decimals: 6,
+    nativeSymbol: "S",
+    icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
   },
 ] as const;
 
@@ -180,6 +272,9 @@ export const CCTP_CONFIG: Record<BridgeChain, { messenger: string; domain: numbe
   Base_Sepolia:     { messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA", domain: 6 },
   Polygon_Amoy_Testnet: { messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA", domain: 7 },
   Unichain_Sepolia: { messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA", domain: 10 },
+  Sonic_Testnet:    { messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA", domain: 13 },
+  Sei_Testnet:      { messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA", domain: 16 },
+  HyperEVM_Testnet: { messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA", domain: 19 },
   Arc_Testnet:      { messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA", domain: 26 },
   Monad_Testnet:    { messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA", domain: 15 },
 };

@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ArrowUpRight, LayoutGrid, Zap, Shield, Globe, Coins, Activity,Mail } from "lucide-react";
-import { Mulish } from "next/font/google"; // Still need it for the className if variable fails or for safety
+import { ArrowUpRight, LayoutGrid, Zap, Shield, Globe, Coins, Activity, Mail } from "lucide-react";
 import Lenis from 'lenis';
 import BounceCards from "@/components/BounceCards";
 import CardSwap, { Card } from "@/components/CardSwap";
@@ -31,7 +30,7 @@ const featureItems = [
     </div>
     <div className="mt-2">
       <h3 className="text-xl font-bold tracking-tight text-white mb-2">Secure MPC</h3>
-      <p className="text-sm text-zinc-400 leading-relaxed font-medium">Non-custodial infrastructure powered by Circle's Programmable Wallets and MPC technology.</p>
+      <p className="text-sm text-zinc-400 leading-relaxed font-medium">Non-custodial infrastructure powered by Circle&apos;s Programmable Wallets and MPC technology.</p>
     </div>
   </div>,
   <div key="3" className="flex flex-col gap-4 pointer-events-auto h-full w-full group">
@@ -40,7 +39,7 @@ const featureItems = [
     </div>
     <div className="mt-2">
       <h3 className="text-xl font-bold tracking-tight text-white mb-2">CCTP Native</h3>
-      <p className="text-sm text-zinc-400 leading-relaxed font-medium">Bridge canonical USDC directly from 15+ testnet chains via Circle's native CCTP protocol.</p>
+      <p className="text-sm text-zinc-400 leading-relaxed font-medium">Bridge canonical USDC directly from 15+ testnet chains via Circle&apos;s native CCTP protocol.</p>
     </div>
   </div>,
   <div key="4" className="flex flex-col gap-4 pointer-events-auto h-full w-full group">
@@ -124,7 +123,7 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-[#000000]/60 z-10" />
           
           {/* Seamless bottom fade to match the next section's background */}
-          <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-[#000000] via-[#000000]/80 to-transparent z-10 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-full h-48 bg-linear-to-t from-[#000000] via-[#000000]/80 to-transparent z-10 pointer-events-none" />
         </div>
 
         {/* Decorative Grid */}
@@ -158,7 +157,7 @@ export default function LandingPage() {
 
         {/* Hero Content */}
         <div className="relative z-20 flex-1 flex flex-col justify-center w-full px-6 lg:px-12 xl:px-20 pb-20 pt-32 lg:pt-40">
-          <div className="grid lg:grid-cols-[1.2fr_600px] items-center gap-12 xl:gap-20 w-full max-w-[1600px] mx-auto">
+          <div className="grid lg:grid-cols-[1.2fr_600px] items-center gap-12 xl:gap-20 w-full max-w-400 mx-auto">
             
             {/* Left Side: Typography & CTAs */}
             <div className="flex flex-col items-start text-left pt-10 lg:pt-0 relative z-30">
@@ -170,7 +169,7 @@ export default function LandingPage() {
                 </h1>
                 
                 <p className="mt-8 text-base sm:text-lg lg:text-xl text-[#a1a1aa] font-medium leading-relaxed max-w-2xl">
-                  Integrate high-performance, predictable subscription payments into your applications with just a few lines of code. Powered by Circle's Programmable Wallets, CCTP, and the Arc blockchain.
+                  Integrate high-performance, predictable subscription payments into your applications with just a few lines of code. Powered by Circle&apos;s Programmable Wallets, CCTP, and the Arc blockchain.
                 </p>
               </div>
               
@@ -196,7 +195,7 @@ export default function LandingPage() {
             </div>
 
             {/* Right Side: Visuals (BounceCards) */}
-            <div className="hidden lg:flex items-center justify-center h-[600px] w-full relative z-20">
+            <div className="hidden lg:flex items-center justify-center h-150 w-full relative z-20">
               <BounceCards
                 className="custom-bounceCards scale-110 xl:scale-125"
                 items={featureItems}
@@ -227,7 +226,7 @@ export default function LandingPage() {
             USDC-Native. <br/><span className="text-[#b6f09c]">Arc-Powered.</span>
           </h2>
           <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2 lg:mt-4">
-            Mecha Pay is the membership infrastructure for the Arc network. By combining Circle's Programmable Wallets with CCTP bridging, we've eliminated gas complexity, allowing users to pay entirely in USDC while developers enjoy sub-second finality.
+            Mecha Pay is the membership infrastructure for the Arc network. By combining Circle&apos;s Programmable Wallets with CCTP bridging, we&apos;ve eliminated gas complexity, allowing users to pay entirely in USDC while developers enjoy sub-second finality.
           </p>
           <div className="grid grid-cols-2 gap-8 mt-4 lg:mt-8">
              <div className="flex flex-col gap-2 border-l border-[#ffffff]/10 pl-4 lg:pl-6">
@@ -241,8 +240,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="hidden lg:flex flex-1 w-full items-center justify-center relative mt-16 lg:mt-0 h-[450px] lg:h-[600px] pointer-events-none">
-          <div className="relative w-[320px] h-[200px] z-10 lg:right-10 pointer-events-auto perspective-[2000px]">
+        <div className="hidden lg:flex flex-1 w-full items-center justify-center relative mt-16 lg:mt-0 h-112.5 lg:h-150 pointer-events-none">
+          <div className="relative w-[320px] h-50 z-10 lg:right-10 pointer-events-auto perspective-[2000px]">
             <CardSwap width={320} height={200} cardDistance={40} verticalDistance={50}>
               <Card className="bg-[#050505] border border-[#ffffff]/10 shadow-2xl rounded-2xl flex flex-col justify-between p-6">
                 <div className="flex justify-between items-center text-[#ffffff]">
@@ -293,7 +292,7 @@ export default function LandingPage() {
       <section id="developers" className="relative w-full bg-[#000000] py-32 z-20">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-16 lg:gap-20 px-6 sm:px-12 lg:px-20 w-full">
           <div className="flex-1 w-full max-w-xl mx-auto flex items-center justify-center relative perspective-[2000px]">
-          <Terminal className="bg-[#050505] border border-[#ffffff]/10 shadow-2xl h-[400px] w-full max-w-xl">
+          <Terminal className="bg-[#050505] border border-[#ffffff]/10 shadow-2xl h-100 w-full max-w-xl">
             <TypingAnimation delay={500} duration={30} className="text-zinc-500 text-xs sm:text-sm font-mono">
               &gt; npm install mechapay-react
             </TypingAnimation>
@@ -306,7 +305,7 @@ export default function LandingPage() {
             </TypingAnimation>
             
             <AnimatedSpan delay={3500} className="text-zinc-300 text-xs sm:text-sm font-mono mt-2 block whitespace-pre-wrap leading-relaxed">
-              <span className="text-[#ff7b72]">import</span> {'{'} <span className="text-[#d2a8ff]">MechaPricingTable</span> {'}'} <span className="text-[#ff7b72]">from</span> <span className="text-[#a5d6ff]">'mechapay-react'</span>;
+              <span className="text-[#ff7b72]">import</span> {'{'} <span className="text-[#d2a8ff]">MechaPricingTable</span> {'}'} <span className="text-[#ff7b72]">from</span> <span className="text-[#a5d6ff]">&apos;mechapay-react&apos;</span>;
               <br/><br/>
               <span className="text-[#ff7b72]">export default function</span> <span className="text-[#d2a8ff]">Page</span>() {'{'}
               <br/>
@@ -314,9 +313,9 @@ export default function LandingPage() {
               <br/>
               {'    '}&lt;<span className="text-[#7ee787]">MechaPricingTable</span> 
               <br/>
-              {'      '}planId=<span className="text-[#a5d6ff]">"0x123..."</span> 
+              {'      '}planId=<span className="text-[#a5d6ff]">&quot;0x123...&quot;</span> 
               <br/>
-              {'      '}userId=<span className="text-[#a5d6ff]">"user_1"</span> 
+              {'      '}userId=<span className="text-[#a5d6ff]">&quot;user_1&quot;</span> 
               <br/>
               {'    '}/&gt;
               <br/>
@@ -412,7 +411,7 @@ export default function LandingPage() {
       {/* Protocol Economics Section */}
       <section className="relative w-full bg-[#000000] py-24 lg:py-40 px-6 sm:px-12 lg:px-20 z-20 overflow-hidden">
         {/* Subtle Architectural Grid Background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-size-[4rem_4rem] mask-[radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
         
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-20 relative z-10">
           <div className="flex-1 flex flex-col gap-6 w-full">
@@ -452,7 +451,7 @@ export default function LandingPage() {
             </div>
             
             <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500 md:col-span-2">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#b6f09c]/0 via-[#b6f09c]/5 to-[#b6f09c]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <div className="absolute inset-0 bg-linear-to-r from-[#b6f09c]/0 via-[#b6f09c]/5 to-[#b6f09c]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
                 <Globe className="w-48 h-48 text-[#b6f09c] -mr-16 -mt-16" />
               </div>

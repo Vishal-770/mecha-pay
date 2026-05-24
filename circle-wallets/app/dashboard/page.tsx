@@ -18,37 +18,33 @@ import {
 
 /* ─── Resolve a CSS variable to a concrete colour string ─── */
 function useCssColors() {
-  const [clr, setClr] = useState({
-    primary:    "#22c55e",
-    muted:      "#64748b",
-    border:     "rgba(148,163,184,0.12)",
-    tooltip:    { bg: "#0f172a", border: "#1e293b" },
-  });
+  return useMemo(() => {
+    if (typeof window === "undefined") {
+      return {
+        primary: "#22c55e",
+        muted: "#64748b",
+        border: "rgba(148,163,184,0.12)",
+        tooltip: { bg: "#0f172a", border: "#1e293b" },
+      };
+    }
 
-  useEffect(() => {
-    const style = getComputedStyle(document.documentElement);
-    const get = (v: string) => style.getPropertyValue(v).trim();
-    // CSS vars are e.g. "oklch(…)" — wrap in var() so the browser resolves it
-    // We use a hidden temp element to convert oklch → rgb for Recharts (SVG fill)
     const resolve = (varName: string): string => {
       const el = document.createElement("div");
       el.style.color = `var(${varName})`;
       el.style.display = "none";
       document.body.appendChild(el);
-      const rgb = getComputedStyle(el).color; // always returns rgb(…)
+      const rgb = getComputedStyle(el).color;
       document.body.removeChild(el);
       return rgb || "#22c55e";
     };
 
-    setClr({
+    return {
       primary: resolve("--primary"),
-      muted:   resolve("--muted-foreground"),
-      border:  `rgba(148,163,184,0.10)`,
+      muted: resolve("--muted-foreground"),
+      border: "rgba(148,163,184,0.10)",
       tooltip: { bg: "#0f172a", border: "#1e293b" },
-    });
+    };
   }, []);
-
-  return clr;
 }
 
 
@@ -141,13 +137,11 @@ export default function DashboardOverviewPage() {
     return () => { mounted = false; };
   }, [wallet?.address, sessionUserToken]);
 
-  const usdcBalance = useMemo(() => {
-    if (!wallet?.tokenBalances) return "0.00";
-    let t = wallet.tokenBalances.find(t => t.symbol.toUpperCase() === "USDC");
-    if (!t) t = wallet.tokenBalances.find(t => t.symbol.toUpperCase().includes("USDC"));
-    if (!t && wallet.blockchain === "ARC-TESTNET") t = wallet.tokenBalances.find(t => t.isNative);
-    return t ? Number(t.amount).toFixed(2) : "0.00";
-  }, [wallet?.tokenBalances, wallet?.blockchain]);
+  const tokenBalances = wallet?.tokenBalances ?? [];
+  let usdcToken = tokenBalances.find((t) => t.symbol.toUpperCase() === "USDC");
+  if (!usdcToken) usdcToken = tokenBalances.find((t) => t.symbol.toUpperCase().includes("USDC"));
+  if (!usdcToken && wallet?.blockchain === "ARC-TESTNET") usdcToken = tokenBalances.find((t) => t.isNative);
+  const usdcBalance = usdcToken ? Number(usdcToken.amount).toFixed(2) : "0.00";
 
   const revenueChart = useMemo(() =>
     (analytics?.revenueHistory ?? []).map(e => ({
@@ -172,7 +166,7 @@ export default function DashboardOverviewPage() {
       <div className="border-b border-border/40 px-5 md:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-sm font-bold tracking-tight">Overview</h1>
-          <p className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate max-w-[200px] sm:max-w-xs md:max-w-none opacity-60">
+          <p className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate max-w-50 sm:max-w-xs md:max-w-none opacity-60">
             {wallet?.address ?? "—"}
           </p>
         </div>

@@ -70,7 +70,8 @@ const DashboardContext = createContext<DashboardContextValue | null>(null);
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/wallet", label: "Wallet", icon: Wallet },
-  { href: "/dashboard/bridge", label: "Bridge", icon: Zap },
+  { href: "/dashboard/smart-bridge", label: "Smart Bridge", icon: Zap },
+  { href: "/dashboard/bridge", label: "Bridge", icon: RefreshCw },
   { href: "/dashboard/marketplace", label: "Marketplace", icon: ShoppingBag },
   { href: "/dashboard/my-plans", label: "My Plans", icon: FileText },
   { href: "/dashboard/plans/create", label: "Create Plan", icon: PlusSquare },
