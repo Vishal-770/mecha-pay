@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCircleSDK } from "@/context/CircleSDKContext";
@@ -99,7 +100,6 @@ export default function PaymentPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [wallet, setWallet]           = useState<{ id: string; address: string; balance: string } | null>(null);
-  const [walletLoading, setWalletLoading] = useState(false);
 
   // Per-tier tx state
   const [tierStatus, setTierStatus] = useState<Record<string, TierTxStatus>>({});
@@ -155,31 +155,36 @@ export default function PaymentPage() {
   }, [planId]);
 
   /* ── Load wallet ── */
-  const refreshWallet = useCallback(async () => {
-    if (!session?.walletAddress) return;
-    setWalletLoading(true);
-    try {
+  const { data: walletBalance = "0", refetch: refetchWalletBalance, isLoading: walletLoading } = useQuery({
+    queryKey: ["walletBalance", session?.walletAddress],
+    queryFn: async () => {
+      if (!session?.walletAddress) return "0";
       const publicClient = createPublicClient({
         chain: arcTestnet,
         transport: http(arcTestnet.rpcUrls.default.http[0]),
       });
-      // Native USDC on Arc uses 18 decimals
       const balance = await publicClient.getBalance({
         address: session.walletAddress as `0x${string}`,
       });
-      setWallet({
-        id: "Arc_Testnet",
-        address: session.walletAddress,
-        balance: formatUnits(balance, 18),
-      });
-    } catch (err) {
-      console.error("Failed to load modular wallet balance on Arc:", err);
-    } finally {
-      setWalletLoading(false);
-    }
-  }, [session?.walletAddress]);
+      return formatUnits(balance, 18);
+    },
+    enabled: !!session?.walletAddress,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
 
-  useEffect(() => { if (session) void refreshWallet(); }, [session, refreshWallet]);
+  useEffect(() => {
+    if (!session?.walletAddress) {
+      setWallet(null);
+      return;
+    }
+    setWallet({
+      id: "Arc_Testnet",
+      address: session.walletAddress,
+      balance: walletBalance,
+    });
+  }, [session?.walletAddress, walletBalance]);
 
   /* ── Check existing subscription ── */
   useEffect(() => {
@@ -273,6 +278,7 @@ export default function PaymentPage() {
       ];
 
       await executeTransaction(calls, false, "Arc_Testnet");
+      void refetchWalletBalance();
 
       // Aggressive Polling for Indexer Sync
       setTierStatus(p => ({ ...p, [tid]: "success" }));

@@ -45,7 +45,7 @@ export const config = {
   // Create embedded wallets for users who don't have a wallet
   embeddedWallets: {
     createOnLogin: "users-without-wallets",
-  } as any,
+  },
   // Enable Smart Wallets (Account Abstraction)
   smartWallets: {
     createOnLogin: "users-without-wallets",

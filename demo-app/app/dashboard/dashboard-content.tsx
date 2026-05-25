@@ -7,8 +7,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const PLAN_ID = process.env.NEXT_PUBLIC_MECHA_PLAN_ID || "0xb074b0822015c916dd232e7f6e7cfd051ecfde5628a14cdb8b2f4050e40a6d1c";
-const API_KEY = process.env.NEXT_PUBLIC_MECHA_API_KEY || "mp_live_36f153484685fdbfa522125830e99f792c726c21ee61a95c";
+const PLAN_ID = process.env.NEXT_PUBLIC_MECHA_PLAN_ID || "";
+const API_KEY = process.env.NEXT_PUBLIC_MECHA_API_KEY || "";
 
 function DashboardContentInner({ userId }: { userId: string }) {
   const { status, remainingSeconds, tierIds, loading, error } = useMecha(PLAN_ID, userId);

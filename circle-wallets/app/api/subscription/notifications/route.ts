@@ -14,6 +14,23 @@ type NotificationEvent = {
   ipfsHash?: string;
 };
 
+type PlanStatusUpdated = {
+  id: string;
+  planId: string;
+  active: boolean;
+  blockTimestamp: string;
+  transactionHash: string;
+};
+
+type PlanUpdated = {
+  id: string;
+  planId: string;
+  duration: string;
+  ipfsHash: string;
+  blockTimestamp: string;
+  transactionHash: string;
+};
+
 const subQuery = `
   query GetUserPlans($subscriber: Bytes!) {
     subscriptionStates(where: { subscriber_: { id: $subscriber } }) {
@@ -89,8 +106,8 @@ export async function GET(req: Request) {
 
     // 2. Get events for those plans
     const eventsData = await querySubgraph<{
-      planStatusUpdateds: any[];
-      planUpdateds: any[];
+      planStatusUpdateds: PlanStatusUpdated[];
+      planUpdateds: PlanUpdated[];
     }>(eventsQuery, { planIds });
 
     // 3. Merge and sort events

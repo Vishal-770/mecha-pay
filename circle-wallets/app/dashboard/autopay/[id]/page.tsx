@@ -24,8 +24,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toCircleSmartAccount } from "@circle-fin/modular-wallets-core";
 import { toWebAuthnAccount } from "viem/account-abstraction";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, type Client } from "viem";
 import { arcTestnet } from "@/lib/bridge_config";
+import { SUBSCRIPTION_GATEWAY_ADDRESS } from "@/lib/subscription";
 
 // Import proper Shadcn Select
 import {
@@ -190,7 +191,7 @@ export default function AutoPayDetailPage() {
       });
 
       const smartAccount = await toCircleSmartAccount({
-        client: publicClient as any,
+        client: publicClient as Client,
         owner: toWebAuthnAccount({ credential: session.credential }),
         name: session.username,
       });
@@ -205,7 +206,7 @@ export default function AutoPayDetailPage() {
           name: "MechaPay Subscription Gateway",
           version: "1",
           chainId: 5042002, // Arc Testnet
-          verifyingContract: "0x2BC2f391fca4144f708eEa918d94348684Bdb544",
+          verifyingContract: SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`,
         },
         types: {
           AuthorizeSessionKey: [

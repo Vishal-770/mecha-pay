@@ -8,9 +8,9 @@ dataSources:
     name: SubscriptionGateway
     network: arc-testnet
     source:
-      address: "0x47d2b46680B3A1dE1bC7B96D02B752cA28b9B72D"
+      address: "0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2"
       abi: SubscriptionGateway
-      startBlock: 33845000
+      startBlock: 43961192
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9

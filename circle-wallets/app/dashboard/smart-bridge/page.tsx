@@ -498,8 +498,7 @@ export default function SmartBridgePage() {
 
       // Find route fee and compute total deposit amount
       const routeInfo = routes.find(r => r.chainIdentifier === selectedRoute);
-      const fee = routeInfo ? parseFloat(routeInfo.fee) : 0;
-      const depositAmount = (parseFloat(amount) + fee).toFixed(6);
+      const depositAmount = parseFloat(amount).toFixed(6);
 
       setStep(1, "pending", `Depositing ${depositAmount} USDC on ${displayChain}…`);
       await deposit(kitContext, {
@@ -513,11 +512,12 @@ export default function SmartBridgePage() {
       await ensureWalletChainAdded("Arc_Testnet");
 
       setStep(2, "pending", "Spending USDC to your Arc Testnet modular wallet…");
+      const netAmount = routeInfo ? routeInfo.net : amount;
       const result = await spend(kitContext, {
-        amount,
+        amount: netAmount,
         from: {
           adapter,
-          allocations: { amount, chain: kitChain as KitChain },
+          allocations: { amount: depositAmount, chain: kitChain as KitChain },
         },
         to: {
           adapter,

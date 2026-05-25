@@ -6,7 +6,7 @@ This directory contains the Solidity smart contracts for Mecha Pay's subscriptio
 
 **Network**: Arc Testnet (Chain ID: 5042002)  
 **Contract**: `SubscriptionGateway`  
-**Address**: [`0x2BC2f391fca4144f708eEa918d94348684Bdb544`](https://testnet.arcscan.app/address/0x2BC2f391fca4144f708eEa918d94348684Bdb544)  
+**Address**: [`0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2`](https://testnet.arcscan.app/address/0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2)  
 **USDC Token**: `0x3600000000000000000000000000000000000000` (Native ERC-20)
 
 ---
@@ -183,7 +183,7 @@ pnpm hardhat ignition deploy ./ignition/modules/SubscriptionGateway.js --network
 
 **Output**:
 ```
-Deployed SubscriptionGateway to: 0x2BC2f391fca4144f708eEa918d94348684Bdb544
+Deployed SubscriptionGateway to: 0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2
 ```
 
 ### Deployment Module
@@ -229,10 +229,10 @@ main().catch((error) => {
 ### Verify on ArcScan
 
 ```bash
-pnpm hardhat verify --network arc-testnet 0x2BC2f391fca4144f708eEa918d94348684Bdb544 "0x3600000000000000000000000000000000000000"
+pnpm hardhat verify --network arc-testnet 0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2 "0x3600000000000000000000000000000000000000"
 ```
 
-**Verified Contract**: [View on ArcScan](https://testnet.arcscan.app/address/0x2BC2f391fca4144f708eEa918d94348684Bdb544)
+**Verified Contract**: [View on ArcScan](https://testnet.arcscan.app/address/0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2)
 
 ---
 
@@ -280,7 +280,7 @@ pnpm hardhat console --network arc-testnet
 ```javascript
 const gateway = await ethers.getContractAt(
   "SubscriptionGateway",
-  "0x2BC2f391fca4144f708eEa918d94348684Bdb544"
+  "0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2"
 );
 
 // Create a plan
@@ -303,7 +303,7 @@ const { ethers } = require("ethers");
 const provider = new ethers.JsonRpcProvider("https://rpc.testnet.arc.network");
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-const contractAddress = "0x2BC2f391fca4144f708eEa918d94348684Bdb544";
+const contractAddress = "0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2";
 const abi = [/* ABI from artifacts */];
 
 const contract = new ethers.Contract(contractAddress, abi, wallet);
@@ -321,13 +321,13 @@ console.log("Subscribed! TX:", receipt.hash);
 
 ```bash
 # Read plan details
-cast call 0x2BC2f391fca4144f708eEa918d94348684Bdb544 \
+cast call 0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2 \
   "plans(bytes32)(address,uint256,uint32,string,bool)" \
   0x1a2b3c4d... \
   --rpc-url https://rpc.testnet.arc.network
 
 # Create plan
-cast send 0x2BC2f391fca4144f708eEa918d94348684Bdb544 \
+cast send 0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2 \
   "createPlan(uint256,uint32,string)" \
   10000000 2592000 "QmHash" \
   --private-key $PRIVATE_KEY \

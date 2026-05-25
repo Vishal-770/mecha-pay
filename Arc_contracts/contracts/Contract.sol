@@ -5,6 +5,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+interface IERC1271 {
+    function isValidSignature(bytes32 hash, bytes calldata signature) external view returns (bytes4);
+}
+
 /**
  * @title SubscriptionGateway
  * @dev High-scalability subscription gateway optimized for the Arc network.
@@ -21,6 +25,18 @@ contract SubscriptionGateway {
 
     // Track last timestamp to ensure monotonicity on networks like Arc
     uint32 public lastSubTimestamp;
+
+    // -------------------- EIP-712 & AUTOPAY STATE --------------------
+
+    bytes32 public immutable DOMAIN_SEPARATOR;
+    bytes32 public constant AUTHORIZE_SESSION_KEY_TYPEHASH = keccak256(
+        "AuthorizeSessionKey(address subscriber,address sessionPublicKey,bytes32 planId,uint256 tierId,uint256 maxCycles,uint256 deadline)"
+    );
+
+    // Tracks the number of executed cycles for a subscriber to a plan
+    mapping(bytes32 => mapping(address => uint256)) public executedCycles;
+    // Tracks the next allowed execution timestamp for a subscriber to a plan
+    mapping(bytes32 => mapping(address => uint256)) public nextAllowedTimestamp;
 
     // -------------------- STRUCTS & STORAGE --------------------
 
@@ -87,6 +103,16 @@ contract SubscriptionGateway {
         require(_usdc != address(0), "Invalid USDC");
         USDC = IERC20(_usdc);
         owner = msg.sender;
+
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes("MechaPay Subscription Gateway")),
+                keccak256(bytes("1")),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 
     // -------------------- PLAN MANAGEMENT --------------------
@@ -180,8 +206,99 @@ contract SubscriptionGateway {
         lastSubTimestamp = startTime;
         uint32 endTime = startTime + plan.duration;
 
+        // Initialize/increment cycle tracking
+        executedCycles[planId][msg.sender] = executedCycles[planId][msg.sender] + 1;
+        nextAllowedTimestamp[planId][msg.sender] = endTime;
+
         emit Subscribed(
             msg.sender,
+            plan.seller,
+            planId,
+            tierId,
+            totalAmount,
+            feeAmount,
+            buyerData,
+            startTime,
+            endTime
+        );
+    }
+
+    /**
+     * @notice Execute a subscription renewal using an off-chain EIP-712 pre-authorization signature.
+     * @dev Validates the signature against the subscriber smart account using ERC-1271.
+     */
+    function subscribeWithSignature(
+        address subscriber,
+        address sessionPublicKey,
+        bytes32 planId,
+        uint256 tierId,
+        uint256 maxCycles,
+        uint256 deadline,
+        bytes calldata signature,
+        string calldata buyerData
+    ) external {
+        require(msg.sender == sessionPublicKey, "Invalid session key");
+        require(block.timestamp <= deadline, "Signature expired");
+
+        Plan storage plan = plans[planId];
+        require(plan.active, "Plan is inactive");
+        require(tierId < plan.tierCount, "Invalid tier");
+        Tier storage tier = plan.tiers[tierId];
+        require(tier.active, "Tier is inactive");
+
+        uint256 currentCycle = executedCycles[planId][subscriber];
+        require(currentCycle < maxCycles, "Max cycles reached");
+        require(block.timestamp >= nextAllowedTimestamp[planId][subscriber], "Too early for next cycle");
+
+        // Construct EIP-712 message hash
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                DOMAIN_SEPARATOR,
+                keccak256(
+                    abi.encode(
+                        AUTHORIZE_SESSION_KEY_TYPEHASH,
+                        subscriber,
+                        sessionPublicKey,
+                        planId,
+                        tierId,
+                        maxCycles,
+                        deadline
+                    )
+                )
+            )
+        );
+
+        // Verify ERC-1271 signature on subscriber contract
+        require(
+            IERC1271(subscriber).isValidSignature(messageHash, signature) == 0x1626ba7e,
+            "Invalid signature"
+        );
+
+        // Perform payment
+        uint256 totalAmount = tier.price;
+        uint256 feeAmount = (totalAmount * feeBps) / 10000;
+        uint256 sellerAmount = totalAmount - feeAmount;
+
+        if (feeAmount > 0) {
+            USDC.safeTransferFrom(subscriber, address(this), feeAmount);
+        }
+        USDC.safeTransferFrom(subscriber, plan.seller, sellerAmount);
+
+        // Update tracking state
+        executedCycles[planId][subscriber] = currentCycle + 1;
+
+        uint32 startTime = uint32(block.timestamp) > lastSubTimestamp 
+            ? uint32(block.timestamp) 
+            : lastSubTimestamp;
+        
+        lastSubTimestamp = startTime;
+        uint32 endTime = startTime + plan.duration;
+
+        nextAllowedTimestamp[planId][subscriber] = endTime;
+
+        emit Subscribed(
+            subscriber,
             plan.seller,
             planId,
             tierId,

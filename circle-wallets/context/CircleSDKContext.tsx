@@ -19,6 +19,7 @@ import {
 } from "@circle-fin/modular-wallets-core";
 import {
   createPublicClient,
+  type Abi,
   type Hex,
   type Transport,
   type Client,
@@ -66,12 +67,12 @@ interface CircleSDKContextValue {
     chainKey?: string
   ) => Promise<{ userOpHash: Hex; txHash: Hex }>;
   readOnChain: (
-    abi: any,
+    abi: Abi,
     address: Hex,
     functionName: string,
-    args: any[],
+    args: readonly unknown[],
     chainKey?: string
-  ) => Promise<any>;
+  ) => Promise<unknown>;
 }
 
 const CircleSDKContext = createContext<CircleSDKContextValue | null>(null);
@@ -290,10 +291,10 @@ export function CircleSDKProvider({ children }: { children: ReactNode }) {
 
   // Client-Side Contract Reading Helper
   const readOnChain = useCallback(async (
-    abi: any,
+    abi: Abi,
     address: Hex,
     functionName: string,
-    args: any[],
+    args: readonly unknown[],
     chainKey: string = "Arc_Testnet"
   ) => {
     const { publicClient } = getClients(chainKey);

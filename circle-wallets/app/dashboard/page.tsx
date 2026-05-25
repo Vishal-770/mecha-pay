@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { formatUnits } from "ethers";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
@@ -110,32 +111,23 @@ export default function DashboardOverviewPage() {
     color: "#e2e8f0",
     padding: "6px 10px",
   };
-  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    const run = async () => {
-      if (!wallet?.address || !sessionUserToken) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const p = new URLSearchParams({
-          seller: wallet.address,
-          subscriber: wallet.address,
-          userToken: sessionUserToken
-        });
-        const res = await fetch(`/api/subscription/analytics?${p.toString()}`, { cache: "no-store" });
-        const json = await res.json() as AnalyticsResponse;
-        if (mounted) setAnalytics(json);
-      } catch (err) {
-        console.error("Dashboard analytics fetch failed:", err);
-      } finally { if (mounted) setLoading(false); }
-    };
-    void run();
-    return () => { mounted = false; };
-  }, [wallet?.address, sessionUserToken]);
+  const { data: analytics = null, isLoading: loading } = useQuery<AnalyticsResponse>({
+    queryKey: ["dashboardAnalytics", wallet?.address, sessionUserToken],
+    queryFn: async () => {
+      if (!wallet?.address || !sessionUserToken) return null as unknown as AnalyticsResponse;
+      const p = new URLSearchParams({
+        seller: wallet.address,
+        subscriber: wallet.address,
+        userToken: sessionUserToken
+      });
+      const res = await fetch(`/api/subscription/analytics?${p.toString()}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to fetch analytics");
+      return res.json();
+    },
+    enabled: !!wallet?.address && !!sessionUserToken,
+    refetchInterval: 15000, // Refresh automatically every 15 seconds
+    refetchOnWindowFocus: true,
+  });
 
   const tokenBalances = wallet?.tokenBalances ?? [];
   let usdcToken = tokenBalances.find((t) => t.symbol.toUpperCase() === "USDC");

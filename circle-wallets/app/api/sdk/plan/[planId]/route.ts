@@ -7,6 +7,44 @@ import {
   toSecondsNow,
 } from "@/lib/subgraph";
 
+type SubgraphPlanTier = {
+  tierId: string;
+  price: string;
+  label: string;
+  active: boolean;
+};
+
+type SubgraphPlan = {
+  id: string;
+  duration: string;
+  ipfsHash: string;
+  active: boolean;
+  tiers: SubgraphPlanTier[];
+  seller: { id: string };
+};
+
+type SubgraphSubscriptionState = {
+  status: string;
+  lastEndTime: string;
+  lastTierId?: string | null;
+};
+
+type SubgraphSubscribed = {
+  tierId: string;
+  endTime: string;
+};
+
+type PlanMetadataTier = {
+  label: string;
+  features?: { title: string; description: string }[];
+};
+
+type PlanMetadata = {
+  name?: string;
+  brand?: { name?: string; website?: string };
+  tiers?: PlanMetadataTier[];
+};
+
 /* ── CORS Configuration ── */
 function corsHeaders() {
   return {
@@ -79,7 +117,7 @@ export async function GET(
       );
     }
     // 1. Fetch Plan Data
-    const planData = await querySubgraph<{ plan: any }>(PLAN_QUERY, {
+    const planData = await querySubgraph<{ plan: SubgraphPlan | null }>(PLAN_QUERY, {
       planId: toLowerHex(planId),
     });
 
@@ -91,12 +129,12 @@ export async function GET(
     }
 
     // 2. Fetch Plan Metadata
-    let metadata = null;
+    let metadata: PlanMetadata | null = null;
     try {
       const res = await fetch(ipfsHashToHttpUrl(planData.plan.ipfsHash), {
         cache: "no-store",
       });
-      metadata = res.ok ? await res.json() : null;
+      metadata = res.ok ? ((await res.json()) as PlanMetadata) : null;
     } catch {
       metadata = null;
     }
@@ -104,7 +142,10 @@ export async function GET(
     // 3. Optional: Check Subscription by userId
     let subscription = null;
     if (userId) {
-      const subData = await querySubgraph<{ subscriptionStates: any[]; subscribeds: any[] }>(
+      const subData = await querySubgraph<{
+        subscriptionStates: SubgraphSubscriptionState[];
+        subscribeds: SubgraphSubscribed[];
+      }>(
         SUB_QUERY,
         {
           planId: toLowerHex(planId),
@@ -145,13 +186,13 @@ export async function GET(
           name: metadata?.name || planData.plan.id,
           duration: planData.plan.duration,
           brand: metadata?.brand,
-          tiers: planData.plan.tiers.map((t: any) => {
+          tiers: planData.plan.tiers.map((tier) => {
             // Find corresponding feature list from metadata
-            const mTier = metadata?.tiers?.find((mt: any) => mt.label === t.label);
+            const mTier = metadata?.tiers?.find((mt) => mt.label === tier.label);
             return {
-              id: t.tierId,
-              label: t.label,
-              price: t.price,
+              id: tier.tierId,
+              label: tier.label,
+              price: tier.price,
               features: mTier?.features || [],
             };
           }),

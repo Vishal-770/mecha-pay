@@ -7,7 +7,7 @@ This directory contains The Graph protocol subgraph for indexing Mecha Pay's sub
 **Network**: Arc Testnet (Chain ID: 5042002)  
 **Studio URL**: [https://thegraph.com/studio/subgraph/mecha-pay](https://thegraph.com/studio/subgraph/mecha-pay)  
 **Query Endpoint**: `[HIDDEN]` (Use `NEXT_PUBLIC_SUBGRAPH_URL` environment variable)  
-**Contract**: [`0x2BC2f391fca4144f708eEa918d94348684Bdb544`](https://testnet.arcscan.app/address/0x2BC2f391fca4144f708eEa918d94348684Bdb544)
+**Contract**: [`0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2`](https://testnet.arcscan.app/address/0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2)
 
 ---
 
@@ -467,7 +467,7 @@ dataSources:
     name: SubscriptionGateway
     network: arc-testnet
     source:
-      address: "0x2BC2f391fca4144f708eEa918d94348684Bdb544"
+      address: "0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2"
       abi: SubscriptionGateway
       startBlock: 33756576
     mapping:

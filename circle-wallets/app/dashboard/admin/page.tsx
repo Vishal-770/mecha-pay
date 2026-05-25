@@ -55,6 +55,14 @@ const ERC20_ABI = [
   }
 ] as const;
 
+function isWalletAccount(value: unknown): value is { type: string; address?: string } {
+  return !!value && typeof value === "object" && "type" in value && typeof (value as { type?: unknown }).type === "string";
+}
+
+function getAccountAddress(value: { address?: string }): string | null {
+  return value.address ? value.address.toLowerCase() : null;
+}
+
 export default function AdminDashboardPage() {
   const { wallet } = useDashboardContext();
   const { executeTransaction } = useCircleSDK();
@@ -121,8 +129,9 @@ export default function AdminDashboardPage() {
     const target = contractOwnerAddr.toLowerCase();
     
     const walletsList = (user.linkedAccounts || [])
-      .filter(acc => acc.type === 'wallet')
-      .map(acc => (acc as any).address?.toLowerCase());
+      .filter((acc) => isWalletAccount(acc) && acc.type === "wallet")
+      .map((acc) => getAccountAddress(acc))
+      .filter((addr): addr is string => typeof addr === "string");
 
     if (connectedEOA) walletsList.push(connectedEOA.toLowerCase());
     if (user.wallet?.address) walletsList.push(user.wallet.address.toLowerCase());

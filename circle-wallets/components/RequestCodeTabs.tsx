@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import type { SyntaxHighlighterProps } from "react-syntax-highlighter";
+import { vs, vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { CopyCodeButton } from "./CopyCodeButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
 
 interface RequestCodeTabsProps {
   bashCode: string;
@@ -12,6 +15,15 @@ interface RequestCodeTabsProps {
 
 export function RequestCodeTabs({ bashCode }: RequestCodeTabsProps) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://local.mechapay.com";
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = !mounted || resolvedTheme === "dark";
+  const highlightStyle = (isDark ? vscDarkPlus : vs) as any;
 
   // Substitute the base URL into the raw bash code to fix the original cURL tab as well
   const runtimeBashCode = bashCode.replace(/https:\/\/pay\.mechapay\.com/g, baseUrl);
@@ -148,15 +160,27 @@ ${headerLines}
 
   const renderHighlight = (code: string, lang: string, titleLabel: string) => (
     <div className="relative group rounded-xl overflow-hidden my-4 border border-border shadow-sm">
-      <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800 text-zinc-400 text-xs font-mono uppercase tracking-wider">
+      <div className={cn(
+        "flex items-center justify-between px-4 py-2 border-b text-xs font-mono uppercase tracking-wider transition-colors duration-200",
+        isDark
+          ? "bg-zinc-900 border-zinc-800 text-zinc-400"
+          : "bg-zinc-100 border-zinc-200 text-zinc-600"
+      )}>
         <span>{titleLabel}</span>
         <CopyCodeButton text={code} />
       </div>
       <SyntaxHighlighter
-        style={vscDarkPlus as any}
+        style={highlightStyle}
         language={lang}
         PreTag="div"
-        customStyle={{ margin: 0, padding: "1.25rem", background: "#09090b", fontSize: "0.875rem", lineHeight: "1.5" }}
+        customStyle={{
+          margin: 0,
+          padding: "1.25rem",
+          background: isDark ? "#09090b" : "#fbfbfb",
+          fontSize: "0.875rem",
+          lineHeight: "1.5",
+          transition: "background 0.2s ease",
+        }}
       >
         {code}
       </SyntaxHighlighter>

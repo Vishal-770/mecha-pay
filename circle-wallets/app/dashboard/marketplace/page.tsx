@@ -46,6 +46,15 @@ type PlanRecord = {
 
 type SortKey = "latest" | "priceLow" | "priceHigh" | "subscribers";
 
+type UserSubscription = {
+  active: boolean;
+  planId: string;
+};
+
+function isSortKey(value: string | null): value is SortKey {
+  return value === "latest" || value === "priceLow" || value === "priceHigh" || value === "subscribers";
+}
+
 function humanDuration(secondsValue: string) {
   const seconds = Number(secondsValue);
   const days = Math.floor(seconds / 86400);
@@ -185,8 +194,9 @@ export default function MarketplacePage() {
       try {
         const res = await fetch(`/api/subscription/list?subscriber=${wallet.address}`);
         if (!res.ok) return;
-        const data = await res.json();
-        setUserSubs(data.subscriptions?.filter((s:any) => s.active).map((s:any) => s.planId) || []);
+        const data = (await res.json()) as { subscriptions?: UserSubscription[] };
+        const active = data.subscriptions?.filter((s) => s.active).map((s) => s.planId) ?? [];
+        setUserSubs(active);
       } catch (err) {
         console.error("Failed to load user subscriptions", err);
       }
@@ -283,7 +293,7 @@ export default function MarketplacePage() {
           <Field>
             <Label className="pl-1">Sort Indices</Label>
           </Field>
-          <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+          <Select value={sortBy} onValueChange={(value) => { if (isSortKey(value)) setSortBy(value); }}>
             <SelectTrigger className="w-[200px] h-11 bg-muted/20 border-border/80 rounded-xl font-bold text-sm">
               <SelectValue placeholder="Sort Indices" />
             </SelectTrigger>

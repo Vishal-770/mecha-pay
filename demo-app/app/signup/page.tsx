@@ -66,9 +66,10 @@ export default function SignUpPage() {
           },
         }
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsLoading(false);
-      setError(err?.message || "An unexpected error occurred.");
+      const message = err instanceof Error ? err.message : "An unexpected error occurred.";
+      setError(message);
     }
   };
 

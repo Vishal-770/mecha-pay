@@ -1,17 +1,33 @@
+"use client";
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeSlug from "rehype-slug";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import type { SyntaxHighlighterProps } from "react-syntax-highlighter";
+import { vs, vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { CopyCodeButton } from "./CopyCodeButton";
 import { RequestCodeTabs } from "./RequestCodeTabs";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface MarkdownRendererProps {
   content: string;
 }
 
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = !mounted || resolvedTheme === "dark";
+  const highlightStyle = (isDark ? vscDarkPlus : vs) as any;
+
   return (
     <article className="prose prose-zinc dark:prose-invert max-w-none 
       prose-headings:scroll-m-20
@@ -32,6 +48,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, rehypeSlug]}
         components={{
+          pre: ({ children }) => <>{children}</>,
           // For blockquotes containing [!IMPORTANT] GitHub alerts
           blockquote: ({ node, children, ...props }) => {
             const rawText = String(children);
@@ -93,20 +110,26 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
             return (
               <div className="relative group rounded-xl overflow-hidden my-6 border border-border shadow-sm">
-                <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800 text-zinc-400 text-xs font-mono uppercase tracking-wider">
+                <div className={cn(
+                  "flex items-center justify-between px-4 py-2 border-b text-xs font-mono uppercase tracking-wider transition-colors duration-200",
+                  isDark
+                    ? "bg-zinc-900 border-zinc-800 text-zinc-400"
+                    : "bg-zinc-100 border-zinc-200 text-zinc-600"
+                )}>
                   <span>{match[1]}</span>
                   <CopyCodeButton text={rawCode} />
                 </div>
                 <SyntaxHighlighter
-                  style={vscDarkPlus as any}
+                  style={highlightStyle}
                   language={match[1]}
                   PreTag="div"
                   customStyle={{
                     margin: 0,
                     padding: "1.25rem",
-                    background: "#09090b", // standard zinc-950
+                    background: isDark ? "#09090b" : "#fbfbfb",
                     fontSize: "0.875rem",
                     lineHeight: "1.5",
+                    transition: "background 0.2s ease",
                   }}
                   {...props}
                 >

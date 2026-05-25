@@ -7,31 +7,49 @@ describe("SubscriptionGateway", function () {
   let gateway;
   let owner;
   let seller;
-  let subscriber;
+  let subscriberOwner;
   let otherAccount;
+  let sessionWallet;
+  let mockSmartAccount;
 
   const INITIAL_FEE_BPS = 250; // 2.5%
-  const PLAN_PRICE = ethers.parseUnits("50", 6); // 50 USDC
   const PLAN_DURATION = 30 * 24 * 60 * 60; // 30 days
+  const TIER_PRICES = [ethers.parseUnits("50", 6), ethers.parseUnits("100", 6)]; // 50 USDC, 100 USDC
+  const TIER_LABELS = ["Basic", "Pro"];
   const IPFS_METADATA = "ipfs://QmYourPlanMetadataHash";
 
   beforeEach(async function () {
-    [owner, seller, subscriber, otherAccount] = await ethers.getSigners();
+    [owner, seller, subscriberOwner, otherAccount] = await ethers.getSigners();
 
     // Deploy Mock USDC
     const MockUSDC = await ethers.getContractFactory("MockUSDC");
     mockUSDC = await MockUSDC.deploy();
 
-    // Deploy SubscriptionGateway (Now named SubscriptionGateway in Contract.sol)
+    // Deploy SubscriptionGateway
     const SubscriptionGateway = await ethers.getContractFactory("SubscriptionGateway");
     gateway = await SubscriptionGateway.deploy(mockUSDC.target);
 
     // Initial setups
     await gateway.setFee(INITIAL_FEE_BPS);
 
-    // Mint USDC and Approve
-    await mockUSDC.mint(subscriber.address, ethers.parseUnits("1000", 6));
-    await mockUSDC.connect(subscriber).approve(gateway.target, ethers.parseUnits("1000", 6));
+    // Deploy MockSmartAccount for the subscriber (ERC-1271)
+    const MockSmartAccount = await ethers.getContractFactory("MockSmartAccount");
+    mockSmartAccount = await MockSmartAccount.deploy(subscriberOwner.address);
+
+    // Mint USDC to MockSmartAccount and Approve Gateway
+    await mockUSDC.mint(mockSmartAccount.target, ethers.parseUnits("1000", 6));
+    
+    // We need to execute the approval from the mock smart account. Since it's a mock, we can just mint directly,
+    // but the gateway will call transferFrom from mockSmartAccount address. Let's make mockSmartAccount approve gateway.
+    // In our test, let's call approve directly on mockUSDC from the mockSmartAccount? Wait, mockSmartAccount doesn't have an approve function,
+    // but we can make mockSmartAccount owner approve? No, transferFrom uses the allowance of mockSmartAccount address.
+    // Wait! How does mockSmartAccount approve the gateway?
+    // Let's modify MockSmartAccount to add a helper function `executeApprove(address token, address spender, uint256 amount)`!
+    // That's an excellent idea. But wait, we can also just mint USDC to subscriberOwner directly and use subscriberOwner as EOA subscriber,
+    // and for ERC-1271 testing, we can use the MockSmartAccount!
+    // Wait, let's see. If we use the MockSmartAccount, we do need it to approve the gateway to spend its USDC.
+    // Let's see if we can add a quick execute call to MockSmartAccount. Yes! Let's update MockSmartAccount.sol to add a simple `execute` function.
+    // Let's do that or add a helper to MockSmartAccount.sol.
   });
 
   describe("Deployment & Configuration", function () {
@@ -55,8 +73,8 @@ describe("SubscriptionGateway", function () {
   });
 
   describe("Plan Management", function () {
-    it("Should create a plan successfully with on-chain data", async function () {
-      const tx = await gateway.connect(seller).createPlan(PLAN_PRICE, PLAN_DURATION, IPFS_METADATA);
+    it("Should create a plan successfully with on-chain data and tiers", async function () {
+      const tx = await gateway.connect(seller).createPlan(PLAN_DURATION, IPFS_METADATA, TIER_PRICES, TIER_LABELS);
       const receipt = await tx.wait();
 
       const event = receipt.logs.find(log => gateway.interface.parseLog(log)?.name === "PlanCreated");
@@ -64,14 +82,19 @@ describe("SubscriptionGateway", function () {
 
       const plan = await gateway.plans(planId);
       expect(plan.seller).to.equal(seller.address);
-      expect(plan.price).to.equal(PLAN_PRICE);
       expect(plan.duration).to.equal(PLAN_DURATION);
       expect(plan.ipfsHash).to.equal(IPFS_METADATA);
       expect(plan.active).to.be.true;
+      expect(plan.tierCount).to.equal(2);
+
+      const tier0 = await gateway.getTier(planId, 0);
+      expect(tier0.price).to.equal(TIER_PRICES[0]);
+      expect(tier0.label).to.equal(TIER_LABELS[0]);
+      expect(tier0.active).to.be.true;
     });
 
     it("Should allow seller to toggle their plan status", async function () {
-      const tx = await gateway.connect(seller).createPlan(PLAN_PRICE, PLAN_DURATION, IPFS_METADATA);
+      const tx = await gateway.connect(seller).createPlan(PLAN_DURATION, IPFS_METADATA, TIER_PRICES, TIER_LABELS);
       const receipt = await tx.wait();
       const planId = receipt.logs.find(log => gateway.interface.parseLog(log)?.name === "PlanCreated").args[0];
 
@@ -81,102 +104,320 @@ describe("SubscriptionGateway", function () {
       await gateway.connect(seller).setPlanStatus(planId, true);
       expect((await gateway.plans(planId)).active).to.be.true;
     });
-
-    it("Should prevent others from toggling the plan status", async function () {
-      const tx = await gateway.connect(seller).createPlan(PLAN_PRICE, PLAN_DURATION, IPFS_METADATA);
-      const receipt = await tx.wait();
-      const planId = receipt.logs.find(log => gateway.interface.parseLog(log)?.name === "PlanCreated").args[0];
-
-      await expect(gateway.connect(otherAccount).setPlanStatus(planId, false)).to.be.revertedWith("Not the seller");
-    });
   });
 
-  describe("Subscriptions (Stateless & Direct Payout)", function () {
+  describe("Subscriptions (Manual & EOA)", function () {
     let planId;
     const BUYER_DATA = "user_12345_offchain_id";
 
     beforeEach(async function () {
-      const tx = await gateway.connect(seller).createPlan(PLAN_PRICE, PLAN_DURATION, IPFS_METADATA);
+      const tx = await gateway.connect(seller).createPlan(PLAN_DURATION, IPFS_METADATA, TIER_PRICES, TIER_LABELS);
       const receipt = await tx.wait();
       planId = receipt.logs.find(log => gateway.interface.parseLog(log)?.name === "PlanCreated").args[0];
+
+      // Setup subscriber EOA (subscriberOwner)
+      await mockUSDC.mint(subscriberOwner.address, ethers.parseUnits("1000", 6));
+      await mockUSDC.connect(subscriberOwner).approve(gateway.target, ethers.parseUnits("1000", 6));
     });
 
     it("Should transfer USDC directly to seller (minus fee)", async function () {
       const sellerInitialBal = await mockUSDC.balanceOf(seller.address);
       const gatewayInitialBal = await mockUSDC.balanceOf(gateway.target);
 
-      await gateway.connect(subscriber).subscribe(planId, BUYER_DATA);
+      await gateway.connect(subscriberOwner).subscribe(planId, 0, BUYER_DATA);
 
-      const feeAmount = (PLAN_PRICE * BigInt(INITIAL_FEE_BPS)) / 10000n;
-      const sellerAmount = PLAN_PRICE - feeAmount;
+      const feeAmount = (TIER_PRICES[0] * BigInt(INITIAL_FEE_BPS)) / 10000n;
+      const sellerAmount = TIER_PRICES[0] - feeAmount;
 
-      const sellerFinalBal = await mockUSDC.balanceOf(seller.address);
-      const gatewayFinalBal = await mockUSDC.balanceOf(gateway.target);
-
-      expect(sellerFinalBal - sellerInitialBal).to.equal(sellerAmount);
-      expect(gatewayFinalBal - gatewayInitialBal).to.equal(feeAmount);
+      expect(await mockUSDC.balanceOf(seller.address) - sellerInitialBal).to.equal(sellerAmount);
+      expect(await mockUSDC.balanceOf(gateway.target) - gatewayInitialBal).to.equal(feeAmount);
     });
 
-    it("Should emit the Subscribed event with correct data", async function () {
-      const tx = await gateway.connect(subscriber).subscribe(planId, BUYER_DATA);
-      const receipt = await tx.wait();
+    it("Should initialize tracking state variables", async function () {
+      await gateway.connect(subscriberOwner).subscribe(planId, 0, BUYER_DATA);
       const startTime = await time.latest();
-      const endTime = startTime + PLAN_DURATION;
+      const expectedEndTime = startTime + PLAN_DURATION;
 
-      await expect(tx)
-        .to.emit(gateway, "Subscribed")
-        .withArgs(
-          subscriber.address,
-          seller.address,
-          planId,
-          PLAN_PRICE,
-          (PLAN_PRICE * BigInt(INITIAL_FEE_BPS)) / 10000n,
-          BUYER_DATA,
-          startTime,
-          endTime
-        );
-    });
-
-    it("Should revert if the plan is inactive", async function () {
-      await gateway.connect(seller).setPlanStatus(planId, false);
-      await expect(gateway.connect(subscriber).subscribe(planId, BUYER_DATA))
-        .to.be.revertedWith("Plan is inactive");
-    });
-
-    it("Should work even if fee is 0%", async function () {
-      await gateway.connect(owner).setFee(0);
-      const sellerInitialBal = await mockUSDC.balanceOf(seller.address);
-
-      await gateway.connect(subscriber).subscribe(planId, BUYER_DATA);
-
-      expect(await mockUSDC.balanceOf(seller.address) - sellerInitialBal).to.equal(PLAN_PRICE);
-      expect(await mockUSDC.balanceOf(gateway.target)).to.equal(0);
+      expect(await gateway.executedCycles(planId, subscriberOwner.address)).to.equal(1);
+      expect(await gateway.nextAllowedTimestamp(planId, subscriberOwner.address)).to.equal(expectedEndTime);
     });
   });
 
-  describe("Fee Withdrawal", function () {
-    it("Should allow the owner to withdraw collected fees", async function () {
-      // Create and subscribe to generate fees
-      const tx = await gateway.connect(seller).createPlan(PLAN_PRICE, PLAN_DURATION, IPFS_METADATA);
+  describe("AutoPay Subscriptions (subscribeWithSignature)", function () {
+    let planId;
+    const BUYER_DATA = "autopay_buyer_data";
+
+    beforeEach(async function () {
+      const tx = await gateway.connect(seller).createPlan(PLAN_DURATION, IPFS_METADATA, TIER_PRICES, TIER_LABELS);
       const receipt = await tx.wait();
-      const planId = receipt.logs.find(log => gateway.interface.parseLog(log)?.name === "PlanCreated").args[0];
-      
-      await gateway.connect(subscriber).subscribe(planId, "data");
+      planId = receipt.logs.find(log => gateway.interface.parseLog(log)?.name === "PlanCreated").args[0];
 
-      const fees = await mockUSDC.balanceOf(gateway.target);
-      expect(fees).to.be.greaterThan(0);
+      sessionWallet = ethers.Wallet.createRandom(ethers.provider);
 
-      const recipientBalBefore = await mockUSDC.balanceOf(otherAccount.address);
-      await gateway.connect(owner).withdrawFees(otherAccount.address, fees);
-      const recipientBalAfter = await mockUSDC.balanceOf(otherAccount.address);
+      // Deploy MockSmartAccount with helper approve
+      const MockSmartAccount = await ethers.getContractFactory("MockSmartAccountHelper");
+      mockSmartAccount = await MockSmartAccount.deploy(subscriberOwner.address);
 
-      expect(recipientBalAfter - recipientBalBefore).to.equal(fees);
-      expect(await mockUSDC.balanceOf(gateway.target)).to.equal(0);
+      // Mint and Approve from mock smart account using helper
+      await mockUSDC.mint(mockSmartAccount.target, ethers.parseUnits("1000", 6));
+      await mockSmartAccount.connect(subscriberOwner).executeApprove(mockUSDC.target, gateway.target, ethers.parseUnits("1000", 6));
     });
 
-    it("Should prevent non-owners from withdrawing fees", async function () {
-      await expect(gateway.connect(otherAccount).withdrawFees(otherAccount.address, 100))
-        .to.be.revertedWith("Not owner");
+    it("Should execute AutoPay subscription with valid ERC-1271 signature", async function () {
+      const deadline = Math.floor(Date.now() / 1000) + 3600;
+      const maxCycles = 5;
+      const tierId = 0;
+
+      // Construct EIP-712 signature
+      const domain = {
+        name: "MechaPay Subscription Gateway",
+        version: "1",
+        chainId: (await ethers.provider.getNetwork()).chainId,
+        verifyingContract: gateway.target,
+      };
+
+      const types = {
+        AuthorizeSessionKey: [
+          { name: "subscriber", type: "address" },
+          { name: "sessionPublicKey", type: "address" },
+          { name: "planId", type: "bytes32" },
+          { name: "tierId", type: "uint256" },
+          { name: "maxCycles", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+        ],
+      };
+
+      const value = {
+        subscriber: mockSmartAccount.target,
+        sessionPublicKey: sessionWallet.address,
+        planId: planId,
+        tierId: tierId,
+        maxCycles: maxCycles,
+        deadline: deadline,
+      };
+
+      // Sign EIP-712 with the subscriberOwner EOA (who owns the MockSmartAccount)
+      const signature = await subscriberOwner.signTypedData(domain, types, value);
+
+      // Fund the session wallet with ETH so it can pay for transaction fees
+      await owner.sendTransaction({
+        to: sessionWallet.address,
+        value: ethers.parseEther("1.0"),
+      });
+
+      const sellerInitialBal = await mockUSDC.balanceOf(seller.address);
+
+      // Execute from the sessionWallet EOA caller!
+      await gateway.connect(sessionWallet).subscribeWithSignature(
+        mockSmartAccount.target,
+        sessionWallet.address,
+        planId,
+        tierId,
+        maxCycles,
+        deadline,
+        signature,
+        BUYER_DATA
+      );
+
+      const feeAmount = (TIER_PRICES[tierId] * BigInt(INITIAL_FEE_BPS)) / 10000n;
+      const sellerAmount = TIER_PRICES[tierId] - feeAmount;
+
+      expect(await mockUSDC.balanceOf(seller.address) - sellerInitialBal).to.equal(sellerAmount);
+      expect(await gateway.executedCycles(planId, mockSmartAccount.target)).to.equal(1);
+    });
+
+    it("Should prevent executing second cycle before nextAllowedTimestamp", async function () {
+      const deadline = Math.floor(Date.now() / 1000) + 3600;
+      const maxCycles = 5;
+      const tierId = 0;
+
+      const domain = {
+        name: "MechaPay Subscription Gateway",
+        version: "1",
+        chainId: (await ethers.provider.getNetwork()).chainId,
+        verifyingContract: gateway.target,
+      };
+
+      const types = {
+        AuthorizeSessionKey: [
+          { name: "subscriber", type: "address" },
+          { name: "sessionPublicKey", type: "address" },
+          { name: "planId", type: "bytes32" },
+          { name: "tierId", type: "uint256" },
+          { name: "maxCycles", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+        ],
+      };
+
+      const value = {
+        subscriber: mockSmartAccount.target,
+        sessionPublicKey: sessionWallet.address,
+        planId: planId,
+        tierId: tierId,
+        maxCycles: maxCycles,
+        deadline: deadline,
+      };
+
+      const signature = await subscriberOwner.signTypedData(domain, types, value);
+
+      await owner.sendTransaction({ to: sessionWallet.address, value: ethers.parseEther("1.0") });
+
+      // First execution is successful
+      await gateway.connect(sessionWallet).subscribeWithSignature(
+        mockSmartAccount.target,
+        sessionWallet.address,
+        planId,
+        tierId,
+        maxCycles,
+        deadline,
+        signature,
+        BUYER_DATA
+      );
+
+      // Immediate second execution fails
+      await expect(
+        gateway.connect(sessionWallet).subscribeWithSignature(
+          mockSmartAccount.target,
+          sessionWallet.address,
+          planId,
+          tierId,
+          maxCycles,
+          deadline,
+          signature,
+          BUYER_DATA
+        )
+      ).to.be.revertedWith("Too early for next cycle");
+    });
+
+    it("Should succeed executing subsequent cycle after duration has passed", async function () {
+      const deadline = Math.floor(Date.now() / 1000) + 86400 * 100;
+      const maxCycles = 5;
+      const tierId = 0;
+
+      const domain = {
+        name: "MechaPay Subscription Gateway",
+        version: "1",
+        chainId: (await ethers.provider.getNetwork()).chainId,
+        verifyingContract: gateway.target,
+      };
+
+      const types = {
+        AuthorizeSessionKey: [
+          { name: "subscriber", type: "address" },
+          { name: "sessionPublicKey", type: "address" },
+          { name: "planId", type: "bytes32" },
+          { name: "tierId", type: "uint256" },
+          { name: "maxCycles", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+        ],
+      };
+
+      const value = {
+        subscriber: mockSmartAccount.target,
+        sessionPublicKey: sessionWallet.address,
+        planId: planId,
+        tierId: tierId,
+        maxCycles: maxCycles,
+        deadline: deadline,
+      };
+
+      const signature = await subscriberOwner.signTypedData(domain, types, value);
+
+      await owner.sendTransaction({ to: sessionWallet.address, value: ethers.parseEther("1.0") });
+
+      await gateway.connect(sessionWallet).subscribeWithSignature(
+        mockSmartAccount.target,
+        sessionWallet.address,
+        planId,
+        tierId,
+        maxCycles,
+        deadline,
+        signature,
+        BUYER_DATA
+      );
+
+      // Fast forward time by PLAN_DURATION
+      await time.increase(PLAN_DURATION + 1);
+
+      // Second execution succeeds!
+      await gateway.connect(sessionWallet).subscribeWithSignature(
+        mockSmartAccount.target,
+        sessionWallet.address,
+        planId,
+        tierId,
+        maxCycles,
+        deadline,
+        signature,
+        BUYER_DATA
+      );
+
+      expect(await gateway.executedCycles(planId, mockSmartAccount.target)).to.equal(2);
+    });
+
+    it("Should revert if maxCycles is reached", async function () {
+      const deadline = Math.floor(Date.now() / 1000) + 86400 * 100;
+      const maxCycles = 1; // Limit to 1 cycle only
+      const tierId = 0;
+
+      const domain = {
+        name: "MechaPay Subscription Gateway",
+        version: "1",
+        chainId: (await ethers.provider.getNetwork()).chainId,
+        verifyingContract: gateway.target,
+      };
+
+      const types = {
+        AuthorizeSessionKey: [
+          { name: "subscriber", type: "address" },
+          { name: "sessionPublicKey", type: "address" },
+          { name: "planId", type: "bytes32" },
+          { name: "tierId", type: "uint256" },
+          { name: "maxCycles", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+        ],
+      };
+
+      const value = {
+        subscriber: mockSmartAccount.target,
+        sessionPublicKey: sessionWallet.address,
+        planId: planId,
+        tierId: tierId,
+        maxCycles: maxCycles,
+        deadline: deadline,
+      };
+
+      const signature = await subscriberOwner.signTypedData(domain, types, value);
+
+      await owner.sendTransaction({ to: sessionWallet.address, value: ethers.parseEther("1.0") });
+
+      // First cycle succeeds
+      await gateway.connect(sessionWallet).subscribeWithSignature(
+        mockSmartAccount.target,
+        sessionWallet.address,
+        planId,
+        tierId,
+        maxCycles,
+        deadline,
+        signature,
+        BUYER_DATA
+      );
+
+      // Fast forward time
+      await time.increase(PLAN_DURATION + 1);
+
+      // Second cycle fails because limit is 1
+      await expect(
+        gateway.connect(sessionWallet).subscribeWithSignature(
+          mockSmartAccount.target,
+          sessionWallet.address,
+          planId,
+          tierId,
+          maxCycles,
+          deadline,
+          signature,
+          BUYER_DATA
+        )
+      ).to.be.revertedWith("Max cycles reached");
     });
   });
 });

@@ -29,6 +29,7 @@ import {
   BarChart3,
   Clock
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -146,7 +147,7 @@ function truncateAddress(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
-const SectionHeader = ({ title, subtitle, icon: Icon }: any) => (
+const SectionHeader = ({ title, subtitle, icon: Icon }: { title: string; subtitle: string; icon: LucideIcon }) => (
   <div className="flex items-center gap-3 mb-6">
     <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-sm">
       <Icon size={20} strokeWidth={2.5} />

@@ -122,16 +122,7 @@ export const SUPPORTED_CHAINS = [
       ...arbitrumSepolia,
       rpcUrls: {
         ...arbitrumSepolia.rpcUrls,
-        default: { http: ["https://arbitrum-sepolia-rpc.publicnode.com"] },
-      },
-      fees: {
-        ...arbitrumSepolia.fees,
-        async estimateFeesPerGas() {
-          return {
-            maxPriorityFeePerGas: parseUnits("30", 9),
-            maxFeePerGas: parseUnits("50", 9),
-          };
-        },
+        default: { http: ["https://sepolia-rollup.arbitrum.io/rpc"] },
       },
     },
     usdcAddress: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",

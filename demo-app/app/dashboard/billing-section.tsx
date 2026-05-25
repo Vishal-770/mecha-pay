@@ -2,10 +2,12 @@
 
 import { MechaProvider, MechaPricingTable } from "mechapay-react";
 
-const PLAN_ID = process.env.NEXT_PUBLIC_MECHA_PLAN_ID || "0xb074b0822015c916dd232e7f6e7cfd051ecfde5628a14cdb8b2f4050e40a6d1c";
-const API_KEY = process.env.NEXT_PUBLIC_MECHA_API_KEY || "mp_live_36f153484685fdbfa522125830e99f792c726c21ee61a95c";
+const PLAN_ID = process.env.NEXT_PUBLIC_MECHA_PLAN_ID || "";
+const API_KEY = process.env.NEXT_PUBLIC_MECHA_API_KEY || "";
 
 export function BillingSection({ userId }: { userId: string }) {
+  type PlanLike = { name?: string };
+
   const cleanAppearance = {
     theme: "dark" as const,
     variables: {
@@ -18,7 +20,7 @@ export function BillingSection({ userId }: { userId: string }) {
     }
   };
 
-  const customRenderHeader = (plan: any) => (
+  const customRenderHeader = (plan: PlanLike) => (
     <div className="text-center mb-10">
       <h2 className="text-3xl font-extrabold text-foreground tracking-tight sm:text-4xl bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent">
         {plan.name && !plan.name.startsWith("0x") ? plan.name : "Protocol Subscriptions"}
@@ -38,7 +40,7 @@ export function BillingSection({ userId }: { userId: string }) {
           recommendedTierId="1"
           appearance={cleanAppearance}
           classNames={{
-            card: "border border-border bg-card/30 backdrop-blur-sm shadow-xl p-8 rounded-2xl hover:border-border/60 transition-all",
+            card: "bg-muted/20 backdrop-blur-sm rounded-2xl p-8 hover:bg-muted/30 transition-all",
             button: "bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md py-3 cursor-pointer",
             tierLabel: "text-foreground font-black tracking-tight",
             priceAmount: "text-foreground font-extrabold tracking-tight",

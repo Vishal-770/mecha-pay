@@ -22,7 +22,7 @@ import { SUBSCRIPTION_GATEWAY_ADDRESS, normalizeIpfsUri } from "@/lib/subscripti
 type EditPlanDialogProps = {
   planId: string;
   durationSeconds: number;
-  metadata: any;
+  metadata: EditPlanMetadata;
   onSuccess?: () => void;
 };
 
@@ -36,6 +36,12 @@ type TierState = {
   price: string;
   features: FeatureState[];
 };
+
+type EditPlanMetadata = {
+  name?: string;
+  brand?: { name?: string; website?: string };
+  tiers?: TierState[];
+} | null;
 
 export function EditPlanDialog({ planId, durationSeconds, metadata, onSuccess }: EditPlanDialogProps) {
   const { executeTransaction } = useCircleSDK();

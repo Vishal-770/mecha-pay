@@ -183,8 +183,9 @@ export const useMecha = (planId: string, userId?: string) => {
         } else {
           setSubscription(s => ({ ...s, status: "NONE", tierIds: [], loading: false }));
         }
-      } catch (err: any) {
-        setSubscription(s => ({ ...s, loading: false, error: err.message }));
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        setSubscription(s => ({ ...s, loading: false, error: message }));
       }
     };
 
@@ -327,8 +328,12 @@ export const MechaPricingTable = ({
         const data = await res.json();
         if (!res.ok) throw { message: data.error || "Plan load failed", code: res.status.toString() };
         setPlan(data.plan);
-      } catch (err: any) {
-        setError({ message: err.message, code: err.code || "FETCH_ERROR" });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        const code = err && typeof err === "object" && "code" in err && typeof err.code === "string"
+          ? err.code
+          : "FETCH_ERROR";
+        setError({ message, code });
       } finally {
         setLoading(false);
       }

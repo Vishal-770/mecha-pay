@@ -520,7 +520,7 @@ export default function LandingPage() {
                 <Link href="https://mecha-pay.vercel.app/docs" target="_blank" className="text-zinc-400 text-sm font-medium hover:text-[#ffffff] hover:translate-x-1 transition-all">Documentation</Link>
                 <Link href="https://github.com/Vishal-770/mecha-pay" target="_blank" className="text-zinc-400 text-sm font-medium hover:text-[#ffffff] hover:translate-x-1 transition-all">GitHub</Link>
                 <Link href="https://testnet.arcscan.net" target="_blank" className="text-zinc-400 text-sm font-medium hover:text-[#ffffff] hover:translate-x-1 transition-all">ArcScan</Link>
-                <Link href="https://testnet.arcscan.net/address/0x2BC2f391fca4144f708eEa918d94348684Bdb544" target="_blank" className="text-zinc-400 text-sm font-medium hover:text-[#ffffff] hover:translate-x-1 transition-all">Contract</Link>
+                <Link href="https://testnet.arcscan.app/address/0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2" target="_blank" className="text-zinc-400 text-sm font-medium hover:text-[#ffffff] hover:translate-x-1 transition-all">Contract</Link>
               </div>
             </div>
           </div>

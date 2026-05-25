@@ -42,9 +42,11 @@ import {
   Layers,
   Search
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { EditPlanDialog } from "./EditPlanDialog";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 
 type BuyerRow = {
   id: string;
@@ -140,7 +142,7 @@ function truncateAddress(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
-const SectionHeader = ({ title, subtitle, icon: Icon }: any) => (
+const SectionHeader = ({ title, subtitle, icon: Icon }: { title: string; subtitle: string; icon: LucideIcon }) => (
   <div className="flex items-center gap-3 mb-4">
     <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center text-foreground/70 border border-border/30">
       <Icon size={15} strokeWidth={2} />
@@ -165,8 +167,16 @@ export default function MyPlanDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [toggling, setToggling] = useState(false);
+  const [activeTab, setActiveTab] = useState<"embed" | "hook">("embed");
   
   const { executeTransaction } = useCircleSDK();
+
+  const effectiveFeePct = useMemo(() => {
+    if (!data) return 2.5;
+    const gross = Number(data.analytics.grossEarnings);
+    if (gross <= 0) return 2.5;
+    return (Number(data.analytics.feeCollected) / gross) * 100;
+  }, [data?.analytics.grossEarnings, data?.analytics.feeCollected]);
 
   const handleToggleStatus = async () => {
     if (!data?.plan || !wallet?.address) return;
@@ -254,6 +264,89 @@ export default function MyPlanDetailPage() {
         revenueNum: Number(formatUnits(d.revenue, 6))
     }));
   }, [data?.chartData]);
+
+  const embedMarkdown = useMemo(() => {
+    const planId = data?.plan?.planId ?? "0x…";
+    return `
+Install the package and drop in the dynamic pricing table integrated with Plan ID \`${planId}\`.
+
+\`\`\`bash
+npm install mechapay-react
+\`\`\`
+
+\`\`\`tsx
+// App.tsx
+import { MechaProvider } from 'mechapay-react';
+
+function App() {
+  return (
+    <MechaProvider apiKey="mp_live_your_api_key" portalUrl="https://mecha-pay.vercel.app">
+      <YourPricingPage />
+    </MechaProvider>
+  );
+}
+
+// PricingPage.tsx
+import { MechaPricingTable } from 'mechapay-react';
+
+function YourPricingPage() {
+  return (
+    <MechaPricingTable 
+      planId="${planId}" 
+      userId="user_unique_id"
+      appearance={{
+        theme: "dark",
+        variables: {
+          colorPrimary: "#00FFC2",
+          borderRadius: "16px"
+        }
+      }}
+    />
+  );
+}
+\`\`\`
+`;
+  }, [data?.plan?.planId]);
+
+  const hookMarkdown = useMemo(() => {
+    const planId = data?.plan?.planId ?? "0x…";
+    return `
+Inspect active subscriptions, resolve active feature/perk permissions, and local cycle expiration dates on-chain.
+
+\`\`\`tsx
+import { useMecha, useMechaPerks } from 'mechapay-react';
+
+function PremiumFeature() {
+  const PLAN_ID = "${planId}";
+  const USER_ID = "user_unique_id";
+
+  const { status, remainingSeconds, loading: statusLoading } = useMecha(PLAN_ID, USER_ID);
+  const { perks, loading: perksLoading } = useMechaPerks(PLAN_ID, USER_ID);
+
+  if (statusLoading || perksLoading) return <div>Checking status...</div>;
+  if (status !== 'ACTIVE') return <div>Access Denied - Please Subscribe</div>;
+
+  return (
+    <div>
+      <h3>Access Unlocked!</h3>
+      <p>Your subscription expires in {Math.floor(remainingSeconds / 86400)} days.</p>
+      
+      {/* Dynamic Perks */}
+      <ul>
+        {perks?.map(tier => (
+          <li key={tier.tierId}>
+            <strong>{tier.tierName} Features:</strong>
+            {tier.features.map(f => f.title).join(', ')}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+\`\`\`
+`;
+  }, [data?.plan?.planId]);
+
 
   if (loading) {
     return (
@@ -367,7 +460,7 @@ export default function MyPlanDetailPage() {
         {[
           { label: "Gross Volume", value: `$${Number(formatUnits(plan.totalGrossVolume, 6)).toLocaleString()}`, sub: `${plan.subscriptionCount} subscriptions`, icon: Activity },
           { label: "Active Members", value: `${metrics.activeBuyerCount}`, sub: `${analytics.activeRate.toFixed(1)}% renewal rate`, icon: Users },
-          { label: "Net Earnings", value: `$${Number(formatUnits(analytics.netEarnings, 6)).toLocaleString()}`, sub: "After 5% protocol fee", icon: Target },
+          { label: "Net Earnings", value: `$${Number(formatUnits(analytics.netEarnings, 6)).toLocaleString()}`, sub: `After ${effectiveFeePct.toFixed(1)}% protocol fee`, icon: Target },
           { label: "Avg. Ticket", value: `$${Number(formatUnits(analytics.avgRevenuePerSubscriber, 6)).toFixed(2)}`, sub: "Per active cycle", icon: TrendingUp },
         ].map((stat, i) => (
           <div key={i} className="flex flex-col gap-1.5 px-6 py-6 first:pl-0 last:pr-0">
@@ -392,25 +485,46 @@ export default function MyPlanDetailPage() {
         </div>
 
         {isV11 ? (
-          <div className="grid gap-px md:grid-cols-3 bg-border/10 rounded-lg overflow-hidden">
-            {plan.metadata?.tiers?.map((tier: any, i: number) => (
-              <div key={i} className="bg-background p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-medium text-muted-foreground">Tier {i + 1}</span>
-                  <span className="text-[10px] text-muted-foreground/50">USDC / cycle</span>
-                </div>
+          <div className={cn(
+            "grid gap-6 w-full",
+            (plan.metadata?.tiers?.length ?? 0) === 1
+              ? "grid-cols-1 max-w-md mx-auto"
+              : (plan.metadata?.tiers?.length ?? 0) === 2
+                ? "grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto"
+                : (plan.metadata?.tiers?.length ?? 0) === 3
+                  ? "grid-cols-1 md:grid-cols-3"
+                  : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          )}>
+            {plan.metadata?.tiers?.map((tier, i) => (
+              <div key={i} className="relative flex flex-col justify-between bg-muted/20 text-card-foreground rounded-2xl p-6 hover:bg-muted/30 transition-all duration-300 group">
                 <div>
-                  <p className="text-lg font-semibold tracking-tight">{tier.label}</p>
-                  <p className="text-2xl font-bold text-foreground mt-0.5">${tier.price}</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md">
+                      Tier {i + 1}
+                    </span>
+                    <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
+                      USDC / cycle
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xl font-bold tracking-tight text-foreground">{tier.label}</p>
+                    <p className="text-4xl font-extrabold text-foreground mt-2 flex items-baseline gap-1">
+                      ${tier.price}
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">/ cycle</span>
+                    </p>
+                  </div>
                 </div>
+
                 {tier.features?.length > 0 && (
-                  <div className="space-y-2 pt-2 border-t border-border/10">
-                    {tier.features.map((f: any, fi: number) => (
-                      <div key={fi} className="flex gap-2">
-                        <CheckCircle2 size={11} className="text-emerald-500 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-[11px] font-medium text-foreground leading-tight">{f.title}</p>
-                          <p className="text-[10px] text-muted-foreground leading-snug mt-0.5 line-clamp-2">{f.description}</p>
+                  <div className="mt-6 pt-1 space-y-3 flex-grow">
+                    {tier.features.map((f, fi) => (
+                      <div key={fi} className="flex gap-3 items-start p-2 rounded-xl hover:bg-muted/30 transition-all duration-200">
+                        <div className="h-5 w-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <CheckCircle2 size={12} className="text-emerald-500" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-semibold text-foreground leading-tight">{f.title}</p>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">{f.description}</p>
                         </div>
                       </div>
                     ))}
@@ -488,14 +602,10 @@ export default function MyPlanDetailPage() {
                   </a>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/10">
+              <div className="pt-3 border-t border-border/10">
                 <div>
                   <p className="text-[10px] text-muted-foreground/60 mb-0.5">Settlement Fee</p>
-                  <p className="text-sm font-medium">5% (500 BPS)</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground/60 mb-0.5">Version</p>
-                  <p className="text-sm font-medium">v1.1.0</p>
+                  <p className="text-sm font-medium">{effectiveFeePct.toFixed(1)}% ({(effectiveFeePct * 100).toFixed(0)} BPS)</p>
                 </div>
               </div>
             </div>
@@ -600,6 +710,53 @@ export default function MyPlanDetailPage() {
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* ── SDK Integration Code Section ─────────────────────────── */}
+      <div className="py-12 border-t border-border/15 space-y-6">
+        <div>
+          <p className="text-sm font-semibold text-foreground">SDK Integration</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Embed pricing table and gate features with the React SDK</p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex border-b border-border/10 text-xs">
+            <button
+              onClick={() => setActiveTab("embed")}
+              className={cn(
+                "pb-2.5 px-4 font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer",
+                activeTab === "embed"
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              1. Embed Table
+            </button>
+            <button
+              onClick={() => setActiveTab("hook")}
+              className={cn(
+                "pb-2.5 px-4 font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer",
+                activeTab === "hook"
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              2. Gate Features
+            </button>
+          </div>
+
+          <div className="bg-card text-card-foreground rounded-xl overflow-hidden p-6 relative">
+            <div className="absolute right-4 top-4 z-10">
+              <span className="text-[9px] font-black bg-primary/10 border border-primary/20 text-primary uppercase tracking-widest px-2 py-0.5 rounded-lg">
+                React SDK
+              </span>
+            </div>
+            
+            <div className="mt-2">
+              <MarkdownRenderer content={activeTab === "embed" ? embedMarkdown : hookMarkdown} />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="pt-20 text-center opacity-20">

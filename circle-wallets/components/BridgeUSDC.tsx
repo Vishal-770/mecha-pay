@@ -153,22 +153,7 @@ const SUPPORTED_CHAINS = [
   {
     name: "Arbitrum Sepolia",
     identifier: "Arbitrum_Sepolia" as BridgeChain,
-    viemChain: {
-      ...arbitrumSepolia,
-      fees: {
-        ...arbitrumSepolia.fees,
-        /**
-         * Arbitrum Sepolia requires a minimum priority fee of 25 Gwei.
-         * We override the estimation to ensure transactions are accepted by the network.
-         */
-        async estimateFeesPerGas() {
-          return {
-            maxPriorityFeePerGas: parseUnits("30", 9), // 30 Gwei for buffer
-            maxFeePerGas: parseUnits("50", 9), // 50 Gwei for buffer
-          };
-        },
-      },
-    },
+    viemChain: arbitrumSepolia,
     usdcAddress: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
     decimals: 6,
     symbol: "Arb",

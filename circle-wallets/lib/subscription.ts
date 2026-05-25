@@ -3,7 +3,7 @@ export const ARC_BLOCKCHAIN = "ARC-TESTNET";
 
 export const SUBSCRIPTION_GATEWAY_ADDRESS =
   process.env.NEXT_PUBLIC_SUBSCRIPTION_GATEWAY_ADDRESS ??
-  "0x47d2b46680B3A1dE1bC7B96D02B752cA28b9B72D";
+  "0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2";
 
 export const ARC_USDC_ADDRESS =
   process.env.NEXT_PUBLIC_ARC_USDC_ADDRESS ??
@@ -56,6 +56,10 @@ function isNonEmptyString(value: unknown) {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object";
+}
+
 export function validateSubscriptionMetadata(input: unknown): {
   valid: boolean;
   errors: string[];
@@ -104,8 +108,8 @@ export function validateSubscriptionMetadata(input: unknown): {
       errors.push("tiers must have at least one item");
     } else {
       for (let i = 0; i < value.tiers.length; i++) {
-        const tier = value.tiers[i] as any;
-        if (!tier || typeof tier !== "object") {
+        const tier = value.tiers[i];
+        if (!isRecord(tier)) {
           errors.push(`tiers[${i}] must be an object`);
           continue;
         }
@@ -117,7 +121,7 @@ export function validateSubscriptionMetadata(input: unknown): {
         } else {
           for (let j = 0; j < tier.features.length; j++) {
             const feature = tier.features[j];
-            if (!feature || typeof feature !== "object" || !isNonEmptyString(feature.title) || !isNonEmptyString(feature.description)) {
+            if (!isRecord(feature) || !isNonEmptyString(feature.title) || !isNonEmptyString(feature.description)) {
               errors.push(`tiers[${i}].features[${j}] must have title and description`);
             }
           }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { ChangeEvent, InputHTMLAttributes } from "react";
 import { useCircleSDK } from "@/context/CircleSDKContext";
 import { useDashboardContext } from "@/app/dashboard/_components/DashboardShell";
 import {
@@ -10,23 +11,24 @@ import {
   SUBSCRIPTION_GATEWAY_ADDRESS,
   normalizeIpfsUri,
 } from "@/lib/subscription";
-import { encodeFunctionData, parseUnits } from "viem";
+import { createPublicClient, encodeFunctionData, http, parseUnits } from "viem";
+import { arcTestnet } from "@/lib/bridge_config";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { 
-  Plus, 
-  Trash2, 
-  Globe, 
-  Tag, 
-  Clock, 
-  DollarSign, 
+import type { LucideIcon } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Globe,
+  Tag,
+  Clock,
+  DollarSign,
   CheckCircle2,
   AlertCircle,
-  Zap,
   ArrowRight,
   ArrowLeft,
   Layers,
-  LayoutGrid
+  LayoutGrid,
 } from "lucide-react";
 
 // --- Simple Professional Components ---
@@ -43,7 +45,12 @@ const CompactHeader = ({ title, subtitle }: { title: string; subtitle: string })
   </div>
 );
 
-const ProInput = ({ label, icon: Icon, ...props }: any) => (
+type ProInputProps = InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  icon?: LucideIcon;
+};
+
+const ProInput = ({ label, icon: Icon, className, ...inputProps }: ProInputProps) => (
   <div className="group relative flex flex-col gap-1.5 w-full">
     <div className="flex items-center gap-2 px-1 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/90 group-focus-within:text-primary transition-colors">
       {Icon && <Icon size={10} className="stroke-[3px]" />}
@@ -51,10 +58,10 @@ const ProInput = ({ label, icon: Icon, ...props }: any) => (
     </div>
     <div className="relative">
       <input
-        {...props}
+        {...inputProps}
         className={cn(
           "w-full bg-muted/20 border border-border/80 rounded-xl px-4 py-3.5 text-sm font-bold outline-none transition-all placeholder:text-muted-foreground/90 focus:border-primary/50 focus:bg-background",
-          props.className
+          className
         )}
       />
     </div>
@@ -144,14 +151,14 @@ const TierConfig = ({
           label="Tier Label"
           icon={Tag}
           value={tier.label}
-          onChange={(e: any) => onUpdate({ ...tier, label: e.target.value })}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => onUpdate({ ...tier, label: e.target.value })}
           placeholder="e.g. Basic, Pro, Enterprise"
         />
         <ProInput
           label="Price (USDC)"
           icon={DollarSign}
           value={tier.price}
-          onChange={(e: any) => onUpdate({ ...tier, price: e.target.value })}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => onUpdate({ ...tier, price: e.target.value })}
           placeholder="0.00"
           type="number"
         />
@@ -211,6 +218,7 @@ export default function CreatePlanPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
 
   const preview = useMemo<SubscriptionUiMetadata>(
     () => ({
@@ -274,6 +282,9 @@ export default function CreatePlanPage() {
 
       const prices = tiers.map((t) => parseUnits(t.price, 6));
       const labels = tiers.map((t) => t.label);
+      if (prices.some((p) => p <= 0n)) {
+        throw new Error("Each tier price must be greater than 0");
+      }
       const durationSeconds = durationNum * 24 * 60 * 60;
       const normalizedIpfs = normalizeIpfsUri(uploadJson.ipfsHash);
 
@@ -298,7 +309,7 @@ export default function CreatePlanPage() {
         args: [durationSeconds, normalizedIpfs, prices, labels],
       });
 
-      await executeTransaction(
+      const { txHash: tx } = await executeTransaction(
         [
           {
             to: SUBSCRIPTION_GATEWAY_ADDRESS as `0x${string}`,
@@ -309,7 +320,19 @@ export default function CreatePlanPage() {
         "Arc_Testnet" // chainKey
       );
 
-      setSuccess("Advanced tiered plan deployment initiated.");
+      const publicClient = createPublicClient({
+        chain: arcTestnet,
+        transport: http(arcTestnet.rpcUrls.default.http[0]),
+      });
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash: tx,
+      });
+      if (receipt.status !== "success") {
+        throw new Error("Transaction reverted while creating the plan");
+      }
+
+      setTxHash(tx);
+      setSuccess("Plan created on-chain. Indexing can take 1-2 minutes.");
       setBrandName("");
       setBrandWebsite("");
       setTiers([{ price: "10", label: "Basic", features: [{ title: "", description: "" }] }]);
@@ -355,7 +378,19 @@ export default function CreatePlanPage() {
       {success && (
         <div className="mb-8 flex items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-[10px] font-black uppercase tracking-widest text-emerald-500">
           <CheckCircle2 size={14} className="stroke-[3px]" />
-          {success}
+          <div className="flex flex-wrap items-center gap-2">
+            <span>{success}</span>
+            {txHash && (
+              <a
+                href={`https://testnet.arcscan.app/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2"
+              >
+                View Tx
+              </a>
+            )}
+          </div>
         </div>
       )}
 
@@ -373,14 +408,14 @@ export default function CreatePlanPage() {
                   label="Merchant Brand"
                   icon={Globe}
                   value={brandName}
-                  onChange={(e: any) => setBrandName(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setBrandName(e.target.value)}
                   placeholder="The Collective"
                 />
                 <ProInput
                   label="Primary Gateway (Website)"
                   icon={Globe}
                   value={brandWebsite}
-                  onChange={(e: any) => setBrandWebsite(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setBrandWebsite(e.target.value)}
                   placeholder="https://yourapp.link"
                 />
               </div>
@@ -388,7 +423,7 @@ export default function CreatePlanPage() {
                 label="Billing Cycle (Days)"
                 icon={Clock}
                 value={planDurationDays}
-                onChange={(e: any) => setPlanDurationDays(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPlanDurationDays(e.target.value)}
                 placeholder="30"
                 type="number"
               />

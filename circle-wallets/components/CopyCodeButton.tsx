@@ -19,7 +19,7 @@ export function CopyCodeButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors z-10"
+      className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors z-10"
       aria-label="Copy code to clipboard"
     >
       {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}

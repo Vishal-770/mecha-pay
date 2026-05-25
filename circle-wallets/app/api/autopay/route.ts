@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     const { db } = await connectToDatabase();
 
-    const updateDoc: any = {
+    const updateDoc: { $set: Record<string, unknown>; $setOnInsert: Record<string, unknown> } = {
       $set: {
         enabled: enabled ?? true,
         tierId: tierId,

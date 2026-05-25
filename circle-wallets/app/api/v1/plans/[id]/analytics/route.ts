@@ -94,9 +94,10 @@ export async function GET(
         tiers: plan.tiers,
       }
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[GET /api/v1/plans/[id]/analytics]", err);
-    if (err.message === "Invalid or revoked API key") {
+    const message = err instanceof Error ? err.message : "";
+    if (message === "Invalid or revoked API key") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

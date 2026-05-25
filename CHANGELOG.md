@@ -99,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - ESLint and Prettier configuration
 
 ### Deployed
-- **Contract Address**: `0x2BC2f391fca4144f708eEa918d94348684Bdb544`
+- **Contract Address**: `0x094D8A6dEDF25ee8ccFe093ac48514B83b7e73D2`
 - **Network**: Arc Testnet (Chain ID: 5042002)
 - **Frontend**: Deployed to Vercel
 

@@ -96,12 +96,12 @@ export async function POST(req: NextRequest) {
           "depositForBurn(uint256,uint32,bytes32,address,bytes32,uint256,uint32)",
         abiParameters: [
           amountIn6,
-          destinationDomain,
+          destinationDomain.toString(),
           recipientBytes32,
           ARC_USDC_ADDRESS,
           CCTP_DESTINATION_CALLER_ZERO,
           CCTP_DEFAULT_MAX_FEE,
-          CCTP_MIN_FINALITY_THRESHOLD,
+          CCTP_MIN_FINALITY_THRESHOLD.toString(),
         ],
         fee: BRIDGE_FEE,
       });

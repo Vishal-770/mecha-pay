@@ -79,7 +79,7 @@ export function handleCorsPreFlight(options: CorsOptions = {}): NextResponse {
  * Wrap a response with CORS headers
  */
 export function corsResponse(
-  data: any,
+  data: unknown,
   init?: ResponseInit,
   options?: CorsOptions
 ): NextResponse {

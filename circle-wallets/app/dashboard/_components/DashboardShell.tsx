@@ -35,6 +35,7 @@ import {
   ExternalLink,
   RefreshCw
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { ModeToggle } from "@/components/ModeToggle";
 import { cn } from "@/lib/utils";
 import { createPublicClient, http, formatUnits } from "viem";
@@ -93,7 +94,7 @@ const erc20Abi = [
   },
 ] as const;
 
-function NavLink({ href, label, icon: Icon, onClick }: { href: string; label: string; icon: any; onClick?: () => void }) {
+function NavLink({ href, label, icon: Icon, onClick }: { href: string; label: string; icon: LucideIcon; onClick?: () => void }) {
   const pathname = usePathname();
   const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
@@ -115,14 +116,12 @@ function NavLink({ href, label, icon: Icon, onClick }: { href: string; label: st
   );
 }
 
+import { useQuery } from "@tanstack/react-query";
+
 export function DashboardShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { session, isReady, clearSession } = useCircleSDK();
-  const [wallet, setWallet] = useState<WalletInfo | null>(null);
-  const [userCircleId, setUserCircleId] = useState<string | null>(null);
-  const [allWallets, setAllWallets] = useState<WalletInfo[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedChain, setSelectedChain] = useState<string>("Arc_Testnet");
 
@@ -204,35 +203,39 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     return newBalancesMap;
   }, []);
 
+  // Use TanStack Query to auto-poll balances in the background
+  const { data: balancesMap = {}, isLoading: queryLoading, refetch: refetchBalancesMap } = useQuery<Record<string, TokenBalance[]>>({
+    queryKey: ["walletBalances", session?.walletAddress, selectedChain],
+    queryFn: () => fetchBalances(selectedChain, session!.walletAddress),
+    enabled: isReady && !!session?.walletAddress,
+    refetchInterval: 3000, // Poll every 3 seconds
+    refetchOnWindowFocus: true,
+  });
+
+  const allWallets = useMemo(() => {
+    if (!session?.walletAddress) return [];
+    return SUPPORTED_CHAINS.map((chain) => {
+      const blockchainStr = chain.identifier === "Arc_Testnet" ? "ARC-TESTNET" : chain.identifier.replace("_", "-").toUpperCase();
+      return {
+        id: chain.identifier,
+        address: session.walletAddress,
+        blockchain: blockchainStr,
+        accountType: "SCA",
+        tokenBalances: balancesMap[chain.identifier] || [],
+      };
+    });
+  }, [session?.walletAddress, balancesMap]);
+
+  const wallet = useMemo(() => {
+    return allWallets.find((w) => w.id === selectedChain) || allWallets[0] || null;
+  }, [allWallets, selectedChain]);
+
+  const userCircleId = session?.username || null;
+  const sessionUserToken = session?.username || "";
+
   const refreshWallets = useCallback(async () => {
-    if (!session?.walletAddress) return;
-
-    setLoading(true);
-    try {
-      const balances = await fetchBalances(selectedChain, session.walletAddress);
-      
-      const walletsList = SUPPORTED_CHAINS.map((chain) => {
-        const blockchainStr = chain.identifier === "Arc_Testnet" ? "ARC-TESTNET" : chain.identifier.replace("_", "-").toUpperCase();
-        return {
-          id: chain.identifier,
-          address: session.walletAddress,
-          blockchain: blockchainStr,
-          accountType: "SCA",
-          tokenBalances: balances[chain.identifier] || [],
-        };
-      });
-
-      setAllWallets(walletsList);
-      setUserCircleId(session.username);
-
-      const activeWallet = walletsList.find((w) => w.id === selectedChain) || walletsList[0] || null;
-      setWallet(activeWallet);
-    } catch (err) {
-      console.error("Failed to refresh wallets on-chain:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [session, selectedChain, fetchBalances]);
+    await refetchBalancesMap();
+  }, [refetchBalancesMap]);
 
   const selectWallet = useCallback((walletId: string) => {
     setSelectedChain(walletId);
@@ -242,10 +245,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     if (!isReady) return;
     if (!session) {
       router.replace("/login");
-      return;
     }
-    void refreshWallets();
-  }, [isReady, session, selectedChain, router]);
+  }, [isReady, session, router]);
 
   // Close sidebar on route change
   useEffect(() => {
@@ -255,14 +256,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const value = useMemo<DashboardContextValue | null>(() => {
     if (!session?.walletAddress) return null;
     return {
-      sessionUserToken: session.username,
+      sessionUserToken,
       wallet,
       allWallets,
       userCircleId,
       refreshWallets,
       selectWallet,
     };
-  }, [session?.walletAddress, wallet, allWallets, userCircleId, refreshWallets, selectWallet]);
+  }, [session?.walletAddress, sessionUserToken, wallet, allWallets, userCircleId, refreshWallets, selectWallet]);
+
+  const loading = !isReady || (queryLoading && !wallet);
 
   if (!isReady || !session || loading || !value) {
     return (
