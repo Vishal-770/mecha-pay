@@ -494,49 +494,23 @@ export const MechaPricingTable = ({
           .mecha-pulse-el {
             animation: mecha-pulse 1.8s ease-in-out infinite;
             background-color: var(--mecha-skeleton-bg);
-            border-radius: 4px;
+            border-radius: var(--mecha-radius);
           }
         ` }} />
 
         {!hideBranding && (
-          <div style={{ textAlign: 'center', marginBottom: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
             <div style={{ height: '36px', width: '220px' }} className="mecha-pulse-el" />
             <div style={{ height: '18px', width: '340px' }} className="mecha-pulse-el" />
           </div>
         )}
 
-        <div className={cn("mecha-grid-cls", classNames?.grid)}>
-          {[1, 2, 3].map((cardId) => (
-            <div
-              key={cardId}
-              className={cn("mecha-card-cls", classNames?.card)}
-              style={{
-                minHeight: '440px',
-                border: `1px solid var(--mecha-border-color)`,
-                ...appearance?.elements?.card
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <div style={{ height: '24px', width: '100px', marginBottom: '16px' }} className="mecha-pulse-el" />
-                <div style={{ height: '40px', width: '150px', marginBottom: '32px' }} className="mecha-pulse-el" />
-
-                <div className={cn(classNames?.featuresList)} style={{ borderTop: `1px solid var(--mecha-border-color)`, paddingTop: '24px' }}>
-                  {[1, 2, 3].map((featId) => (
-                    <div key={featId} style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
-                      <div style={{ height: '12px', width: '12px', borderRadius: '50%' }} className="mecha-pulse-el" />
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <div style={{ height: '12px', width: '75%' }} className="mecha-pulse-el" />
-                        <div style={{ height: '10px', width: '45%' }} className="mecha-pulse-el" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ height: '48px', width: '100%', marginTop: '32px' }} className="mecha-pulse-el" />
-            </div>
-          ))}
-        </div>
+        <div style={{
+          maxWidth: '800px',
+          height: '140px',
+          margin: '0 auto',
+          boxSizing: 'border-box'
+        }} className="mecha-pulse-el" />
       </div>
     );
   }
