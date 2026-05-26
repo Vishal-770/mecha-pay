@@ -27,10 +27,7 @@ import { MechaProvider } from 'mechapay-react';
 
 function App() {
   return (
-    <MechaProvider 
-      apiKey="mp_live_your_api_key_here" 
-      portalUrl="https://mecha-pay.vercel.app"
-    >
+    <MechaProvider apiKey="mp_live_your_api_key_here">
       <MyRoutes />
     </MechaProvider>
   );

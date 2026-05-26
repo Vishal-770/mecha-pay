@@ -280,7 +280,7 @@ import { MechaProvider } from 'mechapay-react';
 
 function App() {
   return (
-    <MechaProvider apiKey="mp_live_your_api_key" portalUrl="https://mecha-pay.vercel.app">
+    <MechaProvider apiKey="mp_live_your_api_key">
       <YourPricingPage />
     </MechaProvider>
   );

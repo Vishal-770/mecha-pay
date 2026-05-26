@@ -111,7 +111,7 @@ function DashboardContentInner({ userId }: { userId: string }) {
 
 export function DashboardContent({ userId }: { userId: string }) {
   return (
-    <MechaProvider apiKey={API_KEY} portalUrl="https://mecha-pay.vercel.app">
+    <MechaProvider apiKey={API_KEY}>
       <DashboardContentInner userId={userId} />
     </MechaProvider>
   );

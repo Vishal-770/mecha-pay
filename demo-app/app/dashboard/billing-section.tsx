@@ -32,7 +32,7 @@ export function BillingSection({ userId }: { userId: string }) {
   );
 
   return (
-    <MechaProvider apiKey={API_KEY} portalUrl="https://mecha-pay.vercel.app">
+    <MechaProvider apiKey={API_KEY}>
       <div className="w-full max-w-4xl mx-auto py-12 px-4 sm:px-6">
         <MechaPricingTable
           planId={PLAN_ID}

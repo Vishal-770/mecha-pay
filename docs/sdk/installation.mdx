@@ -24,10 +24,7 @@ import { MechaProvider } from 'mechapay-react';
 
 function App() {
   return (
-    <MechaProvider 
-      apiKey="mp_live_..." 
-      portalUrl="https://mecha-pay.vercel.app"
-    >
+    <MechaProvider apiKey="mp_live_...">
       <MyRoutes />
     </MechaProvider>
   );
@@ -39,6 +36,5 @@ function App() {
 | Prop | Type | Description |
 | :--- | :--- | :--- |
 | `apiKey` | `string` | **Required.** Your Mecha Pay Developer API Key. |
-| `portalUrl` | `string` | **Optional.** The URL of the Mecha Pay dashboard (e.g., `https://mecha-pay.vercel.app`). |
 
 *(Note: Custom appearance, styling, and dark/light mode configurations are passed directly to individual components like `MechaPricingTable` via their `appearance` prop).*

@@ -61,7 +61,6 @@ export interface MechaAppearance {
 
 export interface MechaConfig {
   apiKey: string;
-  portalUrl?: string;
 }
 
 export interface MechaLabels {
@@ -91,13 +90,16 @@ export interface MechaClassNames {
 }
 
 /* ── Context ── */
-interface MechaContextType extends MechaConfig {
+interface MechaContextType {
+  apiKey: string;
+  portalUrl: string;
   isConfigured: boolean;
 }
 
 const MechaContext = createContext<MechaContextType | null>(null);
 
-export interface MechaProviderProps extends MechaConfig {
+export interface MechaProviderProps {
+  apiKey: string;
   children: React.ReactNode;
 }
 
@@ -107,14 +109,14 @@ export interface MechaProviderProps extends MechaConfig {
  */
 export const MechaProvider = ({ 
   apiKey, 
-  portalUrl = "https://mecha-pay.vercel.app", 
   children 
 }: MechaProviderProps) => {
+  const portalUrl = "https://mecha-pay.vercel.app";
   const value = useMemo(() => ({
     apiKey,
     portalUrl,
     isConfigured: !!apiKey
-  }), [apiKey, portalUrl]);
+  }), [apiKey]);
 
   return <MechaContext.Provider value={value}>{children}</MechaContext.Provider>;
 };
