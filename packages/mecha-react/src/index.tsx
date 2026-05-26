@@ -315,6 +315,22 @@ export const MechaPricingTable = ({
     font: appearance?.variables?.fontFamily || "Inter, sans-serif",
     padding: appearance?.variables?.cardPadding || "40px",
     gap: appearance?.variables?.gap || "24px",
+    
+    // Premium Design Tokens
+    hoverBorder: isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.18)",
+    activeBorder: isDark ? "#ffffff" : "#000000",
+    recommendedBorder: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)",
+    btnText: isDark ? "#09090b" : "#ffffff",
+    btnHoverBg: isDark ? "#e4e4e7" : "#27272a",
+    btnActiveBorder: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)",
+    btnActiveText: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+    badgeBgRec: isDark ? "#18181b" : "#f4f4f5",
+    badgeBorderRec: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+    badgeTextRec: isDark ? "#f4f4f5" : "#18181b",
+    badgeBgActive: isDark ? "#ffffff" : "#000000",
+    badgeTextActive: isDark ? "#09090b" : "#ffffff",
+    skeletonBg: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+    errorBg: isDark ? "#09090b" : "#fbfbfb",
   };
 
   useEffect(() => {
@@ -358,35 +374,7 @@ export const MechaPricingTable = ({
     return activeTiers.length > 0 ? Math.max(...activeTiers.map(t => Number(t.price))) : 0;
   }, [isActiveSub, plan, subscription.tierIds]);
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px', fontFamily: tokens.font, color: tokens.text }}>
-        <Loader2 style={{ animation: 'spin 1s linear infinite', opacity: 0.5 }} />
-        <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }` }} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ 
-        padding: '24px', 
-        border: '1px solid #27272a', 
-        borderRadius: tokens.radius, 
-        textAlign: 'center', 
-        maxWidth: '400px', 
-        margin: '40px auto', 
-        fontFamily: tokens.font, 
-        backgroundColor: '#09090b' 
-      }}>
-        <AlertCircle size={20} style={{ color: '#f4f4f5', margin: '0 auto 12px' }} />
-        <p style={{ fontSize: '10px', fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>{error.code || "Error"}</p>
-        <p style={{ fontSize: '12px', color: '#f4f4f5', marginTop: '8px', fontWeight: 500, lineHeight: 1.5, margin: '8px 0 0 0' }}>{error.message}</p>
-      </div>
-    );
-  }
-
-  // Inject beautiful layout CSS styles (Enterprise Monochrome Flat Classes)
+  // Scoped Custom Styles (Monochrome Flat Premium Theme)
   const customStyles = `
     .mecha-container-cls {
       display: flex;
@@ -415,17 +403,16 @@ export const MechaPricingTable = ({
       padding: var(--mecha-padding);
       position: relative;
       box-sizing: border-box;
-      transition: border-color 0.15s ease;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
     }
     .mecha-card-cls:hover {
-      border-color: #3f3f46;
+      border-color: var(--mecha-hover-border);
     }
     .mecha-card-rec-cls {
-      border-color: #52525b;
+      border-color: var(--mecha-rec-border);
     }
     .mecha-card-active-cls {
-      border-color: #ffffff;
-      background-color: var(--mecha-card-active-bg);
+      border-color: var(--mecha-active-border);
     }
     .mecha-btn-cls {
       margin-top: 32px;
@@ -443,20 +430,20 @@ export const MechaPricingTable = ({
       gap: 6px;
       cursor: pointer;
       box-sizing: border-box;
-      transition: background-color 0.15s ease, color 0.15s ease;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
     }
     .mecha-btn-active-cls {
       background-color: transparent;
-      color: #a1a1aa;
+      color: var(--mecha-btn-active-text);
       cursor: default;
-      border: 1px solid #27272a;
+      border: 1px solid var(--mecha-btn-active-border);
     }
     .mecha-btn-primary-cls {
       background-color: var(--mecha-primary);
       color: var(--mecha-btn-text-color);
     }
     .mecha-btn-primary-cls:hover {
-      background-color: #e4e4e7;
+      background-color: var(--mecha-btn-hover-bg);
     }
     .mecha-btn-disabled-cls {
       background-color: var(--mecha-border-color);
@@ -476,10 +463,145 @@ export const MechaPricingTable = ({
     "--mecha-radius": tokens.radius,
     "--mecha-padding": tokens.padding,
     "--mecha-gap": tokens.gap,
-    "--mecha-btn-text-color": isDark ? "#09090b" : "#ffffff",
-    "--mecha-card-active-bg": "transparent",
+    "--mecha-btn-text-color": tokens.btnText,
+    "--mecha-btn-hover-bg": tokens.btnHoverBg,
+    "--mecha-hover-border": tokens.hoverBorder,
+    "--mecha-active-border": tokens.activeBorder,
+    "--mecha-rec-border": tokens.recommendedBorder,
+    "--mecha-btn-active-border": tokens.btnActiveBorder,
+    "--mecha-btn-active-text": tokens.btnActiveText,
+    "--mecha-badge-bg-rec": tokens.badgeBgRec,
+    "--mecha-badge-border-rec": tokens.badgeBorderRec,
+    "--mecha-badge-text-rec": tokens.badgeTextRec,
+    "--mecha-badge-bg-active": tokens.badgeBgActive,
+    "--mecha-badge-text-active": tokens.badgeTextActive,
+    "--mecha-skeleton-bg": tokens.skeletonBg,
+    "--mecha-error-bg": tokens.errorBg,
     "--mecha-muted-text": tokens.muted,
   } as React.CSSProperties;
+
+  if (loading) {
+    return (
+      <div 
+        className={cn("mecha-container-cls", className, classNames?.container)} 
+        style={{ fontFamily: tokens.font, color: tokens.text, ...cssVariables, ...style }}
+      >
+        <style dangerouslySetInnerHTML={{ __html: customStyles + `
+          @keyframes mecha-pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+          }
+          .mecha-pulse-el {
+            animation: mecha-pulse 1.8s ease-in-out infinite;
+            background-color: var(--mecha-skeleton-bg);
+            border-radius: 4px;
+          }
+        ` }} />
+
+        {!hideBranding && (
+          <div style={{ textAlign: 'center', marginBottom: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+            <div style={{ height: '36px', width: '220px' }} className="mecha-pulse-el" />
+            <div style={{ height: '18px', width: '340px' }} className="mecha-pulse-el" />
+          </div>
+        )}
+
+        <div className={cn("mecha-grid-cls", classNames?.grid)}>
+          {[1, 2, 3].map((cardId) => (
+            <div
+              key={cardId}
+              className={cn("mecha-card-cls", classNames?.card)}
+              style={{
+                minHeight: '440px',
+                border: `1px solid var(--mecha-border-color)`,
+                ...appearance?.elements?.card
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ height: '24px', width: '100px', marginBottom: '16px' }} className="mecha-pulse-el" />
+                <div style={{ height: '40px', width: '150px', marginBottom: '32px' }} className="mecha-pulse-el" />
+
+                <div className={cn(classNames?.featuresList)} style={{ borderTop: `1px solid var(--mecha-border-color)`, paddingTop: '24px' }}>
+                  {[1, 2, 3].map((featId) => (
+                    <div key={featId} style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
+                      <div style={{ height: '12px', width: '12px', borderRadius: '50%' }} className="mecha-pulse-el" />
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ height: '12px', width: '75%' }} className="mecha-pulse-el" />
+                        <div style={{ height: '10px', width: '45%' }} className="mecha-pulse-el" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ height: '48px', width: '100%', marginTop: '32px' }} className="mecha-pulse-el" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div 
+        className={cn("mecha-container-cls", className, classNames?.container)} 
+        style={{ fontFamily: tokens.font, color: tokens.text, ...cssVariables, ...style }}
+      >
+        <style dangerouslySetInnerHTML={{ __html: customStyles }} />
+        <div style={{ 
+          padding: '40px var(--mecha-padding)', 
+          border: '1px solid var(--mecha-border-color)', 
+          borderRadius: 'var(--mecha-radius)', 
+          textAlign: 'center', 
+          maxWidth: '440px', 
+          margin: '80px auto', 
+          backgroundColor: 'var(--mecha-error-bg)',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            backgroundColor: `${tokens.error}15`,
+            color: tokens.error,
+            marginBottom: '16px'
+          }}>
+            <AlertCircle size={20} />
+          </div>
+          <p style={{ 
+            fontSize: '11px', 
+            fontWeight: 800, 
+            color: tokens.error, 
+            textTransform: 'uppercase', 
+            letterSpacing: '1.5px', 
+            margin: 0 
+          }}>
+            {error.code || "Failed to Load"}
+          </p>
+          <p style={{ 
+            fontSize: '13px', 
+            color: tokens.muted, 
+            marginTop: '8px', 
+            fontWeight: 500, 
+            lineHeight: 1.6, 
+            margin: '8px 0 0 0' 
+          }}>
+            {error.message}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mecha-btn-cls mecha-btn-primary-cls"
+            style={{ marginTop: '24px', height: '40px' }}
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -567,10 +689,10 @@ export const MechaPricingTable = ({
               )}
               style={{
                 border: isThisTierActive 
-                  ? '1px solid #ffffff' 
+                  ? '1px solid var(--mecha-active-border)' 
                   : isRecommended 
-                    ? `1px solid #52525b` 
-                    : `1px solid var(--mecha-border-color)`,
+                    ? '1px solid var(--mecha-rec-border)' 
+                    : '1px solid var(--mecha-border-color)',
                 ...appearance?.elements?.card
               }}
             >
@@ -583,8 +705,8 @@ export const MechaPricingTable = ({
                     top: '-10px', 
                     left: '50%', 
                     transform: 'translateX(-50%)', 
-                    backgroundColor: '#ffffff', 
-                    color: '#09090b', 
+                    backgroundColor: 'var(--mecha-badge-bg-active)', 
+                    color: 'var(--mecha-badge-text-active)', 
                     padding: '3px 12px', 
                     borderRadius: '4px', 
                     fontSize: '9px', 
@@ -594,7 +716,7 @@ export const MechaPricingTable = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
-                    border: '1px solid #ffffff'
+                    border: '1px solid var(--mecha-badge-bg-active)'
                   }}
                 >
                   <Check size={10} style={{ strokeWidth: 3 }} />
@@ -609,15 +731,15 @@ export const MechaPricingTable = ({
                     top: '-10px', 
                     left: '50%', 
                     transform: 'translateX(-50%)', 
-                    backgroundColor: '#18181b', 
-                    color: '#f4f4f5', 
+                    backgroundColor: 'var(--mecha-badge-bg-rec)', 
+                    color: 'var(--mecha-badge-text-rec)', 
                     padding: '3px 12px', 
                     borderRadius: '4px', 
                     fontSize: '9px', 
                     fontWeight: 700, 
                     textTransform: 'uppercase', 
                     letterSpacing: '1px',
-                    border: '1px solid #27272a'
+                    border: '1px solid var(--mecha-badge-border-rec)'
                   }}
                 >
                   Recommended
@@ -648,7 +770,7 @@ export const MechaPricingTable = ({
                   {tier.features.map((f, i) => (
                     <div key={i} className={cn("mecha-feat-item", classNames?.featureItem)} style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'flex-start' }}>
                       <div style={{ marginTop: '4px', flexShrink: 0 }}>
-                        <Check size={12} style={{ color: isThisTierActive ? '#ffffff' : '#71717a' }} />
+                        <Check size={12} style={{ color: isThisTierActive ? 'var(--mecha-active-border)' : 'var(--mecha-muted-text)' }} />
                       </div>
                       <div>
                         <p className={cn(classNames?.featureTitle)} style={{ fontSize: '13.5px', fontWeight: 700, margin: 0, lineHeight: '1.4' }}>
@@ -691,9 +813,9 @@ export const MechaPricingTable = ({
                     classNames?.button
                   )}
                   style={{
-                    backgroundColor: isThisTierActive ? 'transparent' : tokens.primary,
-                    color: isThisTierActive ? '#a1a1aa' : (isDark ? '#09090b' : '#ffffff'),
-                    border: isThisTierActive ? '1px solid #27272a' : 'none',
+                    backgroundColor: isThisTierActive ? 'transparent' : 'var(--mecha-primary)',
+                    color: isThisTierActive ? 'var(--mecha-btn-active-text)' : 'var(--mecha-btn-text-color)',
+                    border: isThisTierActive ? '1px solid var(--mecha-btn-active-border)' : 'none',
                     ...appearance?.elements?.button
                   }}
                 >
