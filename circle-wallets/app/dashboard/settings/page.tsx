@@ -48,12 +48,12 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground mt-1">Configure your developer environment, credentials, and preferences.</p>
       </div>
 
-      {/* Modular Smart Account Credentials Section */}
+      {/* Your Account Section */}
       {session && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Modular Smart Account</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Biometric passkey authentication session details.</p>
+            <h2 className="text-lg font-semibold text-foreground">Your Account</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Your saved login credentials.</p>
           </div>
 
           <div className="divide-y divide-border/30 border-t border-b border-border/30">
@@ -62,7 +62,7 @@ export default function SettingsPage() {
               <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-0.5 max-w-sm">
                   <div className="text-sm font-medium text-foreground">Registered Username</div>
-                  <div className="text-xs text-muted-foreground">The biometric identity name linked with this passkey credential.</div>
+                  <div className="text-xs text-muted-foreground">The username linked to your account.</div>
                 </div>
                 <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
                   <div className="flex items-center gap-2">
@@ -83,8 +83,8 @@ export default function SettingsPage() {
             {session.walletAddress && (
               <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-0.5 max-w-sm">
-                  <div className="text-sm font-medium text-foreground">Smart Wallet Address</div>
-                  <div className="text-xs text-muted-foreground">The public address of your biometric-secured Modular Smart Wallet on Arc.</div>
+                  <div className="text-sm font-medium text-foreground">Wallet Address</div>
+                  <div className="text-xs text-muted-foreground">The address of your secure smart wallet.</div>
                 </div>
                 <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
                   <span className="text-xs font-mono font-medium truncate text-foreground/80">{session.walletAddress}</span>
@@ -102,8 +102,8 @@ export default function SettingsPage() {
             {session.credential?.id && (
               <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-0.5 max-w-sm">
-                  <div className="text-sm font-medium text-foreground">Passkey Credential ID</div>
-                  <div className="text-xs text-muted-foreground">The unique cryptographic WebAuthn credential ID registered to your device.</div>
+                  <div className="text-sm font-medium text-foreground">Security Key ID</div>
+                  <div className="text-xs text-muted-foreground">Your device's saved login key identifier.</div>
                 </div>
                 <div className="flex items-center gap-3 bg-muted/40 px-3 py-2 rounded-lg border border-border/20 max-w-lg w-full justify-between">
                   <span className="text-xs font-mono font-medium truncate text-foreground/80">{session.credential.id}</span>
@@ -121,13 +121,13 @@ export default function SettingsPage() {
             {wallet && (
               <div className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-0.5 max-w-sm">
-                  <div className="text-sm font-medium text-foreground">Wallet Account Type</div>
-                  <div className="text-xs text-muted-foreground">The smart contract capabilities of your active wallet.</div>
+                  <div className="text-sm font-medium text-foreground">Wallet Type</div>
+                  <div className="text-xs text-muted-foreground">The active capabilities of your smart wallet.</div>
                 </div>
                 <div className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-4 py-2 rounded-lg max-w-lg w-full md:w-auto justify-center md:justify-start shrink-0">
                   <ShieldCheck className="h-4 w-4" />
                   <span className="text-xs font-bold uppercase tracking-wider">
-                    {wallet.accountType || "Modular Smart Account (MSCA)"}
+                    {wallet.accountType || "Smart Wallet"}
                   </span>
                 </div>
               </div>
@@ -217,14 +217,14 @@ export default function SettingsPage() {
       {/* Security Actions Section */}
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-semibold text-red-500">Security</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Danger zone operations for your session configuration.</p>
+          <h2 className="text-lg font-semibold text-foreground">Security</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Manage your account access.</p>
         </div>
 
         <div className="py-6 border-t border-b border-border/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-0.5">
-            <div className="text-sm font-medium text-foreground">Sign Out Session</div>
-            <div className="text-xs text-muted-foreground">Instantly invalidate current developer and wallet tokens on this device.</div>
+            <div className="text-sm font-medium text-foreground">Sign Out</div>
+            <div className="text-xs text-muted-foreground">Log out of your current session on this device.</div>
           </div>
           <Button
             variant="ghost"

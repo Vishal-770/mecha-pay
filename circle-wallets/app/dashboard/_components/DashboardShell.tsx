@@ -68,21 +68,49 @@ type DashboardContextValue = {
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);
 
-const navItems = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/wallet", label: "Wallet", icon: Wallet },
-  { href: "/dashboard/smart-bridge", label: "Smart Bridge", icon: Zap },
-  { href: "/dashboard/bridge", label: "Bridge", icon: RefreshCw },
-  { href: "/dashboard/marketplace", label: "Marketplace", icon: ShoppingBag },
-  { href: "/dashboard/my-plans", label: "My Plans", icon: FileText },
-  { href: "/dashboard/plans/create", label: "Create Plan", icon: PlusSquare },
-  { href: "/dashboard/subscriptions", label: "My Subscriptions", icon: Activity },
-  { href: "/dashboard/autopay", label: "AutoPay", icon: RefreshCw },
-  { href: "/dashboard/developer", label: "Developer", icon: Terminal },
-  { href: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },
-  { href: "/docs", label: "Documentation", icon: BookOpen },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+const navGroups = [
+  {
+    label: "Main",
+    items: [
+      { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+      { href: "/dashboard/wallet", label: "Wallet", icon: Wallet },
+      { href: "/dashboard/marketplace", label: "Marketplace", icon: ShoppingBag },
+    ],
+  },
+  {
+    label: "Subscriptions",
+    items: [
+      { href: "/dashboard/my-plans", label: "My Plans", icon: FileText },
+      { href: "/dashboard/plans/create", label: "Create Plan", icon: PlusSquare },
+      { href: "/dashboard/subscriptions", label: "My Subscriptions", icon: Activity },
+      { href: "/dashboard/autopay", label: "Auto-Pay", icon: RefreshCw },
+    ],
+  },
+  {
+    label: "Transfers",
+    items: [
+      { href: "/dashboard/smart-bridge", label: "Smart Transfer", icon: Zap },
+      { href: "/dashboard/bridge", label: "Bridge", icon: RefreshCw },
+    ],
+  },
+  {
+    label: "Developer",
+    items: [
+      { href: "/dashboard/developer", label: "API Keys", icon: Terminal },
+      { href: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },
+      { href: "/docs", label: "Docs", icon: BookOpen },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { href: "/dashboard/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
+
+// Flat list for header label lookup
+const navItems = navGroups.flatMap(g => g.items);
 
 const erc20Abi = [
   {
@@ -269,11 +297,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   if (!isReady || !session || loading || !value) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background gap-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background gap-3">
         <Loader />
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-sm font-black uppercase italic">Initializing Protocol...</p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground font-mono">Mecha Pay Command Center</p>
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-sm font-semibold text-foreground">Loading your wallet…</p>
+          <p className="text-xs text-muted-foreground">Connecting to the network</p>
         </div>
       </div>
     );
@@ -325,42 +353,22 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               </div>
             </div>
 
-            <nav className="flex flex-col gap-1 flex-1">
-              <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Navigation</p>
-              {navItems.map((item) => (
-                <NavLink 
-                  key={item.href} 
-                  href={item.href} 
-                  label={item.label} 
-                  icon={item.icon} 
-                  onClick={() => setIsSidebarOpen(false)}
-                />
+            <nav className="flex flex-col gap-4 flex-1 overflow-y-auto no-scrollbar">
+              {navGroups.map((group) => (
+                <div key={group.label}>
+                  <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 mb-1">{group.label}</p>
+                  {group.items.map((item) => (
+                    <NavLink 
+                      key={item.href} 
+                      href={item.href} 
+                      label={item.label} 
+                      icon={item.icon} 
+                      onClick={() => setIsSidebarOpen(false)}
+                    />
+                  ))}
+                </div>
               ))}
             </nav>
-
-            <div className="mt-auto pt-4 pb-2 border-t border-border/40">
-              {wallet && (
-                <a
-                  href={`https://testnet.arcscan.app/address/${wallet.address}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors group"
-                >
-                  <div className="h-9 w-9 rounded-md bg-muted/40 border border-border/50 text-foreground/70 flex items-center justify-center shrink-0 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 transition-colors">
-                    <Wallet size={16} />
-                  </div>
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                      {wallet.blockchain.replace("-", " ")}
-                    </span>
-                    <span className="text-[11px] font-mono text-muted-foreground truncate">
-                      {wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}
-                    </span>
-                  </div>
-                  <ExternalLink size={14} className="text-muted-foreground/40 group-hover:text-foreground transition-colors" />
-                </a>
-              )}
-            </div>
           </div>
         </aside>
 
@@ -376,17 +384,23 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <div className="flex-1 flex flex-col min-w-0">
           
           {/* Desktop Top Bar */}
-          <header className="hidden lg:flex h-20 items-center justify-between px-10 bg-card/80 backdrop-blur-md border-b border-border sticky top-0 z-20">
-            <h2 className="text-xl font-black uppercase italic tracking-tighter">
+          <header className="hidden lg:flex h-16 items-center justify-between px-8 bg-card/80 backdrop-blur-md border-b border-border sticky top-0 z-20">
+            <h2 className="text-base font-semibold text-foreground">
               {navItems.find(item => item.href === pathname || (item.href !== "/dashboard" && pathname.startsWith(item.href)))?.label || "Overview"}
             </h2>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {wallet && (
-                <div className="flex flex-col items-end px-4 py-2 bg-muted/30 rounded-xl border border-border">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground">Active Wallet</span>
-                  <span className="text-xs font-mono font-bold text-foreground">{wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}</span>
-                </div>
+                <a
+                  href={`https://testnet.arcscan.app/address/${wallet.address}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border hover:bg-muted transition-colors"
+                >
+                  <div className="h-2 w-2 rounded-full bg-primary" />
+                  <span className="text-xs font-mono text-muted-foreground">{wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}</span>
+                  <ExternalLink size={11} className="text-muted-foreground/40" />
+                </a>
               )}
               <Button 
                 variant="ghost" 
@@ -395,9 +409,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   clearSession();
                   router.push("/login");
                 }}
-                className="h-10 w-10 rounded-xl hover:bg-red-500/5 hover:text-red-500 transition-all"
+                className="h-9 w-9 rounded-lg hover:bg-red-500/10 hover:text-red-500 transition-all"
+                title="Sign out"
               >
-                <LogOut size={18} strokeWidth={3} />
+                <LogOut size={16} />
               </Button>
             </div>
           </header>

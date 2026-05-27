@@ -122,18 +122,18 @@ export default function MySubscriptionsPage() {
       ) : notifications.map((notif) => {
         const isActive = notif.type === "STATUS_CHANGE" ? notif.active : true;
         let icon = <Settings className="h-3.5 w-3.5" />;
-        let label = "Protocol Update";
-        let desc = "Plan rules or pricing updated on-chain.";
+        let label = "Plan Update";
+        let desc = "Plan rules or pricing updated.";
 
         if (notif.type === "STATUS_CHANGE") {
           if (isActive) {
             icon = <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
             label = "Activated";
-            desc = "Subscription access privileges established.";
+            desc = "Your subscription is now active.";
           } else {
             icon = <XCircle className="h-3.5 w-3.5 text-muted-foreground/60" />;
             label = "Deactivated";
-            desc = "Billing cycle ended or access revoked.";
+            desc = "Your subscription has ended.";
           }
         }
 
@@ -222,7 +222,7 @@ export default function MySubscriptionsPage() {
               </div>
               <div className="px-6 py-4 border-t border-border/10">
                 <a href={`https://testnet.arcscan.app`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-                  <ShieldCheck className="h-3 w-3" /> Secured by Arc Settlement Layer
+                  <ShieldCheck className="h-3 w-3" /> Secured by Arc Network
                 </a>
               </div>
             </SheetContent>

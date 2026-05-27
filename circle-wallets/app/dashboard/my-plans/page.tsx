@@ -187,7 +187,7 @@ export default function MyPlansPage() {
         <div className="py-8 border-b border-border/15 flex items-center justify-between">
           <div>
             <p className="text-[11px] text-muted-foreground">My Plans</p>
-            <h2 className="text-xl font-semibold tracking-tight mt-0.5">Creator Console</h2>
+            <h2 className="text-xl font-semibold tracking-tight mt-0.5">My Plans</h2>
           </div>
           <Link
             href="/dashboard/plans/create"
@@ -201,16 +201,16 @@ export default function MyPlansPage() {
             <Zap size={20} className="text-muted-foreground/40" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold">No plans deployed yet</p>
+            <p className="text-sm font-semibold">No plans yet</p>
             <p className="text-xs text-muted-foreground max-w-xs">
-              Create your first subscription plan to start accepting recurring USDC payments on ARC.
+              Create your first subscription plan to start accepting recurring USDC payments.
             </p>
           </div>
           <Link
             href="/dashboard/plans/create"
             className={cn(buttonVariants({ size: "sm" }), "h-9 px-5 text-xs font-medium rounded-lg gap-1.5 mt-2")}
           >
-            <Plus size={13} /> Deploy First Plan
+            <Plus size={13} /> Create Your First Plan
           </Link>
         </div>
       </div>
@@ -224,8 +224,8 @@ export default function MyPlansPage() {
       <div className="flex items-start justify-between py-8 border-b border-border/15">
         <div className="space-y-1">
           <p className="text-[11px] text-muted-foreground">My Plans</p>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">Creator Console</h2>
-          <p className="text-[11px] text-muted-foreground">Manage your subscription protocols & view settlement data</p>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">My Plans</h2>
+          <p className="text-xs text-muted-foreground">Manage your subscription plans and track earnings</p>
         </div>
         <Link
           href="/dashboard/plans/create"
@@ -247,13 +247,13 @@ export default function MyPlansPage() {
           {
             label: "Total Volume",
             value: `$${Number(formatUnits(BigInt(data.summary.totalGross), 6)).toLocaleString()}`,
-            sub: "Gross settled",
+            sub: "Gross revenue",
             icon: TrendingUp,
           },
           {
             label: "Net Earnings",
             value: `$${Number(formatUnits(BigInt(data.summary.totalNet), 6)).toLocaleString()}`,
-            sub: "After protocol fees",
+            sub: "After fees",
             icon: Activity,
           },
           {
@@ -310,7 +310,7 @@ export default function MyPlansPage() {
                       ? "bg-emerald-500/10 text-emerald-600"
                       : "bg-muted text-muted-foreground/60"
                   )}>
-                    {plan.active ? "● Live" : "○ Off"}
+                    {plan.active ? "● Active" : "○ Inactive"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2.5 mt-1 text-[11px] text-muted-foreground/60">
@@ -349,7 +349,7 @@ export default function MyPlansPage() {
               {/* Renewal Rate */}
               <div className="text-right w-20 hidden lg:block">
                 <p className="text-sm font-semibold text-foreground">{plan.analysis.repeatBuyerRate.toFixed(1)}%</p>
-                <p className="text-[10px] text-muted-foreground/50 mt-0.5">renewal</p>
+                <p className="text-[10px] text-muted-foreground/50 mt-0.5">repeat</p>
               </div>
 
               {/* Arrow */}

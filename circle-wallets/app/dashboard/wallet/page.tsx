@@ -518,7 +518,7 @@ export default function WalletPage() {
       <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <h3 className="text-base font-semibold text-card-foreground">Send USDC</h3>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          Transfer USDC to any address on ARC Testnet. 1 USDC is reserved for gas.
+          Send USDC to any wallet address. Gas fees are covered.
         </p>
         <div className="mt-5 space-y-4">
           <div>
@@ -705,8 +705,8 @@ export default function WalletPage() {
                             >
                               {isOut ? "↑" : "↓"}
                             </span>
-                            <span className="font-medium text-foreground capitalize">
-                              {tx.transactionType?.toLowerCase() ?? "tx"}
+                            <span className="font-medium text-foreground">
+                              {isOut ? "Sent" : "Received"}
                             </span>
                           </div>
                         </td>

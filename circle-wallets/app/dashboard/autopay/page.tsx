@@ -125,13 +125,13 @@ export default function AutoPayPage() {
     return (
       <div className="w-full py-16 px-6 md:px-12 lg:px-16 space-y-12 animate-pulse">
         <div className="py-6 border-b border-border/20 space-y-3">
-          <Skeleton className="h-4 w-32 bg-muted rounded-none" />
-          <Skeleton className="h-10 w-72 bg-muted rounded-none" />
-          <Skeleton className="h-4 w-full max-w-2xl bg-muted rounded-none" />
+          <Skeleton className="h-4 w-32 bg-muted rounded-lg" />
+          <Skeleton className="h-10 w-72 bg-muted rounded-lg" />
+          <Skeleton className="h-4 w-full max-w-2xl bg-muted rounded-lg" />
         </div>
         <div className="space-y-6">
           {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-24 w-full rounded-none bg-muted/10 border-b border-border/20" />
+            <Skeleton key={i} className="h-24 w-full rounded-lg bg-muted/10 border border-border/20" />
           ))}
         </div>
       </div>
@@ -145,10 +145,10 @@ export default function AutoPayPage() {
           <AlertCircle size={28} />
         </div>
         <div className="space-y-2">
-          <h2 className="text-sm font-bold tracking-wider uppercase text-foreground">Unable to connect to AutoPay</h2>
+          <h2 className="text-sm font-semibold text-foreground">Unable to connect to Auto-Pay</h2>
           <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">{error}</p>
         </div>
-        <Button onClick={() => window.location.reload()} size="sm" variant="outline" className="rounded-none font-bold text-xs h-9 px-4 border-foreground transition-colors">
+        <Button onClick={() => window.location.reload()} size="sm" variant="outline" className="rounded-lg font-semibold text-xs h-9 px-4 border-foreground transition-colors">
           Retry Connection
         </Button>
       </div>
@@ -163,76 +163,76 @@ export default function AutoPayPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-primary">
             <ShieldCheck className="h-4 w-4 text-primary" />
-            <span className="text-[10px] font-mono tracking-widest uppercase font-extrabold">EIP-712 Cryptographic Protocol</span>
+            <span className="text-xs font-semibold tracking-wider uppercase">Secure Auto-Renewal</span>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground uppercase">
-            AutoPay Gateway
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Auto-Pay
           </h1>
-          <p className="text-xs text-muted-foreground max-w-4xl leading-relaxed font-semibold">
-            Pre-authorized off-chain subscription billing gateway.
+          <p className="text-sm text-muted-foreground max-w-4xl leading-relaxed">
+            Automatically renew your subscriptions without manual payments.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button asChild variant="link" size="sm" className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground p-0">
+          <Button asChild variant="link" size="sm" className="text-sm font-semibold text-muted-foreground hover:text-foreground p-0">
             <Link href="/dashboard/subscriptions">
-              Subscriptions [→]
+              Subscriptions →
             </Link>
           </Button>
         </div>
       </div>
 
-      {/* ── Visual Metrics Console (Swiss Monospace Row) ── */}
+      {/* ── Visual Metrics Console ── */}
       <div className="flex flex-wrap gap-x-16 gap-y-6 py-6 border-b border-border/10 text-xs animate-in fade-in duration-300">
         <div className="space-y-1">
-          <span className="text-[9px] font-mono uppercase font-bold tracking-widest text-muted-foreground block">
+          <span className="text-xs font-semibold tracking-wider text-muted-foreground block uppercase">
             Subscribed
           </span>
-          <span className="text-xl font-bold tracking-tight text-foreground font-mono block">
-            {subscriptions.length} <span className="text-xs text-muted-foreground font-normal">Products</span>
+          <span className="text-xl font-bold tracking-tight text-foreground block">
+            {subscriptions.length} <span className="text-xs text-muted-foreground font-normal">Plans</span>
           </span>
         </div>
 
         <div className="space-y-1 border-l border-border/15 pl-12 md:pl-16">
-          <span className="text-[9px] font-mono uppercase font-bold tracking-widest text-muted-foreground block">
-            AutoPay Active
+          <span className="text-xs font-semibold tracking-wider text-muted-foreground block uppercase">
+            Auto-Pay Active
           </span>
-          <span className="text-xl font-bold tracking-tight text-primary font-mono block">
-            {Object.values(autopaySettings).filter(s => s.enabled).length} <span className="text-xs text-muted-foreground font-normal">Secured</span>
-          </span>
-        </div>
-
-        <div className="space-y-1 border-l border-border/15 pl-12 md:pl-16">
-          <span className="text-[9px] font-mono uppercase font-bold tracking-widest text-muted-foreground block">
-            AutoPay Inactive
-          </span>
-          <span className="text-xl font-bold tracking-tight text-muted-foreground font-mono block">
-            {subscriptions.length - Object.values(autopaySettings).filter(s => s.enabled).length} <span className="text-xs text-muted-foreground font-normal">Pending</span>
+          <span className="text-xl font-bold tracking-tight text-primary block">
+            {Object.values(autopaySettings).filter(s => s.enabled).length} <span className="text-xs text-muted-foreground font-normal">Active</span>
           </span>
         </div>
 
         <div className="space-y-1 border-l border-border/15 pl-12 md:pl-16">
-          <span className="text-[9px] font-mono uppercase font-bold tracking-widest text-muted-foreground block">
-            Gas Sponsorship
+          <span className="text-xs font-semibold tracking-wider text-muted-foreground block uppercase">
+            Auto-Pay Inactive
           </span>
-          <span className="text-xl font-bold tracking-tight text-foreground font-mono block">
-            100% <span className="text-xs text-muted-foreground font-normal">Sponsored</span>
+          <span className="text-xl font-bold tracking-tight text-muted-foreground block">
+            {subscriptions.length - Object.values(autopaySettings).filter(s => s.enabled).length} <span className="text-xs text-muted-foreground font-normal">Not set up</span>
+          </span>
+        </div>
+
+        <div className="space-y-1 border-l border-border/15 pl-12 md:pl-16">
+          <span className="text-xs font-semibold tracking-wider text-muted-foreground block uppercase">
+            Transaction Fees
+          </span>
+          <span className="text-xl font-bold tracking-tight text-foreground block">
+            Free <span className="text-xs text-muted-foreground font-normal">Sponsored</span>
           </span>
         </div>
       </div>
 
-      {/* ── Subscriptions Master Grid View (List Rows, No Box Containers) ────────────────── */}
+      {/* ── Subscriptions Master Grid View ────────────────── */}
       {subscriptions.length === 0 ? (
         <div className="py-24 flex flex-col items-center gap-6 text-center">
           <div className="h-12 w-12 flex items-center justify-center text-muted-foreground">
             <HelpCircle size={28} />
           </div>
           <div className="space-y-2">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-foreground">No Subscriptions Found</h3>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed font-medium">
-              AutoPay setups require a corresponding active subscription. Visit the marketplace to subscribe to merchant plans.
+            <h3 className="text-sm font-semibold text-foreground">No Subscriptions Found</h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+              Auto-Pay setups require a corresponding active subscription. Visit the marketplace to subscribe to plans.
             </p>
           </div>
-          <Button asChild variant="outline" className="rounded-none font-bold text-xs shadow-none border-foreground">
+          <Button asChild variant="outline" className="rounded-lg font-semibold text-sm shadow-none border-foreground">
             <Link href="/dashboard/marketplace">Explore Marketplace</Link>
           </Button>
         </div>
@@ -243,7 +243,7 @@ export default function AutoPayPage() {
             const setting = autopaySettings[planIdLower];
             const isEnabled = !!setting?.enabled;
 
-            const planName = sub.metadata?.name ?? sub.metadata?.brand?.name ?? `Product ${sub.plan.id.slice(0, 8)}`;
+            const planName = sub.metadata?.name ?? sub.metadata?.brand?.name ?? `Plan ${sub.plan.id.slice(0, 8)}`;
 
             return (
               <div
@@ -253,27 +253,27 @@ export default function AutoPayPage() {
                 {/* Meta details */}
                 <div className="space-y-1 md:max-w-xs">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-sm font-bold text-foreground uppercase tracking-tight">
+                    <h3 className="text-sm font-semibold text-foreground tracking-tight">
                       {planName}
                     </h3>
                     <span
                       className={cn(
-                        "inline-flex items-center text-[9px] font-mono font-bold uppercase px-2 py-0.5 border tracking-wider rounded-none shrink-0",
+                        "inline-flex items-center text-[10px] font-medium px-2 py-0.5 border rounded-full shrink-0",
                         isEnabled
                           ? "bg-primary/10 text-primary border-primary/20"
                           : "bg-muted text-muted-foreground border-border"
                       )}
                     >
-                      {isEnabled ? "Secured" : "Inactive"}
+                      {isEnabled ? "Active" : "Not set up"}
                     </span>
                   </div>
                 </div>
 
                 {/* Expiration Details */}
-                <div className="text-xs font-mono">
-                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground block mb-1">Next Renewal</span>
-                  <span className="font-bold text-foreground inline-flex items-center gap-1.5">
-                    <Clock size={12} className="text-muted-foreground" />
+                <div className="text-xs">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground block mb-1">Next Renewal</span>
+                  <span className="font-semibold text-foreground inline-flex items-center gap-1.5">
+                    <Clock size={13} className="text-muted-foreground" />
                     {new Date(Number(sub.lastEndTime) * 1000).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
@@ -286,7 +286,7 @@ export default function AutoPayPage() {
                 <div className="shrink-0">
                   <Button
                     onClick={() => router.push(`/dashboard/autopay/${sub.id}`)}
-                    className="h-10 px-5 text-xs font-mono font-bold uppercase tracking-wider rounded-none border border-border bg-transparent text-foreground hover:border-primary hover:text-primary transition-all duration-150 cursor-pointer"
+                    className="h-10 px-5 text-sm font-semibold rounded-lg border border-border bg-transparent text-foreground hover:border-primary hover:text-primary transition-all duration-150 cursor-pointer"
                   >
                     Configure
                   </Button>

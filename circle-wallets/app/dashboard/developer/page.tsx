@@ -142,12 +142,12 @@ export default function DeveloperPage() {
       {/* ── Page Header ─────────────────────────────────────────── */}
       <div className="flex items-end justify-between border-b border-border pb-6">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2">
-            Mecha Pay · Developer
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            API Keys
           </p>
           <h1 className="text-4xl font-bold tracking-tight">API Keys</h1>
           <p className="mt-2 text-sm text-muted-foreground max-w-md">
-            Authenticate your backend services with protocol-level access keys. Keys are hashed and never stored in plaintext.
+            Create and manage your API keys to authenticate with Mecha Pay services. Keys are securely hashed and never shown again once generated.
           </p>
         </div>
 
@@ -271,14 +271,14 @@ export default function DeveloperPage() {
         <Separator orientation="vertical" className="h-4" />
         <div className="flex items-center gap-2">
           <ShieldCheck size={12} />
-          <span>Authenticate via</span>
+          <span>Use the</span>
           <Badge
             variant="outline"
-            className="font-mono text-[9px] h-4 px-1.5 bg-muted"
+            className="font-mono text-[9px] h-4 px-1.5 bg-muted rounded-md"
           >
             x-api-key
           </Badge>
-          <span>header · HTTPS only</span>
+          <span>header over secure HTTPS connections.</span>
         </div>
       </div>
 

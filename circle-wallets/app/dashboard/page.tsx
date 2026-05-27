@@ -93,7 +93,7 @@ function MetricRow({ label, value, sub, loading }: { label: string; value: strin
 /* ─── Section label ─── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground mb-4 leading-none">
+    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-4 leading-none">
       {children}
     </p>
   );
@@ -187,24 +187,24 @@ export default function DashboardOverviewPage() {
         <div className="xl:col-span-2 flex flex-col sm:flex-row xl:flex-col divide-y xl:divide-y sm:divide-y-0 sm:divide-x xl:divide-x-0 divide-border/40 border-b xl:border-b-0">
 
           <div className="px-5 py-5 flex-1">
-            <SectionLabel>As Seller</SectionLabel>
-            <MetricRow label="Net Rev."  value={`$${fmt(s?.totalNetRevenue)}`}   loading={loading} />
-            <MetricRow label="Gross"     value={`$${fmt(s?.totalGrossRevenue)}`} loading={loading} />
-            <MetricRow label="Plans"     value={`${s?.activePlanCount ?? 0} / ${s?.planCount ?? 0}`} sub="live" loading={loading} />
-            <MetricRow label="Subs"      value={String(s?.subscriptionCount ?? 0)} loading={loading} />
-            <MetricRow label="Fees Out"  value={`$${fmt(s?.totalFeeContributed)}`} loading={loading} />
+            <SectionLabel>Your Revenue</SectionLabel>
+            <MetricRow label="Net Revenue"   value={`$${fmt(s?.totalNetRevenue)}`}   loading={loading} />
+            <MetricRow label="Gross Revenue" value={`$${fmt(s?.totalGrossRevenue)}`} loading={loading} />
+            <MetricRow label="Active Plans"  value={`${s?.activePlanCount ?? 0} of ${s?.planCount ?? 0}`} loading={loading} />
+            <MetricRow label="Subscribers"   value={String(s?.subscriptionCount ?? 0)} loading={loading} />
+            <MetricRow label="Fees Paid"     value={`$${fmt(s?.totalFeeContributed)}`} loading={loading} />
           </div>
 
           <div className="px-5 py-5 flex-1">
-            <SectionLabel>As Buyer</SectionLabel>
-            <MetricRow label="Spent"     value={`$${fmt(b?.totalSpent)}`}              loading={loading} />
-            <MetricRow label="Active"    value={String(b?.activeSubscriptionCount ?? 0)} loading={loading} />
-            <MetricRow label="Total"     value={String(b?.subscriptionCount ?? 0)}       loading={loading} />
-            <MetricRow label="Fees Paid" value={`$${fmt(b?.totalFeesPaid)}`}            loading={loading} />
+            <SectionLabel>Your Spending</SectionLabel>
+            <MetricRow label="Total Spent"      value={`$${fmt(b?.totalSpent)}`}              loading={loading} />
+            <MetricRow label="Active Plans"     value={String(b?.activeSubscriptionCount ?? 0)} loading={loading} />
+            <MetricRow label="All Subscriptions" value={String(b?.subscriptionCount ?? 0)}       loading={loading} />
+            <MetricRow label="Fees Paid"        value={`$${fmt(b?.totalFeesPaid)}`}            loading={loading} />
           </div>
 
           <div className="px-5 py-5 flex-1 hidden sm:block">
-            <SectionLabel>Navigate</SectionLabel>
+            <SectionLabel>Quick Links</SectionLabel>
             {[
               { href: "/dashboard/my-plans",     label: "My Plans" },
               { href: "/dashboard/subscriptions", label: "Subscriptions" },
@@ -353,7 +353,7 @@ export default function DashboardOverviewPage() {
           {/* On-chain activity feed */}
           <div className="flex-1">
             <div className="px-6 py-4 border-b border-border/30 flex items-center justify-between">
-              <SectionLabel>On-Chain Activity</SectionLabel>
+              <SectionLabel>Recent Transactions</SectionLabel>
               <Link href="/dashboard/subscriptions" className="text-[10px] font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
                 All <ExternalLink className="h-2.5 w-2.5" />
               </Link>
@@ -485,7 +485,7 @@ export default function DashboardOverviewPage() {
 
           {/* This month's protocol stats */}
           <div className="px-5 py-5">
-            <SectionLabel>Protocol · This Month</SectionLabel>
+            <SectionLabel>This Month</SectionLabel>
             {(analytics?.monthlyStats ?? []).slice(0, 1).map(m => (
               <div key={m.id}>
                 <MetricRow label="Volume"   value={`$${fmt(m.totalGrossVolume)}`}     loading={loading} />

@@ -213,18 +213,18 @@ export default function SubscriptionDetailPage() {
       ) : notifications.map((notif) => {
         const isActiveNotif = notif.type === "STATUS_CHANGE" ? notif.active : true;
         let icon = <Settings className="h-3.5 w-3.5" />;
-        let label = "Protocol Update";
-        let desc = "Plan specifications or custom rules updated";
+        let label = "Plan Update";
+        let desc = "Plan rules or pricing updated.";
 
         if (notif.type === "STATUS_CHANGE") {
           if (isActiveNotif) {
             icon = <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
             label = "Activated";
-            desc = "Subscription state changed to Active";
+            desc = "Subscription is now active.";
           } else {
             icon = <XCircle className="h-3.5 w-3.5 text-muted-foreground/60" />;
             label = "Deactivated";
-            desc = "Subscription state changed to Inactive";
+            desc = "Subscription has ended.";
           }
         }
 
@@ -292,7 +292,7 @@ export default function SubscriptionDetailPage() {
               <SheetHeader className="px-6 py-5 border-b border-border/10">
                 <SheetTitle className="text-sm font-semibold">Notifications & Updates</SheetTitle>
                 <SheetDescription className="text-xs text-muted-foreground">
-                  Updates and state logs for this protocol subscription gateway.
+                  Updates and status history for this plan.
                 </SheetDescription>
               </SheetHeader>
               <div className="flex-1 overflow-y-auto px-6 py-2">
@@ -305,7 +305,7 @@ export default function SubscriptionDetailPage() {
                   rel="noreferrer" 
                   className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
                 >
-                  <ShieldCheck className="h-3 w-3" /> Secured by Arc Settlement Layer
+                  <ShieldCheck className="h-3 w-3" /> Secured by Arc Network
                 </a>
               </div>
             </SheetContent>
@@ -369,8 +369,8 @@ export default function SubscriptionDetailPage() {
         {/* Left Side: Features list */}
         <div className="space-y-4">
           <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-foreground">Active Privileges</h3>
-            <p className="text-xs text-muted-foreground">Features included in your current tier tier.</p>
+            <h3 className="text-sm font-semibold text-foreground">Plan Features</h3>
+            <p className="text-xs text-muted-foreground">Features included in your current tier.</p>
           </div>
 
           <div className="border-t border-border/10 pt-4">
@@ -397,7 +397,7 @@ export default function SubscriptionDetailPage() {
         {/* Right Side: Metadata / Technical parameters */}
         <div className="space-y-6">
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Metadata Context</h3>
+            <h3 className="text-sm font-semibold text-foreground">Plan Details</h3>
             
             <div className="grid grid-cols-2 gap-y-5 gap-x-6 border-t border-border/10 pt-4">
               <div className="space-y-1">

@@ -312,16 +312,16 @@ export default function AutoPayDetailPage() {
     return (
       <div className="w-full min-h-screen py-16 px-6 md:px-12 lg:px-20 space-y-12">
         <div className="py-6 border-b border-border/10 space-y-3">
-          <Skeleton className="h-4 w-32 bg-muted rounded-none" />
-          <Skeleton className="h-10 w-72 bg-muted rounded-none" />
-          <Skeleton className="h-4 w-full max-w-2xl bg-muted rounded-none" />
+          <Skeleton className="h-4 w-32 bg-muted rounded-full" />
+          <Skeleton className="h-10 w-72 bg-muted rounded-full" />
+          <Skeleton className="h-4 w-full max-w-2xl bg-muted rounded-full" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           <div className="lg:col-span-7">
-            <Skeleton className="h-96 w-full rounded-none bg-muted/10 border-0" />
+            <Skeleton className="h-96 w-full rounded-full bg-muted/10 border-0" />
           </div>
           <div className="lg:col-span-5">
-            <Skeleton className="h-80 w-full rounded-none bg-muted/10 border-0" />
+            <Skeleton className="h-80 w-full rounded-full bg-muted/10 border-0" />
           </div>
         </div>
       </div>
@@ -342,7 +342,7 @@ export default function AutoPayDetailPage() {
           <Button asChild size="sm" variant="link" className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground p-0">
             <Link href="/dashboard/autopay">Back to Autopay</Link>
           </Button>
-          <Button onClick={() => window.location.reload()} size="sm" variant="outline" className="rounded-none font-bold text-xs h-9 px-4 border-foreground">
+          <Button onClick={() => window.location.reload()} size="sm" variant="outline" className="rounded-full font-bold text-xs h-9 px-4 border-foreground">
             Retry Connection
           </Button>
         </div>
@@ -355,7 +355,7 @@ export default function AutoPayDetailPage() {
     selectedTierId !== setting.tierId || 
     selectedCycles !== (setting.maxCycles ?? 10)
   );
-  const planName = sub.metadata?.name ?? sub.metadata?.brand?.name ?? `Product ${sub.plan.id.slice(0, 8)}`;
+  const planName = sub.metadata?.name ?? sub.metadata?.brand?.name ?? `Plan ${sub.plan.id.slice(0, 8)}`;
   const durationDays = Math.round(Number(sub.plan.duration) / 86400);
 
   // Active Tiers
@@ -377,9 +377,9 @@ export default function AutoPayDetailPage() {
       <div className="max-w-7xl mx-auto w-full">
         <button
           onClick={() => router.push("/dashboard/autopay")}
-          className="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft size={14} /> Back to Products Console
+          <ArrowLeft size={14} className="stroke-[2.5px]" /> Back to Auto-Pay
         </button>
       </div>
 
@@ -396,29 +396,29 @@ export default function AutoPayDetailPage() {
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-extrabold tracking-tight text-foreground uppercase leading-none">{planName}</h1>
                 <span className={cn(
-                  "text-[9px] font-mono font-bold uppercase px-2.5 py-0.5 border tracking-wider rounded-none shrink-0",
+                  "text-[10px] font-medium uppercase px-2.5 py-0.5 border tracking-wider rounded-full shrink-0",
                   sub.status === "ACTIVE"
-                    ? "bg-muted text-primary border-primary/20"
+                    ? "bg-primary/10 text-primary border-primary/20"
                     : "bg-muted text-muted-foreground border-border"
                 )}>
-                  {sub.status}
+                  {sub.status === "ACTIVE" ? "Active" : "Expired"}
                 </span>
               </div>
               <p className="text-[10px] font-mono text-muted-foreground flex items-center gap-2">
-                <span>PLAN ID:</span>
+                <span>Plan ID:</span>
                 <span className="font-bold select-all text-foreground truncate max-w-[200px] md:max-w-none">{sub.plan.id}</span>
               </p>
             </div>
 
             <span
               className={cn(
-                "inline-flex items-center text-[10px] font-mono font-bold uppercase px-3 py-1 border tracking-wider md:self-start rounded-none shrink-0",
+                "inline-flex items-center text-[10px] font-medium uppercase px-3 py-1 border tracking-wider md:self-start rounded-full shrink-0",
                 isEnabled
-                  ? "bg-muted text-primary border-primary/30"
+                  ? "bg-primary/10 text-primary border-primary/30"
                   : "bg-muted text-muted-foreground border-border"
               )}
             >
-              {isEnabled ? "AutoPay Secured" : "AutoPay Inactive"}
+              {isEnabled ? "Auto-Pay Active" : "Auto-Pay Inactive"}
             </span>
           </div>
 
@@ -447,8 +447,8 @@ export default function AutoPayDetailPage() {
             {/* Active Switch Toggle */}
             <div className="flex items-center justify-between border-b border-border/10 pb-6">
               <div className="space-y-1.5 pr-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-foreground block">Enable Recurring AutoPay</span>
-                <p className="text-[10px] text-muted-foreground leading-normal font-semibold max-w-md">Permit smart gateway execution of renewals using off-chain intents.</p>
+                <span className="text-xs font-bold uppercase tracking-wider text-foreground block">Enable Recurring Auto-Pay</span>
+                <p className="text-[10px] text-muted-foreground leading-normal font-semibold max-w-md">Allow automatic renewal payments of your subscriptions using safe passkey approvals.</p>
               </div>
               <button
                 onClick={() => {
@@ -484,12 +484,12 @@ export default function AutoPayDetailPage() {
                 onValueChange={(val) => setSelectedTierId(val ?? "")}
                 items={activeTiers.map((t) => ({ value: t.tierId, label: t.label }))}
               >
-                <SelectTrigger className="w-full flex w-full justify-between items-center h-11 px-3 border-b border-border bg-transparent text-xs font-bold font-sans rounded-none transition-colors focus:border-foreground cursor-pointer">
+                <SelectTrigger className="w-full flex w-full justify-between items-center h-11 px-3 border-b border-border bg-transparent text-xs font-bold font-sans rounded-lg border border-border px-3 transition-colors focus:border-foreground cursor-pointer">
                   <SelectValue placeholder="Select a pricing tier" />
                 </SelectTrigger>
-                <SelectContent className="rounded-none border border-border">
+                <SelectContent className="rounded-lg border border-border">
                   {activeTiers.map((t) => (
-                    <SelectItem key={t.tierId} value={t.tierId} label={t.label} className="font-sans text-xs rounded-none">
+                    <SelectItem key={t.tierId} value={t.tierId} label={t.label} className="font-sans text-xs rounded-lg">
                       {t.label} — {Number(formatUnits(t.price, 6)).toLocaleString()} USDC
                     </SelectItem>
                   ))}
@@ -501,7 +501,7 @@ export default function AutoPayDetailPage() {
             <div className="space-y-2.5">
               <div className="flex justify-between items-baseline">
                 <label htmlFor="cycle-limit" className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                  AutoPay Cycle Limit (1 - 10)
+                  Renewal Cycle Limit (1 - 10)
                 </label>
                 <span className="font-mono text-[10px] text-primary font-bold">{maxCycles} Cycles</span>
               </div>
@@ -518,7 +518,7 @@ export default function AutoPayDetailPage() {
                   if (val > 10) val = 10;
                   setSelectedCycles(val);
                 }}
-                className="w-full h-11 bg-transparent border-b border-border rounded-none px-0 py-2.5 text-xs text-foreground focus:outline-none focus:border-foreground font-sans font-bold"
+                className="w-full h-11 bg-muted/20 border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-foreground font-sans font-semibold"
               />
             </div>
 
@@ -526,14 +526,14 @@ export default function AutoPayDetailPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground block">
-                  Metadata / Buyer Data (String)
+                  Saved Details / Custom Data
                 </label>
               </div>
               <p className="text-xs font-mono text-foreground font-bold select-all py-3 border-b border-border/10">
                 {sub.lastBuyerData || "No parameters registered"}
               </p>
               <p className="text-[10px] text-muted-foreground leading-normal font-semibold">
-                Bound permanently to align with original subscription parameters.
+                These options are permanently bound to align with your original subscription parameters.
               </p>
             </div>
 
@@ -541,7 +541,7 @@ export default function AutoPayDetailPage() {
             <div className="space-y-4 pt-6 border-t border-border/10">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                  Scheduled Execution Timeline
+                  Renewal Schedule
                 </label>
                 <button
                   onClick={() => setShowTimeline(!showTimeline)}
@@ -561,7 +561,7 @@ export default function AutoPayDetailPage() {
                         <th className="py-2.5 px-0 text-right">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border/10 text-xs font-mono">
+                    <tbody className="divide-y divide-border/10 text-xs">
                       {scheduleItems.map((item) => {
                         const dateStr = new Date(item.startTime * 1000).toLocaleDateString(undefined, {
                           month: "short",
@@ -572,10 +572,10 @@ export default function AutoPayDetailPage() {
 
                         return (
                           <tr key={item.index}>
-                            <td className="py-3 px-0 font-bold text-foreground">
+                            <td className="py-3 px-0 font-semibold text-foreground">
                               #{String(item.index).padStart(2, '0')}
                             </td>
-                            <td className="py-3 px-0 text-muted-foreground font-semibold">
+                            <td className="py-3 px-0 text-muted-foreground font-medium">
                               {dateStr}
                             </td>
                             <td className="py-3 px-0 text-right">
@@ -591,7 +591,7 @@ export default function AutoPayDetailPage() {
                                   "w-1.5 h-1.5 rounded-full",
                                   isExecuted ? "bg-muted-foreground" : isEnabled ? "bg-primary animate-pulse" : "bg-muted-foreground"
                                 )} />
-                                {isExecuted ? "Executed" : isEnabled ? "Authorized" : "Pending Sign"}
+                                {isExecuted ? "Executed" : isEnabled ? "Authorized" : "Needs Signature"}
                               </span>
                             </td>
                           </tr>
@@ -610,17 +610,17 @@ export default function AutoPayDetailPage() {
             {isEnabled && setting && !isModified && (
               <div className="border-l-2 border-primary pl-4 py-1 space-y-1.5">
                 <p className="text-[10px] font-mono font-bold uppercase text-primary tracking-wider flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="shrink-0" /> Intent Cryptographically Secured
+                  <CheckCircle2 size={13} className="shrink-0" /> Auto-Pay is Securely Set Up
                 </p>
                 <p className="text-[10px] text-muted-foreground leading-relaxed font-semibold">
-                  Signature pre-authorization registered in the vault. Client Sequence Nonce: <span className="font-mono font-bold text-foreground">{setting.nonce}</span>. Validation deadline set for 5 years.
+                  Your device signature is saved securely in the vault. Client Sequence Nonce: <span className="font-mono font-bold text-foreground">{setting.nonce}</span>. Validation deadline set for 5 years.
                 </p>
                 <div className="pt-2">
                   <button
                     onClick={() => setShowRevokeModal(true)}
-                    className="h-9 px-4 text-xs font-mono font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 transition-all duration-150 rounded-none w-full md:w-auto cursor-pointer"
+                    className="h-9 px-4 text-xs font-semibold bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 transition-all duration-150 rounded-lg w-full md:w-auto cursor-pointer"
                   >
-                    Revoke Consent & Signature
+                    Turn Off Auto-Pay
                   </button>
                 </div>
               </div>
@@ -633,7 +633,7 @@ export default function AutoPayDetailPage() {
                   onClick={handleAuthorizeAutoPay}
                   disabled={actionLoading}
                   variant="outline"
-                  className="flex-1 h-11 text-xs font-bold uppercase tracking-wider gap-2 rounded-none border-foreground hover:bg-foreground hover:text-background transition-colors cursor-pointer"
+                  className="flex-1 h-11 text-xs font-bold uppercase tracking-wider gap-2 rounded-lg border border-border hover:bg-muted transition-colors cursor-pointer"
                 >
                   {actionLoading ? (
                     <>
@@ -641,11 +641,11 @@ export default function AutoPayDetailPage() {
                     </>
                   ) : isModified ? (
                     <>
-                      <Play size={11} className="fill-current text-current shrink-0" /> Save & Re-Sign Authorization
+                      <Play size={11} className="fill-current text-current shrink-0" /> Save & Re-Sign Setup
                     </>
                   ) : (
                     <>
-                      <Play size={11} className="fill-current text-current shrink-0" /> Sign Authorization Intent
+                      <Play size={11} className="fill-current text-current shrink-0" /> Set Up Auto-Pay
                     </>
                   )}
                 </Button>
@@ -660,7 +660,7 @@ export default function AutoPayDetailPage() {
                     }}
                     disabled={actionLoading}
                     variant="ghost"
-                    className="h-11 px-6 text-xs font-bold uppercase tracking-wider rounded-none hover:bg-muted border border-transparent hover:border-border/30 transition-colors cursor-pointer"
+                    className="h-11 px-6 text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-muted border border-border/30 transition-colors cursor-pointer"
                   >
                     Reset Changes
                   </Button>
@@ -690,13 +690,13 @@ export default function AutoPayDetailPage() {
           <div className="space-y-8">
             <div className="space-y-2">
               <span className="text-[10px] font-mono tracking-widest uppercase font-extrabold text-primary">
-                Protocol Pipeline
+                Security & Status
               </span>
               <h2 className="text-xl font-extrabold tracking-tight uppercase">
-                EIP-712 Cryptographic Pipeline
+                Auto-Pay Security Setup
               </h2>
               <p className="text-xs text-muted-foreground leading-relaxed font-semibold">
-                Your cryptographic signatures are off-chain consents, allowing sponsored instant contract execution.
+                Your device passkey creates secure, instant automatic payments without exposing your private keys.
               </p>
             </div>
 
@@ -705,7 +705,7 @@ export default function AutoPayDetailPage() {
               <div className="relative">
                 {/* Node Dot */}
                 <span className={cn(
-                  "absolute -left-7 top-1 w-2 h-2 border bg-background transition-colors duration-300 rounded-none",
+                  "absolute -left-7 top-1 w-2 h-2 border bg-background transition-colors duration-300 rounded-full",
                   isEnabled ? "bg-primary border-primary" : "border-muted-foreground"
                 )} />
                 
@@ -715,17 +715,17 @@ export default function AutoPayDetailPage() {
                       01. Biometric Consent
                     </span>
                     <span className={cn(
-                      "text-[9px] font-mono font-bold uppercase px-2 py-0.5 border rounded-none transition-colors duration-300 shrink-0",
+                      "text-[9px] font-mono font-bold uppercase px-2 py-0.5 border rounded-full transition-colors duration-300 shrink-0",
                       isEnabled ? "bg-muted text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"
                     )}>
                       {isEnabled ? "Signed" : "Pending Sign"}
                     </span>
                   </div>
                   <p className="text-[10px] font-mono text-muted-foreground font-semibold">
-                    EIP-712 Secure Sign
+                    Device login key approval
                   </p>
                   <p className="text-[10px] text-muted-foreground leading-normal font-semibold">
-                    Biometrically authorize the session keys using your device passkey.
+                    Biometrically approve the setup using your device's saved login key or Face ID.
                   </p>
                 </div>
               </div>
@@ -733,27 +733,27 @@ export default function AutoPayDetailPage() {
               {/* Step 2: Off-Chain Storage */}
               <div className="relative">
                 <span className={cn(
-                  "absolute -left-7 top-1 w-2 h-2 border bg-background transition-colors duration-300 rounded-none",
+                  "absolute -left-7 top-1 w-2 h-2 border bg-background transition-colors duration-300 rounded-full",
                   isEnabled ? "bg-primary border-primary" : "border-muted-foreground"
                 )} />
                 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      02. Off-Chain Storage
+                      02. Vault Storage
                     </span>
                     <span className={cn(
-                      "text-[9px] font-mono font-bold uppercase px-2 py-0.5 border rounded-none transition-colors duration-300 shrink-0",
+                      "text-[9px] font-mono font-bold uppercase px-2 py-0.5 border rounded-full transition-colors duration-300 shrink-0",
                       isEnabled ? "bg-muted text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"
                     )}>
                       {isEnabled ? "Secured" : "Inactive"}
                     </span>
                   </div>
                   <p className="text-[10px] font-mono text-muted-foreground font-semibold">
-                    MongoDB Secure Vault
+                    Secure Vault
                   </p>
                   <p className="text-[10px] text-muted-foreground leading-normal font-semibold">
-                    The signature and session metadata are securely stored in the MongoDB vault.
+                    Your secure auto-renewal settings are stored in the server vault.
                   </p>
                 </div>
               </div>
@@ -761,27 +761,27 @@ export default function AutoPayDetailPage() {
               {/* Step 3: Sponsored Relayer */}
               <div className="relative">
                 <span className={cn(
-                  "absolute -left-7 top-1 w-2 h-2 border bg-background transition-colors duration-300 rounded-none",
+                  "absolute -left-7 top-1 w-2 h-2 border bg-background transition-colors duration-300 rounded-full",
                   isEnabled ? "bg-primary border-primary animate-pulse" : "border-muted-foreground"
                 )} />
                 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      03. Sponsored Relayer
+                      03. Transaction Fee Sponsor
                     </span>
                     <span className={cn(
-                      "text-[9px] font-mono font-bold uppercase px-2 py-0.5 border rounded-none transition-colors duration-300 shrink-0",
+                      "text-[9px] font-mono font-bold uppercase px-2 py-0.5 border rounded-full transition-colors duration-300 shrink-0",
                       isEnabled ? "bg-muted text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"
                     )}>
                       {isEnabled ? "Active" : "Disabled"}
                     </span>
                   </div>
                   <p className="text-[10px] font-mono text-muted-foreground font-semibold">
-                    Zero-gas Auto Trigger
+                    Free automatic triggers
                   </p>
                   <p className="text-[10px] text-muted-foreground leading-normal font-semibold">
-                    Sponsor relayers monitor renewal schedules and execute on-chain triggers automatically.
+                    Transaction fees are fully covered. Auto-Pay handles renewals on schedule.
                   </p>
                 </div>
               </div>
@@ -789,27 +789,27 @@ export default function AutoPayDetailPage() {
               {/* Step 4: Arc Testnet Chain */}
               <div className="relative">
                 <span className={cn(
-                  "absolute -left-7 top-1 w-2 h-2 border bg-background transition-colors duration-300 rounded-none",
+                  "absolute -left-7 top-1 w-2 h-2 border bg-background transition-colors duration-300 rounded-full",
                   isEnabled ? "bg-primary border-primary" : "border-muted-foreground"
                 )} />
                 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      04. Arc Testnet Chain
+                      04. Network Verification
                     </span>
                     <span className={cn(
-                      "text-[9px] font-mono font-bold uppercase px-2 py-0.5 border rounded-none transition-colors duration-300 shrink-0",
+                      "text-[9px] font-mono font-bold uppercase px-2 py-0.5 border rounded-full transition-colors duration-300 shrink-0",
                       isEnabled ? "bg-muted text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"
                     )}>
                       {isEnabled ? "Verified" : "Ready"}
                     </span>
                   </div>
                   <p className="text-[10px] font-mono text-muted-foreground font-semibold">
-                    Smart Gateway Verify
+                    On-Chain Verification
                   </p>
                   <p className="text-[10px] text-muted-foreground leading-normal font-semibold">
-                    On-chain verifier executes the subscription transfer, checking constraints against the signature.
+                    The smart payment gateway verifies and executes the transfer on schedule.
                   </p>
                 </div>
               </div>
@@ -820,13 +820,13 @@ export default function AutoPayDetailPage() {
               <div className="flex items-center gap-3">
                 <CheckCircle2 size={14} className="text-primary shrink-0" />
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
-                  Zero Gas Cost Sponsorships
+                  Zero transaction fees (Fully sponsored)
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <CheckCircle2 size={14} className="text-primary shrink-0" />
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
-                  Instantly Revocable off-chain
+                  Instantly revocable anytime
                 </span>
               </div>
             </div>
@@ -837,24 +837,24 @@ export default function AutoPayDetailPage() {
       {/* ── Cryptographic Revocation Confirmation Dialog ── */}
       {showRevokeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-background border border-border p-8 space-y-6 rounded-none shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-md bg-background border border-border p-8 space-y-6 rounded-full shadow-2xl animate-in zoom-in-95 duration-200">
             
             {/* Warning Icon and Header */}
             <div className="space-y-3 font-sans">
               <div className="flex items-center gap-2 text-destructive">
                 <AlertCircle className="h-5 w-5 shrink-0" />
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Confirm Revocation</span>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider">Confirm</span>
               </div>
               <h2 className="text-lg font-bold uppercase tracking-tight text-foreground">
-                Revoke AutoPay Pre-authorization?
+                Turn off Auto-Pay?
               </h2>
               <p className="text-xs text-muted-foreground leading-relaxed font-semibold">
-                This action is immediate and cryptographically irreversible. Your off-chain session keys will be securely deleted, and all remaining scheduled cycles will be cancelled.
+                This will immediately turn off automatic renewals for this plan. You can set it up again anytime.
               </p>
             </div>
 
             {/* Structured details block */}
-            <div className="border border-border/40 p-5 space-y-3 text-[10px] font-mono rounded-none">
+            <div className="border border-border/40 p-5 space-y-3 text-[10px] font-mono rounded-full">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground uppercase font-bold">Plan ID:</span>
                 <span className="font-bold text-foreground truncate max-w-[200px] select-all font-mono">
@@ -890,21 +890,21 @@ export default function AutoPayDetailPage() {
               <button
                 disabled={actionLoading}
                 onClick={() => setShowRevokeModal(false)}
-                className="flex-1 h-10 border border-border bg-transparent text-xs font-mono font-bold uppercase tracking-wider hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
+                className="flex-1 h-10 border border-border bg-transparent text-xs font-mono font-bold uppercase tracking-wider hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-full"
               >
                 Cancel
               </button>
               <button
                 disabled={actionLoading}
                 onClick={handleDisableAutoPay}
-                className="flex-1 h-10 bg-destructive text-destructive-foreground text-xs font-mono font-bold uppercase tracking-wider hover:opacity-90 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed rounded-none flex items-center justify-center gap-2"
+                className="flex-1 h-10 bg-destructive text-destructive-foreground text-xs font-mono font-bold uppercase tracking-wider hover:opacity-90 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed rounded-full flex items-center justify-center gap-2"
               >
                 {actionLoading ? (
                   <>
                     <RefreshCw className="h-3.5 w-3.5 animate-spin shrink-0" /> Revoking...
                   </>
                 ) : (
-                  "Confirm Revoke"
+                  "Turn Off"
                 )}
               </button>
             </div>

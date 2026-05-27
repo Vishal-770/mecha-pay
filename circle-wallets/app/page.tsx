@@ -161,6 +161,14 @@ export default function LandingPage() {
             
             {/* Left Side: Typography & CTAs */}
             <div className="flex flex-col items-start text-left pt-10 lg:pt-0 relative z-30">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-6">
+                <span className="text-[#b6f09c] text-xs font-semibold tracking-wide flex items-center gap-1.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#b6f09c] animate-pulse"></span>
+                  One-Click Subscriptions in Seconds
+                </span>
+                <span className="text-zinc-500 text-xs">•</span>
+                <span className="text-zinc-300 text-xs font-semibold tracking-wide">Enterprise Compliance Ready</span>
+              </div>
               <div className="flex flex-col mb-10 relative">
                 <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[4.5rem] xl:text-[5.5rem] font-extrabold tracking-tighter leading-[1.05] text-[#ffffff]">
                   <span className="block">USDC-Native</span>
@@ -169,7 +177,7 @@ export default function LandingPage() {
                 </h1>
                 
                 <p className="mt-8 text-base sm:text-lg lg:text-xl text-[#a1a1aa] font-medium leading-relaxed max-w-2xl">
-                  Integrate high-performance, predictable subscription payments into your applications with just a few lines of code. Powered by Circle&apos;s Programmable Wallets, CCTP, and the Arc blockchain.
+                  Integrate beautiful, predictable subscription checkouts in seconds. Zero friction, drop-in React SDK widgets powered by Circle Programmable Wallets, CCTP, and the Arc blockchain.
                 </p>
               </div>
               
@@ -328,16 +336,16 @@ export default function LandingPage() {
 
         <div className="flex-1 flex flex-col gap-6 max-w-2xl w-full mt-16 lg:mt-0">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-2">
-            <span className="text-zinc-300 text-xs font-semibold tracking-wide">Developer SDK</span>
+            <span className="text-[#b6f09c] text-xs font-semibold tracking-wide">Drop-in Checkout SDK</span>
           </div>
-          <h2 className="text-5xl lg:text-6xl font-bold tracking-tighter text-[#ffffff]">
-            Integrate with <br/><span className="text-[#b6f09c]">Mecha SDK.</span>
+          <h2 className="text-5xl lg:text-6xl font-bold tracking-tighter text-[#ffffff] leading-tight">
+            One-Click Payments. <br/><span className="text-[#b6f09c]">Integrates in Seconds.</span>
           </h2>
           <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2 lg:mt-4">
-            Mecha Pay provides a powerful <span className="text-[#ffffff] font-bold">React SDK</span> (`mechapay-react`) for seamless on-chain subscription management. Import pre-built UI components like <span className="text-[#ffffff] font-bold">MechaPricingTable</span> or use the <span className="text-[#ffffff] font-bold">useMecha</span> hook for real-time feature gating.
+            Mecha Pay offers a zero-friction, pre-built checkout widget that inserts directly into your client application. Similar to modern drop-in login interfaces, just paste a single React component to accept USDC subscriptions instantly. No smart contract deployments or complex backend sync required.
           </p>
           <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2">
-            Get started by installing the <span className="font-mono text-zinc-300 text-sm bg-[#ffffff]/10 px-2 py-1 rounded">mechapay-react</span> package and connecting your merchant account in minutes.
+            The SDK automatically provisions non-custodial wallets, secures transactions via device passkeys, handles multi-chain bridging, and validates customer access privileges instantly.
           </p>
           <div className="flex gap-4 mt-6">
             <Link href="/docs" className="flex h-14 w-full sm:w-auto px-8 items-center justify-center gap-2 rounded-full bg-[#b6f09c] text-sm font-bold text-[#000000] hover:opacity-90 transition-opacity">
@@ -465,6 +473,84 @@ export default function LandingPage() {
                 <h4 className="text-xl font-bold text-[#ffffff] mb-2 tracking-tight">Native Circle CCTP Integration</h4>
                 <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-lg">No wrapped assets. Move canonical USDC seamlessly between Ethereum, Base, Polygon, and 15+ others via official burn-and-mint logic.</p>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Compliance Section */}
+      <section id="compliance" className="relative w-full bg-[#000000] py-24 lg:py-32 px-6 sm:px-12 lg:px-20 z-20 overflow-hidden border-t border-[#ffffff]/10">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-20%,#b6f09c08,transparent_70%)] pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto flex flex-col gap-16 relative z-10">
+          
+          <div className="flex flex-col items-center text-center gap-4 max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-2">
+              <span className="text-[#b6f09c] text-xs font-semibold tracking-wide">Enterprise Gated Security</span>
+            </div>
+            <h2 className="text-4xl lg:text-6xl font-bold tracking-tighter text-[#ffffff] leading-tight">
+              Regulatory Compliance <br/>& <span className="text-zinc-500">Institutional Trust</span>
+            </h2>
+            <p className="text-zinc-400 font-medium leading-relaxed text-base sm:text-lg mt-2">
+              Mecha Pay is engineered to align with global regulatory frameworks, ensuring a fully compliant stablecoin payment stream.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+            {/* MiCA Ready */}
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+              <div>
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#b6f09c]/30 transition-colors">
+                  <Shield className="h-5 w-5 text-[#b6f09c]" />
+                </div>
+                <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">MiCA Compliant</h4>
+                <p className="text-sm text-zinc-400 font-medium leading-relaxed">
+                  Leverages native Circle USDC, fully backed and regulated under the EU's Markets in Crypto-Assets regulation, guaranteeing stable value redemption.
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">Stablecoin Regs</span>
+            </div>
+
+            {/* GDPR & Privacy First */}
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+              <div>
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#b6f09c]/30 transition-colors">
+                  <Globe className="h-5 w-5 text-[#b6f09c]" />
+                </div>
+                <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">GDPR & Data Privacy</h4>
+                <p className="text-sm text-zinc-400 font-medium leading-relaxed">
+                  No personally identifiable information (PII) is stored on the ledger. Cryptographic session keys authorize payouts without exposing customer identities.
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">GDPR Compliant</span>
+            </div>
+
+            {/* SOC 2 Type II */}
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+              <div>
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#b6f09c]/30 transition-colors">
+                  <Zap className="h-5 w-5 text-[#b6f09c]" />
+                </div>
+                <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">SOC 2 Type II Insulated</h4>
+                <p className="text-sm text-zinc-400 font-medium leading-relaxed">
+                  Operates using Circle's non-custodial wallet infrastructure, audited to SOC 2 Type II security standards for safe private key segment storage.
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">Audit Certified</span>
+            </div>
+
+            {/* BSA & AML Gating */}
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+              <div>
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#b6f09c]/30 transition-colors">
+                  <Coins className="h-5 w-5 text-[#b6f09c]" />
+                </div>
+                <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">BSA / AML Gating</h4>
+                <p className="text-sm text-zinc-400 font-medium leading-relaxed">
+                  Integrates seamlessly with RPC-level sanction filters and OFAC screening tools, protecting merchants from interacting with flagged wallets.
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">AML Protection</span>
             </div>
           </div>
         </div>
