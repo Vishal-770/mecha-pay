@@ -307,7 +307,7 @@ export default function MyPlansPage() {
                   <span className={cn(
                     "inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded-full shrink-0",
                     plan.active
-                      ? "bg-emerald-500/10 text-emerald-600"
+                      ? "bg-blue-500/10 text-blue-600"
                       : "bg-muted text-muted-foreground/60"
                   )}>
                     {plan.active ? "● Active" : "○ Inactive"}

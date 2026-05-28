@@ -297,7 +297,7 @@ function YourPricingPage() {
       appearance={{
         theme: "dark",
         variables: {
-          colorPrimary: "#00FFC2",
+          colorPrimary: "#3b82f6",
           borderRadius: "16px"
         }
       }}
@@ -400,7 +400,7 @@ function PremiumFeature() {
             <span className={cn(
               "inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full",
               plan.active
-                ? "bg-emerald-500/10 text-emerald-600"
+                ? "bg-blue-500/10 text-blue-600"
                 : "bg-muted text-muted-foreground"
             )}>
               {plan.active ? "● Live" : "○ Inactive"}
@@ -519,8 +519,8 @@ function PremiumFeature() {
                   <div className="mt-6 pt-1 space-y-3 flex-grow">
                     {tier.features.map((f, fi) => (
                       <div key={fi} className="flex gap-3 items-start p-2 rounded-xl hover:bg-muted/30 transition-all duration-200">
-                        <div className="h-5 w-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <CheckCircle2 size={12} className="text-emerald-500" />
+                        <div className="h-5 w-5 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <CheckCircle2 size={12} className="text-blue-500" />
                         </div>
                         <div className="space-y-0.5">
                           <p className="text-xs font-semibold text-foreground leading-tight">{f.title}</p>
@@ -623,13 +623,13 @@ function PremiumFeature() {
                 <p className="text-[11px] text-muted-foreground mt-0.5">Returning members</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-semibold tracking-tight text-emerald-500">{analytics.repeatBuyerRate.toFixed(1)}%</p>
+                <p className="text-2xl font-semibold tracking-tight text-blue-500">{analytics.repeatBuyerRate.toFixed(1)}%</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Renewal rate</p>
               </div>
             </div>
             <div className="h-1 w-full bg-muted/20 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-primary to-emerald-500 transition-all duration-1000"
+                className="h-full bg-gradient-to-r from-primary to-blue-500 transition-all duration-1000"
                 style={{ width: `${analytics.repeatBuyerRate}%` }}
               />
             </div>
@@ -693,7 +693,7 @@ function PremiumFeature() {
                   <span className={cn(
                     "inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full",
                     buyer.status === "ACTIVE"
-                      ? "bg-emerald-500/8 text-emerald-600"
+                      ? "bg-blue-500/8 text-blue-600"
                       : "bg-muted/60 text-muted-foreground"
                   )}>
                     {buyer.status === "ACTIVE" ? "● Active" : "○ Expired"}

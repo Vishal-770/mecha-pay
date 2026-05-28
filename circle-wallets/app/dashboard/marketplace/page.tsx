@@ -160,7 +160,7 @@ function ProtocolCard({ plan, isSubscribed }: { plan: PlanRecord; isSubscribed?:
           </div>
 
           {isSubscribed ? (
-            <Button disabled className="w-full rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-semibold text-sm flex items-center justify-center opacity-100 cursor-default">
+            <Button disabled className="w-full rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20 font-semibold text-sm flex items-center justify-center opacity-100 cursor-default">
               <CheckCircle2 size={14} className="mr-2" />
               Subscribed
             </Button>

@@ -376,7 +376,7 @@ export default function CreatePlanPage() {
       )}
       
       {success && (
-        <div className="mb-8 flex items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm font-medium text-emerald-500">
+        <div className="mb-8 flex items-center gap-3 rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 text-sm font-medium text-blue-500">
           <CheckCircle2 size={16} className="stroke-[2px]" />
           <div className="flex flex-wrap items-center gap-2">
             <span>{success}</span>

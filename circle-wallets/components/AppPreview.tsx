@@ -25,16 +25,8 @@ export default function AppPreview() {
       className="relative w-full pt-32 pb-40 overflow-hidden bg-[#000000]"
     >
       {/* Subtle Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[50%] bg-[#b6f09c] rounded-full blur-[200px] opacity-[0.03] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[50%] bg-[#3b82f6] rounded-full blur-[200px] opacity-[0.03] pointer-events-none" />
       
-      {/* Decorative Grid */}
-      <div className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none" 
-           style={{
-             backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
-             backgroundSize: '4rem 4rem'
-           }} 
-      />
-
       <div className="relative z-10 container mx-auto px-6 lg:px-12 flex flex-col items-center text-center">
         
         {/* Premium Badge */}
@@ -45,7 +37,7 @@ export default function AppPreview() {
            viewport={{ once: true, margin: "-100px" }}
            className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full mb-8 backdrop-blur-md"
         >
-          <ShieldCheck className="h-3.5 w-3.5 text-[#b6f09c]" />
+          <ShieldCheck className="h-3.5 w-3.5 text-[#3b82f6]" />
           <span className="text-zinc-300 text-xs font-semibold tracking-wide">
             Institutional Grade Infrastructure
           </span>
@@ -60,7 +52,7 @@ export default function AppPreview() {
           className="text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] font-bold tracking-tighter text-[#ffffff] leading-[1.05] max-w-4xl mb-8"
         >
           The New Standard <br/>
-          <span className="text-[#b6f09c]">
+          <span className="text-[#3b82f6]">
             For Onchain Payments
           </span>
         </motion.h2>
@@ -85,7 +77,7 @@ export default function AppPreview() {
           viewport={{ once: true, margin: "-100px" }}
           className="flex flex-col sm:flex-row items-center gap-4 mb-24 w-full sm:w-auto"
         >
-          <Link href="/login" className="flex h-14 w-full sm:w-auto px-8 items-center justify-center gap-2 rounded-full bg-[#b6f09c] text-sm font-bold text-[#000000] hover:opacity-90 transition-opacity">
+          <Link href="/login" className="flex h-14 w-full sm:w-auto px-8 items-center justify-center gap-2 rounded-full bg-[#3b82f6] text-sm font-bold text-[#ffffff] hover:opacity-90 transition-opacity">
             <span>Get Started</span>
             <ArrowUpRight className="h-4 w-4 stroke-[3px]" />
           </Link>
@@ -109,7 +101,7 @@ export default function AppPreview() {
              <div className="relative rounded-[1.8rem] md:rounded-[2rem] overflow-hidden border border-[#ffffff]/5 bg-[#000000]">
                {/* Image */}
                <Image 
-                 src="/demo-app.png" 
+                 src="/blue-demo-app.png" 
                  alt="Mecha Pay Dashboard" 
                  width={2560} 
                  height={1440} 

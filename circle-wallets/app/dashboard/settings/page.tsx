@@ -73,7 +73,7 @@ export default function SettingsPage() {
                     onClick={() => copyToClipboard(session.username, "username")}
                     className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                   >
-                    {copiedKey === "username" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    {copiedKey === "username" ? <Check className="h-4 w-4 text-blue-500" /> : <Copy className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -92,7 +92,7 @@ export default function SettingsPage() {
                     onClick={() => copyToClipboard(session.walletAddress, "walletAddress")}
                     className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                   >
-                    {copiedKey === "walletAddress" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    {copiedKey === "walletAddress" ? <Check className="h-4 w-4 text-blue-500" /> : <Copy className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -111,7 +111,7 @@ export default function SettingsPage() {
                     onClick={() => copyToClipboard(session.credential.id, "credentialId")}
                     className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                   >
-                    {copiedKey === "credentialId" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    {copiedKey === "credentialId" ? <Check className="h-4 w-4 text-blue-500" /> : <Copy className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -157,7 +157,7 @@ export default function SettingsPage() {
                   onClick={() => copyToClipboard(appId, "appId")}
                   className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 >
-                  {copiedKey === "appId" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                  {copiedKey === "appId" ? <Check className="h-4 w-4 text-blue-500" /> : <Copy className="h-4 w-4" />}
                 </button>
               </div>
             </div>

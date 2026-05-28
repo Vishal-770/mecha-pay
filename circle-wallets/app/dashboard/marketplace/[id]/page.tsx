@@ -395,7 +395,7 @@ export default function MarketplaceDetailPage() {
             </h1>
             <Badge variant={plan.active ? "secondary" : "outline"} className={cn(
               "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border-none shadow-sm",
-              plan.active ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground/50"
+              plan.active ? "bg-blue-500/10 text-blue-500" : "bg-muted text-muted-foreground/50"
             )}>
               {plan.active ? "Open" : "Closed"}
             </Badge>
@@ -435,7 +435,7 @@ export default function MarketplaceDetailPage() {
                 {[
                   { label: "Current Members", value: metrics.activeBuyerCount, sub: `${metrics.totalBuyers} Lifetime`, icon: Users, color: "text-sky-500" },
                   { label: "Total Sales", value: `$${Number(formatUnits(plan.totalGrossVolume, 6)).toLocaleString()}`, sub: "Settled USDC", icon: DollarSign, color: "text-primary" },
-                  { label: "Repeat Business", value: `${analytics?.repeatBuyerRate.toFixed(1) ?? "0"}%`, sub: "Renewal Rate", icon: Target, color: "text-emerald-500" },
+                  { label: "Repeat Business", value: `${analytics?.repeatBuyerRate.toFixed(1) ?? "0"}%`, sub: "Renewal Rate", icon: Target, color: "text-blue-500" },
                 ].map((stat, i) => (
                   <Card key={i} className="bg-card border-border/80 shadow-none rounded-2xl group hover:bg-muted/5 transition-colors">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -540,13 +540,13 @@ export default function MarketplaceDetailPage() {
           {/* Trust Indicators for Buyers */}
           {!isOwnerView && (
             <div className="grid gap-6 sm:grid-cols-2">
-              <Card className="bg-emerald-500/5 border-emerald-500/10 shadow-none rounded-3xl p-8 space-y-4">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+              <Card className="bg-blue-500/5 border-blue-500/10 shadow-none rounded-3xl p-8 space-y-4">
+                <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
                   <ShieldCheck size={20} strokeWidth={2.5} />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-emerald-700">Protected Payments</h3>
-                  <p className="text-[11px] text-emerald-600/70 leading-relaxed uppercase font-bold tracking-tight">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-blue-700">Protected Payments</h3>
+                  <p className="text-[11px] text-blue-600/70 leading-relaxed uppercase font-bold tracking-tight">
                     Funds are held in a secure protocol vault. You only pay for what you use, and renewal is transparently managed on-chain.
                   </p>
                 </div>
@@ -598,7 +598,7 @@ export default function MarketplaceDetailPage() {
                          <TableCell>
                            <Badge variant={buyer.status === "ACTIVE" ? "secondary" : "outline"} className={cn(
                              "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border-none shadow-sm",
-                             buyer.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground/50"
+                             buyer.status === "ACTIVE" ? "bg-blue-500/10 text-blue-500" : "bg-muted text-muted-foreground/50"
                            )}>
                              {buyer.status}
                            </Badge>
@@ -650,7 +650,7 @@ export default function MarketplaceDetailPage() {
                 <div className="flex items-center justify-between">
                    <div className="space-y-1">
                      <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Status</p>
-                     <Badge variant="outline" className="text-[9px] font-bold uppercase border-emerald-500/30 text-emerald-500 bg-emerald-500/5">Verified</Badge>
+                     <Badge variant="outline" className="text-[9px] font-bold uppercase border-blue-500/30 text-blue-500 bg-blue-500/5">Verified</Badge>
                    </div>
                    <div className="text-right space-y-1">
                      <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Currency</p>
@@ -707,14 +707,14 @@ export default function MarketplaceDetailPage() {
                 </Button>
 
                 {blocked && (
-                  <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-3xl p-6 space-y-4 transition-all">
+                  <div className="bg-blue-500/5 border border-blue-500/20 rounded-3xl p-6 space-y-4 transition-all">
                     <div className="flex items-center justify-between">
-                       <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Active Member</p>
-                       <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                       <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Active Member</p>
+                       <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
                     </div>
                     <div className="flex items-baseline gap-1.5">
-                      <p className="text-3xl font-black italic text-emerald-700 leading-none">{formatCountdown(eligibility!.remainingSeconds)}</p>
-                      <p className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-tighter">left in period</p>
+                      <p className="text-3xl font-black italic text-blue-700 leading-none">{formatCountdown(eligibility!.remainingSeconds)}</p>
+                      <p className="text-[10px] font-bold text-blue-600/60 uppercase tracking-tighter">left in period</p>
                     </div>
                   </div>
                 )}
@@ -728,8 +728,8 @@ export default function MarketplaceDetailPage() {
                 )}
 
                 {successMsg && (
-                  <div className="bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/20 transition-all">
-                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest text-center leading-relaxed">
+                  <div className="bg-blue-500/10 p-5 rounded-2xl border border-blue-500/20 transition-all">
+                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-center leading-relaxed">
                       {successMsg}
                     </p>
                   </div>

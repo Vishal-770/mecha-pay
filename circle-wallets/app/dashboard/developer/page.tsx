@@ -197,7 +197,7 @@ export default function DeveloperPage() {
                     className="shrink-0"
                   >
                     {copied ? (
-                      <Check size={14} className="text-emerald-500" />
+                      <Check size={14} className="text-blue-500" />
                     ) : (
                       <Copy size={14} />
                     )}

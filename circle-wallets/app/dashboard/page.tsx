@@ -22,7 +22,7 @@ function useCssColors() {
   return useMemo(() => {
     if (typeof window === "undefined") {
       return {
-        primary: "#22c55e",
+        primary: "#3b82f6",
         muted: "#64748b",
         border: "rgba(148,163,184,0.12)",
         tooltip: { bg: "#0f172a", border: "#1e293b" },
@@ -36,7 +36,7 @@ function useCssColors() {
       document.body.appendChild(el);
       const rgb = getComputedStyle(el).color;
       document.body.removeChild(el);
-      return rgb || "#22c55e";
+      return rgb || "#3b82f6";
     };
 
     return {
@@ -232,7 +232,7 @@ export default function DashboardOverviewPage() {
                   : <p className="text-2xl font-black font-mono leading-none">${fmt(s?.totalNetRevenue)}</p>
                 }
               </div>
-              <div className="flex items-center gap-1.5 text-emerald-500 text-[10px] font-bold mb-1">
+              <div className="flex items-center gap-1.5 text-blue-500 text-[10px] font-bold mb-1">
                 <TrendingUp className="h-3.5 w-3.5" /> Net earnings
               </div>
             </div>
@@ -384,7 +384,7 @@ export default function DashboardOverviewPage() {
                       </div>
                       <p className="text-[10px] text-muted-foreground font-mono truncate">{tx.plan ? trunc(tx.plan.id) : "—"}</p>
                       {tx.amount ? (
-                        <div className={cn("flex items-center gap-0.5 text-xs font-mono font-bold", isIn ? "text-emerald-400" : "text-slate-400")}>
+                        <div className={cn("flex items-center gap-0.5 text-xs font-mono font-bold", isIn ? "text-blue-400" : "text-slate-400")}>
                           {isIn ? <ArrowDownRight className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
                           ${fmt(tx.amount)}
                         </div>
@@ -434,7 +434,7 @@ export default function DashboardOverviewPage() {
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-xs font-mono font-bold">${fmt(plan.netRevenue)}</p>
-                        <div className={cn("text-[9px] font-black uppercase mt-0.5", plan.active ? "text-emerald-400" : "text-muted-foreground/50")}>
+                        <div className={cn("text-[9px] font-black uppercase mt-0.5", plan.active ? "text-blue-400" : "text-muted-foreground/50")}>
                           {plan.active ? "live" : "off"}
                         </div>
                       </div>
@@ -461,7 +461,7 @@ export default function DashboardOverviewPage() {
                   const isSale = sub.seller.toLowerCase() === wallet?.address?.toLowerCase();
                   return (
                     <div key={sub.id} className="flex items-center gap-3 py-2.5 border-b border-border/15 last:border-0">
-                      <div className={cn("shrink-0 h-1.5 w-1.5 rounded-full mt-0.5", isSale ? "bg-emerald-400" : "bg-indigo-400")} />
+                      <div className={cn("shrink-0 h-1.5 w-1.5 rounded-full mt-0.5", isSale ? "bg-blue-400" : "bg-indigo-400")} />
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] font-mono text-muted-foreground truncate">{trunc(sub.subscriber)}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -473,7 +473,7 @@ export default function DashboardOverviewPage() {
                           </span>
                         </div>
                       </div>
-                      <p className={cn("text-xs font-mono font-bold shrink-0 tabular-nums", isSale ? "text-emerald-400" : "text-slate-300")}>
+                      <p className={cn("text-xs font-mono font-bold shrink-0 tabular-nums", isSale ? "text-blue-400" : "text-slate-300")}>
                         {isSale ? "+" : ""}{fmt(sub.totalAmount)}
                       </p>
                     </div>

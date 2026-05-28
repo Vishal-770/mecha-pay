@@ -501,7 +501,7 @@ export default function WebhooksPage() {
         </div>
         <Separator orientation="vertical" className="h-4" />
         <div className="flex items-center gap-2">
-          <ShieldCheck size={12} className="text-emerald-500" />
+          <ShieldCheck size={12} className="text-blue-500" />
           <span>Events:</span>
           <Badge variant="outline" className="font-mono text-[9px] h-4 px-1.5 bg-muted/50 border-primary/20 text-primary">
             payment.succeeded
@@ -570,7 +570,7 @@ export default function WebhooksPage() {
                         <Badge
                           variant={wh.isActive ? "secondary" : "outline"}
                           className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-lg border-none ${
-                            wh.isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground/40"
+                            wh.isActive ? "bg-blue-500/10 text-blue-500" : "bg-muted text-muted-foreground/40"
                           }`}
                         >
                           {wh.isActive ? "Active" : "Disabled"}
@@ -626,7 +626,7 @@ export default function WebhooksPage() {
                           className="h-8 w-8 rounded-lg shrink-0 border border-border bg-background"
                         >
                           {isCopied ? (
-                            <Check size={13} className="text-emerald-500" />
+                            <Check size={13} className="text-blue-500" />
                           ) : (
                             <Copy size={13} />
                           )}
@@ -640,7 +640,7 @@ export default function WebhooksPage() {
                           Subscribed Event
                         </span>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
+                          <CheckCircle2 size={12} className="text-blue-500 shrink-0" />
                           <span className="text-xs font-bold text-foreground">payment.succeeded</span>
                         </div>
                       </div>
@@ -741,7 +741,7 @@ export default function WebhooksPage() {
                           variant={isSuccess ? "secondary" : "destructive"}
                           className={`text-[10px] font-black px-2 py-0.5 rounded-md border-none ${
                             isSuccess
-                              ? "bg-emerald-500/10 text-emerald-500"
+                              ? "bg-blue-500/10 text-blue-500"
                               : log.status === 0
                               ? "bg-rose-500/10 text-rose-500"
                               : "bg-amber-500/10 text-amber-500"
@@ -836,7 +836,7 @@ export default function WebhooksPage() {
                     <span
                       className={`inline-block size-2 rounded-full ${
                         selectedLogDetails.status >= 200 && selectedLogDetails.status < 300
-                          ? "bg-emerald-500"
+                          ? "bg-blue-500"
                           : "bg-rose-500"
                       }`}
                     />

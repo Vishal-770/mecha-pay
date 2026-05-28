@@ -328,7 +328,7 @@ export default function AdminDashboardPage() {
                 setIsVerifying(true);
                 // The useEffect will re-run on next render if we change a dependency dummy
               }}
-              className="h-12 bg-emerald-600 font-black uppercase italic tracking-widest text-xs hover:bg-emerald-700 shadow-xl shadow-emerald-500/20"
+              className="h-12 bg-blue-600 font-black uppercase italic tracking-widest text-xs hover:bg-blue-700 shadow-xl shadow-blue-500/20"
             >
               Verify Connection
             </Button>
@@ -397,7 +397,7 @@ export default function AdminDashboardPage() {
 
         <article className="rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center justify-between">
-            <div className="rounded-2xl bg-emerald-500/10 text-emerald-500 p-2.5">
+            <div className="rounded-2xl bg-blue-500/10 text-blue-500 p-2.5">
               <TrendingUp size={24} />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Protocol Revenue</span>
@@ -479,7 +479,7 @@ export default function AdminDashboardPage() {
         {/* Treasury Management */}
         <article className="rounded-[2.5rem] border border-border bg-card p-8 shadow-sm">
           <div className="flex items-center gap-3 mb-8">
-            <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-500">
+            <div className="rounded-2xl bg-blue-500/10 p-3 text-blue-500">
               <ArrowDownCircle size={22} />
             </div>
             <div>
@@ -496,7 +496,7 @@ export default function AdminDashboardPage() {
                 value={withdrawAddress}
                 onChange={(e) => setWithdrawAddress(e.target.value)}
                 placeholder="0x..."
-                className="w-full rounded-2xl border border-border bg-background px-5 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all placeholder:text-muted-foreground/30"
+                className="w-full rounded-2xl border border-border bg-background px-5 py-4 text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-muted-foreground/30"
               />
             </div>
 
@@ -508,7 +508,7 @@ export default function AdminDashboardPage() {
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full rounded-2xl border border-border bg-background px-5 py-4 text-base font-black focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all placeholder:text-muted-foreground/30"
+                  className="w-full rounded-2xl border border-border bg-background px-5 py-4 text-base font-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-muted-foreground/30"
                 />
               </div>
             </div>
@@ -516,7 +516,7 @@ export default function AdminDashboardPage() {
             <button 
               onClick={() => void handleWithdraw()}
               disabled={processing || !withdrawAddress || !withdrawAmount}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-black text-white shadow-xl shadow-emerald-900/20 hover:bg-emerald-700 transition-all disabled:opacity-50 uppercase italic tracking-widest"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-4 text-sm font-black text-white shadow-xl shadow-blue-900/20 hover:bg-blue-700 transition-all disabled:opacity-50 uppercase italic tracking-widest"
             >
               {processing ? "Confirming..." : "Initiate Withdrawal"}
               {!processing && <ChevronRight size={18} />}

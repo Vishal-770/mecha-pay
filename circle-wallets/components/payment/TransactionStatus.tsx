@@ -43,10 +43,10 @@ export default function TransactionStatus({
 
   if (status === "success" && transactionHash) {
     return (
-      <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
         <div className="flex items-start gap-3">
           <svg
-            className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
+            className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -59,7 +59,7 @@ export default function TransactionStatus({
             />
           </svg>
           <div className="flex-1">
-            <div className="text-green-500 font-semibold mb-1">
+            <div className="text-blue-500 font-semibold mb-1">
               Payment Successful!
             </div>
             <div className="text-sm text-gray-400 font-mono break-all">

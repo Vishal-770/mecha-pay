@@ -218,7 +218,7 @@ export default function SubscriptionDetailPage() {
 
         if (notif.type === "STATUS_CHANGE") {
           if (isActiveNotif) {
-            icon = <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
+            icon = <CheckCircle2 className="h-3.5 w-3.5 text-blue-500" />;
             label = "Activated";
             desc = "Subscription is now active.";
           } else {
@@ -269,7 +269,7 @@ export default function SubscriptionDetailPage() {
             <span className={cn(
               "inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full",
               isActive
-                ? "bg-emerald-500/10 text-emerald-600"
+                ? "bg-blue-500/10 text-blue-600"
                 : "bg-muted text-muted-foreground"
             )}>
               {isActive ? "● Active" : "○ Expired"}
@@ -380,7 +380,7 @@ export default function SubscriptionDetailPage() {
               <div className="space-y-5">
                 {perks.map((feature, i) => (
                   <div key={i} className="flex gap-3">
-                    <div className="h-5 w-5 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="h-5 w-5 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
                       <CheckCircle2 size={11} strokeWidth={2.5} />
                     </div>
                     <div className="space-y-0.5">

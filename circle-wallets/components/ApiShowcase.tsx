@@ -6,17 +6,17 @@ import { ArrowUpRight, Code2, Globe2, ShieldCheck } from "lucide-react"
 
 const apiFeatureDetails = [
   {
-    icon: <Globe2 className="w-5 h-5 text-[#b6f09c]" />,
+    icon: <Globe2 className="w-5 h-5 text-[#3b82f6]" />,
     title: "Global Availability",
     description: "High-performance edge nodes ensuring sub-100ms response times worldwide."
   },
   {
-    icon: <ShieldCheck className="w-5 h-5 text-[#b6f09c]" />,
+    icon: <ShieldCheck className="w-5 h-5 text-[#3b82f6]" />,
     title: "Secure Auth",
     description: "Standardized API key authentication with granular merchant-level permissions."
   },
   {
-    icon: <Code2 className="w-5 h-5 text-[#b6f09c]" />,
+    icon: <Code2 className="w-5 h-5 text-[#3b82f6]" />,
     title: "Web Hooks",
     description: "Real-time event notifications for subscription renewals and expirations."
   }
@@ -36,7 +36,7 @@ export default function ApiShowcase() {
             </div>
             
             <h2 className="text-5xl lg:text-6xl font-bold tracking-tighter text-[#ffffff]">
-              Seamless Data <br/><span className="text-[#b6f09c]">Via REST API</span>
+              Seamless Data <br/><span className="text-[#3b82f6]">Via REST API</span>
             </h2>
             
             <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2 lg:mt-4 max-w-xl">
@@ -60,7 +60,7 @@ export default function ApiShowcase() {
             <div className="mt-8">
               <Link 
                 href="/docs" 
-                className="flex h-14 w-full sm:w-fit px-8 items-center justify-center gap-2 rounded-full bg-[#b6f09c] text-sm font-bold text-[#000000] hover:opacity-90 transition-opacity"
+                className="flex h-14 w-full sm:w-fit px-8 items-center justify-center gap-2 rounded-full bg-[#3b82f6] text-sm font-bold text-[#ffffff] hover:opacity-90 transition-opacity"
               >
                 <span>API Reference</span>
                 <ArrowUpRight className="h-4 w-4 stroke-[3px]" />

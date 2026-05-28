@@ -5,70 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, LayoutGrid, Zap, Shield, Globe, Coins, Activity, Mail } from "lucide-react";
 import Lenis from 'lenis';
-import BounceCards from "@/components/BounceCards";
 import CardSwap, { Card } from "@/components/CardSwap";
 import { Terminal, AnimatedSpan, TypingAnimation } from "@/components/ui/terminal";
 
 import AppPreview from "@/components/AppPreview";
 import ApiShowcase from "@/components/ApiShowcase";
 
-
-
-const featureItems = [
-  <div key="1" className="flex flex-col gap-4 pointer-events-auto h-full w-full group">
-    <div className="h-10 flex items-center transition-transform duration-300">
-      <Zap className="h-8 w-8 text-[#b6f09c]" />
-    </div>
-    <div className="mt-2">
-      <h3 className="text-xl font-bold tracking-tight text-white mb-2">USDC-as-Gas</h3>
-      <p className="text-sm text-zinc-400 leading-relaxed font-medium">Eliminate native gas tokens. Pay for memberships and network fees entirely in USDC on Arc.</p>
-    </div>
-  </div>,
-  <div key="2" className="flex flex-col gap-4 pointer-events-auto h-full w-full group">
-    <div className="h-10 flex items-center transition-transform duration-300">
-      <Shield className="h-8 w-8 text-[#b6f09c]" />
-    </div>
-    <div className="mt-2">
-      <h3 className="text-xl font-bold tracking-tight text-white mb-2">Secure MPC</h3>
-      <p className="text-sm text-zinc-400 leading-relaxed font-medium">Non-custodial infrastructure powered by Circle&apos;s Programmable Wallets and MPC technology.</p>
-    </div>
-  </div>,
-  <div key="3" className="flex flex-col gap-4 pointer-events-auto h-full w-full group">
-    <div className="h-10 flex items-center transition-transform duration-300">
-      <Globe className="h-8 w-8 text-[#b6f09c]" />
-    </div>
-    <div className="mt-2">
-      <h3 className="text-xl font-bold tracking-tight text-white mb-2">CCTP Native</h3>
-      <p className="text-sm text-zinc-400 leading-relaxed font-medium">Bridge canonical USDC directly from 15+ testnet chains via Circle&apos;s native CCTP protocol.</p>
-    </div>
-  </div>,
-  <div key="4" className="flex flex-col gap-4 pointer-events-auto h-full w-full group">
-    <div className="h-10 flex items-center transition-transform duration-300">
-      <Activity className="h-8 w-8 text-[#b6f09c]" />
-    </div>
-    <div className="mt-2">
-      <h3 className="text-xl font-bold tracking-tight text-white mb-2">Fast Indexing</h3>
-      <p className="text-sm text-zinc-400 leading-relaxed font-medium">Millisecond-accurate membership status powered by our custom high-fidelity indexing engine.</p>
-    </div>
-  </div>,
-  <div key="5" className="flex flex-col gap-4 pointer-events-auto h-full w-full group">
-    <div className="h-10 flex items-center transition-transform duration-300">
-      <LayoutGrid className="h-8 w-8 text-[#b6f09c]" />
-    </div>
-    <div className="mt-2">
-      <h3 className="text-xl font-bold tracking-tight text-white mb-2">React SDK</h3>
-      <p className="text-sm text-zinc-400 leading-relaxed font-medium">Ready-to-use pricing tables and membership hooks for instant protocol integration.</p>
-    </div>
-  </div>
-];
-
-const transformStyles = [
-  "rotate(12deg) translate(-180px, -40px)",
-  "rotate(-8deg) translate(-90px, 20px)",
-  "rotate(0deg) translate(0px, -20px)",
-  "rotate(8deg) translate(90px, 20px)",
-  "rotate(-12deg) translate(180px, -40px)"
-];
 
 export default function LandingPage() {
   const [isNavVisible, setIsNavVisible] = useState(true);
@@ -116,7 +58,7 @@ export default function LandingPage() {
             playsInline
             className="absolute top-0 left-0 w-full h-full object-cover opacity-60"
           >
-            <source src="/background.mp4" type="video/mp4" />
+            <source src="/bg.mp4" type="video/mp4" />
           </video>
           
           {/* Simple dark overlay */}
@@ -125,14 +67,6 @@ export default function LandingPage() {
           {/* Seamless bottom fade to match the next section's background */}
           <div className="absolute bottom-0 left-0 w-full h-48 bg-linear-to-t from-[#000000] via-[#000000]/80 to-transparent z-10 pointer-events-none" />
         </div>
-
-        {/* Decorative Grid */}
-        <div className="absolute inset-0 z-10 opacity-[0.03] pointer-events-none" 
-             style={{
-               backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
-               backgroundSize: '4rem 4rem'
-             }} 
-        />
 
         {/* Navbar Implementation - Clean */}
         <header 
@@ -156,66 +90,44 @@ export default function LandingPage() {
         </header>
 
         {/* Hero Content */}
-        <div className="relative z-20 flex-1 flex flex-col justify-center w-full px-6 lg:px-12 xl:px-20 pb-20 pt-32 lg:pt-40">
-          <div className="grid lg:grid-cols-[1.2fr_600px] items-center gap-12 xl:gap-20 w-full max-w-400 mx-auto">
+        <div className="relative z-20 flex-1 flex flex-col justify-center w-full px-8 sm:px-16 lg:pl-36 lg:pr-12 xl:pl-64 xl:pr-16 pb-20 pt-32 lg:pt-40">
+          <div className="flex flex-col items-start text-left max-w-4xl w-full">
             
             {/* Left Side: Typography & CTAs */}
-            <div className="flex flex-col items-start text-left pt-10 lg:pt-0 relative z-30">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-6">
-                <span className="text-[#b6f09c] text-xs font-semibold tracking-wide flex items-center gap-1.5">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#b6f09c] animate-pulse"></span>
-                  One-Click Subscriptions in Seconds
-                </span>
-                <span className="text-zinc-500 text-xs">•</span>
-                <span className="text-zinc-300 text-xs font-semibold tracking-wide">Enterprise Compliance Ready</span>
-              </div>
+            <div className="flex flex-col items-start text-left relative z-30 w-full">
               <div className="flex flex-col mb-10 relative">
-                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[4.5rem] xl:text-[5.5rem] font-extrabold tracking-tighter leading-[1.05] text-[#ffffff]">
+                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[4.5rem] xl:text-[5.5rem] font-extrabold tracking-tighter leading-[1.05] text-foreground">
                   <span className="block">USDC-Native</span>
-                  <span className="block text-[#b6f09c]">Membership</span>
+                  <span className="block text-primary">Membership</span>
                   <span className="block">Infrastructure.</span>
                 </h1>
                 
-                <p className="mt-8 text-base sm:text-lg lg:text-xl text-[#a1a1aa] font-medium leading-relaxed max-w-2xl">
+                <p className="mt-8 text-base sm:text-lg lg:text-xl text-muted-foreground font-medium leading-relaxed max-w-2xl">
                   Integrate beautiful, predictable subscription checkouts in seconds. Zero friction, drop-in React SDK widgets powered by Circle Programmable Wallets, CCTP, and the Arc blockchain.
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
-                <Link href="/login" className="flex h-14 w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-[#b6f09c] px-8 text-sm font-bold text-[#000000] hover:opacity-90 transition-opacity">
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                <Link href="/login" className="flex h-12 px-6 items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity shadow-md">
                   <span>Open Console</span>
-                  <ArrowUpRight className="h-4 w-4 stroke-[3px]" />
+                  <ArrowUpRight className="h-4 w-4 stroke-[2.5px]" />
                 </Link>
-                <Link href="/docs" className="flex h-14 w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-[#ffffff]/5 px-8 text-sm font-semibold text-[#ffffff] border border-[#ffffff]/10 hover:bg-[#ffffff]/10 transition-colors">
+                <Link href="/docs" className="flex h-12 px-6 items-center justify-center gap-2 rounded-full border border-border bg-card/35 text-sm font-semibold text-foreground hover:bg-muted transition-colors">
                   <span>Explore Docs</span>
                 </Link>
               </div>
               
               {/* Trust Indicators */}
               <div className="mt-14 flex items-center gap-6 opacity-60">
-                <span className="text-xs font-semibold tracking-widest uppercase text-[#71717a]">Powered by</span>
+                <span className="text-xs font-semibold tracking-widest uppercase text-muted-foreground">Powered by</span>
                 <div className="flex items-center gap-6">
-                  <span className="text-sm font-bold text-[#ffffff] tracking-wide">Circle</span>
-                  <span className="text-sm font-bold text-[#ffffff] tracking-wide">Arc</span>
-                  <span className="text-sm font-bold text-[#ffffff] tracking-wide">CCTP</span>
+                  <span className="text-sm font-bold text-foreground tracking-wide">Circle</span>
+                  <span className="text-sm font-bold text-foreground tracking-wide">Arc</span>
+                  <span className="text-sm font-bold text-foreground tracking-wide">CCTP</span>
                 </div>
               </div>
             </div>
-
-            {/* Right Side: Visuals (BounceCards) */}
-            <div className="hidden lg:flex items-center justify-center h-150 w-full relative z-20">
-              <BounceCards
-                className="custom-bounceCards scale-110 xl:scale-125"
-                items={featureItems}
-                containerWidth={600}
-                containerHeight={500}
-                animationDelay={0.4}
-                animationStagger={0.08}
-                easeType="elastic.out(1, 0.75)"
-                transformStyles={transformStyles}
-                enableHover={true}
-              />
-            </div>
+            
           </div>
         </div>
       </section>
@@ -231,7 +143,7 @@ export default function LandingPage() {
             <span className="text-zinc-300 text-xs font-semibold tracking-wide">Protocol Architecture</span>
           </div>
           <h2 className="text-5xl lg:text-6xl font-bold tracking-tighter text-[#ffffff]">
-            USDC-Native. <br/><span className="text-[#b6f09c]">Arc-Powered.</span>
+            USDC-Native. <br/><span className="text-[#3b82f6]">Arc-Powered.</span>
           </h2>
           <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2 lg:mt-4">
             Mecha Pay is the membership infrastructure for the Arc network. By combining Circle&apos;s Programmable Wallets with CCTP bridging, we&apos;ve eliminated gas complexity, allowing users to pay entirely in USDC while developers enjoy sub-second finality.
@@ -254,7 +166,7 @@ export default function LandingPage() {
               <Card className="bg-[#050505] border border-[#ffffff]/10 shadow-2xl rounded-2xl flex flex-col justify-between p-6">
                 <div className="flex justify-between items-center text-[#ffffff]">
                   <div className="flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-[#b6f09c]"/> 
+                    <Globe className="w-5 h-5 text-[#3b82f6]"/> 
                     <span className="text-sm font-semibold tracking-wide">CCTP Bridge</span>
                   </div>
                   <span className="text-xs font-semibold text-zinc-400 bg-[#ffffff]/5 border border-[#ffffff]/10 px-2.5 py-1 rounded-full">15+ Chains</span>
@@ -267,7 +179,7 @@ export default function LandingPage() {
               <Card className="bg-[#050505] border border-[#ffffff]/10 shadow-2xl rounded-2xl flex flex-col justify-between p-6">
                 <div className="flex justify-between items-center text-[#ffffff]">
                   <div className="flex items-center gap-3">
-                    <Shield className="w-5 h-5 text-[#b6f09c]"/> 
+                    <Shield className="w-5 h-5 text-[#3b82f6]"/> 
                     <span className="text-sm font-semibold tracking-wide">MPC Wallets</span>
                   </div>
                   <span className="text-xs font-semibold text-zinc-400 bg-[#ffffff]/5 border border-[#ffffff]/10 px-2.5 py-1 rounded-full">Non-Custodial</span>
@@ -280,7 +192,7 @@ export default function LandingPage() {
               <Card className="bg-[#050505] border border-[#ffffff]/10 shadow-2xl rounded-2xl flex flex-col justify-between p-6">
                 <div className="flex justify-between items-center text-[#ffffff]">
                   <div className="flex items-center gap-3">
-                    <Zap className="w-5 h-5 text-[#b6f09c]"/> 
+                    <Zap className="w-5 h-5 text-[#3b82f6]"/> 
                     <span className="text-sm font-semibold tracking-wide">Execution</span>
                   </div>
                   <span className="text-xs font-semibold text-zinc-400 bg-[#ffffff]/5 border border-[#ffffff]/10 px-2.5 py-1 rounded-full">Arc Network</span>
@@ -299,12 +211,12 @@ export default function LandingPage() {
       {/* Developer Integration Section */}
       <section id="developers" className="relative w-full bg-[#000000] py-32 z-20">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-16 lg:gap-20 px-6 sm:px-12 lg:px-20 w-full">
-          <div className="flex-1 w-full max-w-xl mx-auto flex items-center justify-center relative perspective-[2000px]">
-          <Terminal className="bg-[#050505] border border-[#ffffff]/10 shadow-2xl h-100 w-full max-w-xl">
+          <div className="flex-1 w-full max-w-3xl mx-auto flex items-center justify-center relative perspective-[2000px]">
+          <Terminal className="bg-[#050505] border border-[#ffffff]/10 shadow-2xl h-[520px] w-full max-w-3xl">
             <TypingAnimation delay={500} duration={30} className="text-zinc-500 text-xs sm:text-sm font-mono">
               &gt; npm install mechapay-react
             </TypingAnimation>
-            <AnimatedSpan delay={1500} className="text-[#b6f09c] text-xs sm:text-sm font-mono mt-2 block">
+            <AnimatedSpan delay={1500} className="text-[#3b82f6] text-xs sm:text-sm font-mono mt-2 block">
               ✔ Package installed successfully
             </AnimatedSpan>
             
@@ -336,19 +248,16 @@ export default function LandingPage() {
 
         <div className="flex-1 flex flex-col gap-6 max-w-2xl w-full mt-16 lg:mt-0">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-2">
-            <span className="text-[#b6f09c] text-xs font-semibold tracking-wide">Drop-in Checkout SDK</span>
+            <span className="text-[#3b82f6] text-xs font-semibold tracking-wide">Drop-in Checkout SDK</span>
           </div>
           <h2 className="text-5xl lg:text-6xl font-bold tracking-tighter text-[#ffffff] leading-tight">
-            One-Click Payments. <br/><span className="text-[#b6f09c]">Integrates in Seconds.</span>
+            One-Click Payments. <br/><span className="text-[#3b82f6]">Integrates in Seconds.</span>
           </h2>
           <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2 lg:mt-4">
-            Mecha Pay offers a zero-friction, pre-built checkout widget that inserts directly into your client application. Similar to modern drop-in login interfaces, just paste a single React component to accept USDC subscriptions instantly. No smart contract deployments or complex backend sync required.
-          </p>
-          <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2">
-            The SDK automatically provisions non-custodial wallets, secures transactions via device passkeys, handles multi-chain bridging, and validates customer access privileges instantly.
+            Mecha Pay offers a zero-friction, pre-built checkout widget for your client application. Drop in a single React component to accept USDC subscriptions instantly, with automatic wallet provisioning, passkey security, native bridging, and real-time access gating.
           </p>
           <div className="flex gap-4 mt-6">
-            <Link href="/docs" className="flex h-14 w-full sm:w-auto px-8 items-center justify-center gap-2 rounded-full bg-[#b6f09c] text-sm font-bold text-[#000000] hover:opacity-90 transition-opacity">
+            <Link href="/docs" className="flex h-14 w-full sm:w-auto px-8 items-center justify-center gap-2 rounded-full bg-[#3b82f6] text-sm font-bold text-[#ffffff] hover:opacity-90 transition-opacity">
               <span>Explore SDK Docs</span>
               <ArrowUpRight className="h-4 w-4 stroke-[3px]" />
             </Link>
@@ -428,7 +337,7 @@ export default function LandingPage() {
             </div>
             <h2 className="text-5xl lg:text-7xl font-bold tracking-tighter text-[#ffffff] leading-[1.1]">
               Pure Efficiency. <br/>
-              <span className="text-[#b6f09c]">Zero Waste.</span>
+              <span className="text-[#3b82f6]">Zero Waste.</span>
             </h2>
             <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2 lg:mt-4 max-w-xl">
               Traditional payment rails eat into your margins with hidden fees and expensive gas costs. Mecha Pay redefines protocol economics.
@@ -436,37 +345,37 @@ export default function LandingPage() {
           </div>
 
           <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500">
+            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
-                <Coins className="w-32 h-32 text-[#b6f09c] -mr-8 -mt-8" />
+                <Coins className="w-32 h-32 text-[#3b82f6] -mr-8 -mt-8" />
               </div>
               <div className="relative z-10">
-                <div className="text-5xl font-bold tracking-tighter text-[#ffffff] mb-4 group-hover:text-[#b6f09c] transition-colors duration-500">$0.00</div>
+                <div className="text-5xl font-bold tracking-tighter text-[#ffffff] mb-4 group-hover:text-[#3b82f6] transition-colors duration-500">$0.00</div>
                 <h4 className="text-xl font-bold text-[#ffffff] mb-2 tracking-tight">Native Fee</h4>
                 <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-[90%]">Eliminate secondary gas tokens. Arc uses USDC as native gas for predictable, low-cost execution.</p>
               </div>
             </div>
             
-            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500">
+            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500">
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
-                <Zap className="w-32 h-32 text-[#b6f09c] -mr-8 -mt-8" />
+                <Zap className="w-32 h-32 text-[#3b82f6] -mr-8 -mt-8" />
               </div>
               <div className="relative z-10">
-                <div className="text-5xl font-bold tracking-tighter text-[#ffffff] mb-4 group-hover:text-[#b6f09c] transition-colors duration-500">Instant</div>
+                <div className="text-5xl font-bold tracking-tighter text-[#ffffff] mb-4 group-hover:text-[#3b82f6] transition-colors duration-500">Instant</div>
                 <h4 className="text-xl font-bold text-[#ffffff] mb-2 tracking-tight">Sub-Second Finality</h4>
                 <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-[90%]">Subscriptions and bridges confirm in under 1 second, providing a true Web2-like experience.</p>
               </div>
             </div>
             
-            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500 md:col-span-2">
-              <div className="absolute inset-0 bg-linear-to-r from-[#b6f09c]/0 via-[#b6f09c]/5 to-[#b6f09c]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 md:col-span-2">
+              <div className="absolute inset-0 bg-linear-to-r from-[#3b82f6]/0 via-[#3b82f6]/5 to-[#3b82f6]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
-                <Globe className="w-48 h-48 text-[#b6f09c] -mr-16 -mt-16" />
+                <Globe className="w-48 h-48 text-[#3b82f6] -mr-16 -mt-16" />
               </div>
               <div className="relative z-10">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="h-12 w-12 rounded-xl bg-[#ffffff]/5 flex items-center justify-center border border-[#ffffff]/10 group-hover:border-[#b6f09c]/30 transition-colors duration-500">
-                     <Globe className="h-6 w-6 text-[#ffffff] group-hover:text-[#b6f09c] transition-colors duration-500" />
+                  <div className="h-12 w-12 rounded-xl bg-[#ffffff]/5 flex items-center justify-center border border-[#ffffff]/10 group-hover:border-[#3b82f6]/30 transition-colors duration-500">
+                     <Globe className="h-6 w-6 text-[#ffffff] group-hover:text-[#3b82f6] transition-colors duration-500" />
                   </div>
                   <div className="text-3xl font-bold tracking-tighter text-[#ffffff]">Unified Liquidity</div>
                 </div>
@@ -480,13 +389,13 @@ export default function LandingPage() {
 
       {/* Trust & Compliance Section */}
       <section id="compliance" className="relative w-full bg-[#000000] py-24 lg:py-32 px-6 sm:px-12 lg:px-20 z-20 overflow-hidden border-t border-[#ffffff]/10">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-20%,#b6f09c08,transparent_70%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-20%,#3b82f608,transparent_70%)] pointer-events-none" />
         
         <div className="max-w-7xl mx-auto flex flex-col gap-16 relative z-10">
           
           <div className="flex flex-col items-center text-center gap-4 max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-2">
-              <span className="text-[#b6f09c] text-xs font-semibold tracking-wide">Enterprise Gated Security</span>
+              <span className="text-[#3b82f6] text-xs font-semibold tracking-wide">Enterprise Gated Security</span>
             </div>
             <h2 className="text-4xl lg:text-6xl font-bold tracking-tighter text-[#ffffff] leading-tight">
               Regulatory Compliance <br/>& <span className="text-zinc-500">Institutional Trust</span>
@@ -498,10 +407,10 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
             {/* MiCA Ready */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
               <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#b6f09c]/30 transition-colors">
-                  <Shield className="h-5 w-5 text-[#b6f09c]" />
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                  <Shield className="h-5 w-5 text-[#3b82f6]" />
                 </div>
                 <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">MiCA Compliant</h4>
                 <p className="text-sm text-zinc-400 font-medium leading-relaxed">
@@ -512,10 +421,10 @@ export default function LandingPage() {
             </div>
 
             {/* GDPR & Privacy First */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
               <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#b6f09c]/30 transition-colors">
-                  <Globe className="h-5 w-5 text-[#b6f09c]" />
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                  <Globe className="h-5 w-5 text-[#3b82f6]" />
                 </div>
                 <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">GDPR & Data Privacy</h4>
                 <p className="text-sm text-zinc-400 font-medium leading-relaxed">
@@ -526,10 +435,10 @@ export default function LandingPage() {
             </div>
 
             {/* SOC 2 Type II */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
               <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#b6f09c]/30 transition-colors">
-                  <Zap className="h-5 w-5 text-[#b6f09c]" />
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                  <Zap className="h-5 w-5 text-[#3b82f6]" />
                 </div>
                 <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">SOC 2 Type II Insulated</h4>
                 <p className="text-sm text-zinc-400 font-medium leading-relaxed">
@@ -540,10 +449,10 @@ export default function LandingPage() {
             </div>
 
             {/* BSA & AML Gating */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#b6f09c]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
               <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#b6f09c]/30 transition-colors">
-                  <Coins className="h-5 w-5 text-[#b6f09c]" />
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                  <Coins className="h-5 w-5 text-[#3b82f6]" />
                 </div>
                 <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">BSA / AML Gating</h4>
                 <p className="text-sm text-zinc-400 font-medium leading-relaxed">
@@ -575,7 +484,7 @@ export default function LandingPage() {
                 The production-grade, USDC-native membership infrastructure for Web3. Built on Arc Testnet with Circle CCTP.
               </p>
               <div className="flex items-center gap-4 mt-2">
-                <Link href="#" className="h-10 w-10 flex items-center justify-center rounded-full border border-[#ffffff]/10 bg-[#ffffff]/5 text-zinc-400 hover:text-[#000000] hover:bg-[#b6f09c] hover:border-[#b6f09c] transition-all duration-300">
+                <Link href="#" className="h-10 w-10 flex items-center justify-center rounded-full border border-[#ffffff]/10 bg-[#ffffff]/5 text-zinc-400 hover:text-[#ffffff] hover:bg-[#3b82f6] hover:border-[#3b82f6] transition-all duration-300">
                   <Mail className="h-4 w-4" />
                 </Link>
               </div>

@@ -127,7 +127,7 @@ export default function MySubscriptionsPage() {
 
         if (notif.type === "STATUS_CHANGE") {
           if (isActive) {
-            icon = <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
+            icon = <CheckCircle2 className="h-3.5 w-3.5 text-blue-500" />;
             label = "Activated";
             desc = "Your subscription is now active.";
           } else {
@@ -299,7 +299,7 @@ export default function MySubscriptionsPage() {
                     <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{title}</p>
                     <span className={cn(
                       "inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded-full shrink-0",
-                      item.status === "ACTIVE" ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground/60"
+                      item.status === "ACTIVE" ? "bg-blue-500/10 text-blue-600" : "bg-muted text-muted-foreground/60"
                     )}>
                       {item.status === "ACTIVE" ? "● Active" : "○ Expired"}
                     </span>

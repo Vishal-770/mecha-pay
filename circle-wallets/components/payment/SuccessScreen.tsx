@@ -47,10 +47,10 @@ export default function SuccessScreen({
       <div className="max-w-xl w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         
         <div className="text-center space-y-4">
-          <div className="h-20 w-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="h-10 w-10 text-emerald-500" strokeWidth={2.5} />
+          <div className="h-20 w-20 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="h-10 w-10 text-blue-500" strokeWidth={2.5} />
           </div>
-          <Badge variant="outline" className="bg-emerald-500/5 border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-[0.3em] px-4 py-1 rounded-full">
+          <Badge variant="outline" className="bg-blue-500/5 border-blue-500/20 text-blue-500 text-[10px] font-black uppercase tracking-[0.3em] px-4 py-1 rounded-full">
             Protocol Settled
           </Badge>
           <h1 className="text-3xl lg:text-5xl font-black uppercase tracking-tighter leading-none">

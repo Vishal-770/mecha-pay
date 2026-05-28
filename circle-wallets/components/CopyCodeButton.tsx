@@ -22,7 +22,7 @@ export function CopyCodeButton({ text }: { text: string }) {
       className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors z-10"
       aria-label="Copy code to clipboard"
     >
-      {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+      {copied ? <Check size={16} className="text-blue-500" /> : <Copy size={16} />}
     </button>
   );
 }

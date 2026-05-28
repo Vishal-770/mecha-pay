@@ -440,7 +440,7 @@ export default function PaymentPage() {
             {session && (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                   <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Connected</span>
                 </div>
                 <span className="h-2.5 w-px bg-border/30" />
@@ -577,7 +577,7 @@ export default function PaymentPage() {
 
         {/* Existing Alert Statuses (Left-Border Bar Layout) */}
         {isActiveSub && (
-          <div className="border-l-2 border-emerald-500 pl-4 py-2 space-y-1 text-emerald-500 transition-all">
+          <div className="border-l-2 border-blue-500 pl-4 py-2 space-y-1 text-blue-500 transition-all">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               <p className="text-[10px] font-bold uppercase tracking-wider">Active Subscription Found</p>
@@ -689,7 +689,7 @@ export default function PaymentPage() {
                             Owner
                           </div>
                         ) : isThisTierActive ? (
-                          <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 border border-emerald-500/20 bg-emerald-500/5 py-2.5 rounded-md text-center font-sans">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-blue-500 border border-blue-500/20 bg-blue-500/5 py-2.5 rounded-md text-center font-sans">
                             Active
                           </div>
                         ) : !session ? null : succeeded ? (

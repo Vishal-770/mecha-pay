@@ -55,7 +55,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
             if (rawText.includes("[!IMPORTANT]")) {
               const cleanText = rawText.replace("[!IMPORTANT]", "").trim();
               return (
-                <blockquote className="border-l-4 border-emerald-500 bg-emerald-500/10 pl-4 py-3 rounded-r-lg my-6 text-emerald-600 dark:text-emerald-400 text-sm">
+                <blockquote className="border-l-4 border-blue-500 bg-blue-500/10 pl-4 py-3 rounded-r-lg my-6 text-blue-600 dark:text-blue-400 text-sm">
                   <div className="font-bold flex items-center gap-2 mb-1.5 uppercase tracking-widest text-[11px]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                     Important Note
@@ -80,7 +80,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
               
               let methodColor = "bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200";
               if (method === "GET") methodColor = "bg-zinc-100 text-zinc-600 dark:bg-zinc-800/60 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/50";
-              if (method === "POST") methodColor = "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50";
+              if (method === "POST") methodColor = "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50";
               if (method === "PUT" || method === "PATCH") methodColor = "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50";
               if (method === "DELETE") methodColor = "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 border border-red-200 dark:border-red-800/50";
 
