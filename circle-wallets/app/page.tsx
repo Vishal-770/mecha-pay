@@ -134,6 +134,147 @@ export default function LandingPage() {
 
       <AppPreview />
 
+      {/* Trust & Compliance Section */}
+      <section id="compliance" className="relative w-full bg-[#000000] py-24 lg:py-32 px-6 sm:px-12 lg:px-20 z-20 overflow-hidden border-t border-[#ffffff]/10">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-20%,#3b82f608,transparent_70%)] pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto flex flex-col gap-16 relative z-10">
+          
+          <div className="flex flex-col items-center text-center gap-4 max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-2">
+              <span className="text-[#3b82f6] text-xs font-semibold tracking-wide">Enterprise Gated Security</span>
+            </div>
+            <h2 className="text-4xl lg:text-6xl font-bold tracking-tighter text-[#ffffff] leading-tight">
+              Regulatory Compliance <br/>& <span className="text-zinc-500">Institutional Trust</span>
+            </h2>
+            <p className="text-zinc-400 font-medium leading-relaxed text-base sm:text-lg mt-2">
+              Mecha Pay is engineered to align with global regulatory frameworks, ensuring a fully compliant stablecoin payment stream.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+            {/* BSA & AML Gating */}
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+              <div>
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                  <Coins className="h-5 w-5 text-primary" />
+                </div>
+                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">BSA / AML Gating</h4>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                  Integrates seamlessly with RPC-level sanction filters and OFAC screening tools, protecting merchants from interacting with flagged wallets.
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">AML Protection</span>
+            </div>
+
+            {/* MiCA Ready */}
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+              <div>
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">MiCA Compliant</h4>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                  Leverages native Circle USDC, fully backed and regulated under the EU's Markets in Crypto-Assets regulation, guaranteeing stable value redemption.
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">Stablecoin Regs</span>
+            </div>
+
+            {/* GDPR & Privacy First */}
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+              <div>
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                  <Globe className="h-5 w-5 text-primary" />
+                </div>
+                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">GDPR & Data Privacy</h4>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                  No personally identifiable information (PII) is stored on the ledger. Cryptographic session keys authorize payouts without exposing customer identities.
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">GDPR Compliant</span>
+            </div>
+
+            {/* SOC 2 Type II */}
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+              <div>
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                  <Zap className="h-5 w-5 text-primary" />
+                </div>
+                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">SOC 2 Type II Insulated</h4>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                  Operates using Circle's non-custodial wallet infrastructure, audited to SOC 2 Type II security standards for safe private key segment storage.
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">Audit Certified</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Protocol Economics Section */}
+      {/* Protocol Economics Section */}
+      <section className="relative w-full bg-[#000000] py-24 lg:py-40 px-6 sm:px-12 lg:px-20 z-20 overflow-hidden">
+        {/* Subtle Architectural Grid Background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-size-[4rem_4rem] mask-[radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-20 relative z-10">
+          <div className="flex-1 flex flex-col gap-6 w-full">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-2">
+              <span className="text-zinc-300 text-xs font-semibold tracking-wide">Fee Transparency</span>
+            </div>
+            <h2 className="text-5xl lg:text-7xl font-bold tracking-tighter text-[#ffffff] leading-[1.1]">
+              Pure Efficiency. <br/>
+              <span className="text-[#3b82f6]">Zero Waste.</span>
+            </h2>
+            <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2 lg:mt-4 max-w-xl">
+              Traditional payment rails eat into your margins with hidden fees and expensive gas costs. Mecha Pay redefines protocol economics.
+            </p>
+          </div>
+
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
+                <Coins className="w-32 h-32 text-[#3b82f6] -mr-8 -mt-8" />
+              </div>
+              <div className="relative z-10">
+                <div className="text-5xl font-bold tracking-tighter text-[#ffffff] mb-4 group-hover:text-[#3b82f6] transition-colors duration-500">$0.00</div>
+                <h4 className="text-xl font-bold text-[#ffffff] mb-2 tracking-tight">Native Fee</h4>
+                <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-[90%]">Eliminate secondary gas tokens. Arc uses USDC as native gas for predictable, low-cost execution.</p>
+              </div>
+            </div>
+            
+            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
+                <Zap className="w-32 h-32 text-[#3b82f6] -mr-8 -mt-8" />
+              </div>
+              <div className="relative z-10">
+                <div className="text-5xl font-bold tracking-tighter text-[#ffffff] mb-4 group-hover:text-[#3b82f6] transition-colors duration-500">Instant</div>
+                <h4 className="text-xl font-bold text-[#ffffff] mb-2 tracking-tight">Sub-Second Finality</h4>
+                <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-[90%]">Subscriptions and bridges confirm in under 1 second, providing a true Web2-like experience.</p>
+              </div>
+            </div>
+            
+            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 md:col-span-2">
+              <div className="absolute inset-0 bg-linear-to-r from-[#3b82f6]/0 via-[#3b82f6]/5 to-[#3b82f6]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
+                <Globe className="w-48 h-48 text-[#3b82f6] -mr-16 -mt-16" />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="h-12 w-12 rounded-xl bg-[#ffffff]/5 flex items-center justify-center border border-[#ffffff]/10 group-hover:border-[#3b82f6]/30 transition-colors duration-500">
+                     <Globe className="h-6 w-6 text-[#ffffff] group-hover:text-[#3b82f6] transition-colors duration-500" />
+                  </div>
+                  <div className="text-3xl font-bold tracking-tighter text-[#ffffff]">Unified Liquidity</div>
+                </div>
+                <h4 className="text-xl font-bold text-[#ffffff] mb-2 tracking-tight">Native Circle CCTP Integration</h4>
+                <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-lg">No wrapped assets. Move canonical USDC seamlessly between Ethereum, Base, Polygon, and 15+ others via official burn-and-mint logic.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Protocol Features Section */}
 
       <section id="features" className="relative w-full bg-[#000000] py-24 lg:py-32 z-20">
@@ -324,146 +465,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Protocol Economics Section */}
-      {/* Protocol Economics Section */}
-      <section className="relative w-full bg-[#000000] py-24 lg:py-40 px-6 sm:px-12 lg:px-20 z-20 overflow-hidden">
-        {/* Subtle Architectural Grid Background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-size-[4rem_4rem] mask-[radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
-        
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-20 relative z-10">
-          <div className="flex-1 flex flex-col gap-6 w-full">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-2">
-              <span className="text-zinc-300 text-xs font-semibold tracking-wide">Fee Transparency</span>
-            </div>
-            <h2 className="text-5xl lg:text-7xl font-bold tracking-tighter text-[#ffffff] leading-[1.1]">
-              Pure Efficiency. <br/>
-              <span className="text-[#3b82f6]">Zero Waste.</span>
-            </h2>
-            <p className="text-zinc-400 font-medium leading-relaxed text-lg md:text-xl mt-2 lg:mt-4 max-w-xl">
-              Traditional payment rails eat into your margins with hidden fees and expensive gas costs. Mecha Pay redefines protocol economics.
-            </p>
-          </div>
 
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500">
-              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
-                <Coins className="w-32 h-32 text-[#3b82f6] -mr-8 -mt-8" />
-              </div>
-              <div className="relative z-10">
-                <div className="text-5xl font-bold tracking-tighter text-[#ffffff] mb-4 group-hover:text-[#3b82f6] transition-colors duration-500">$0.00</div>
-                <h4 className="text-xl font-bold text-[#ffffff] mb-2 tracking-tight">Native Fee</h4>
-                <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-[90%]">Eliminate secondary gas tokens. Arc uses USDC as native gas for predictable, low-cost execution.</p>
-              </div>
-            </div>
-            
-            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500">
-              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
-                <Zap className="w-32 h-32 text-[#3b82f6] -mr-8 -mt-8" />
-              </div>
-              <div className="relative z-10">
-                <div className="text-5xl font-bold tracking-tighter text-[#ffffff] mb-4 group-hover:text-[#3b82f6] transition-colors duration-500">Instant</div>
-                <h4 className="text-xl font-bold text-[#ffffff] mb-2 tracking-tight">Sub-Second Finality</h4>
-                <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-[90%]">Subscriptions and bridges confirm in under 1 second, providing a true Web2-like experience.</p>
-              </div>
-            </div>
-            
-            <div className="group relative overflow-hidden p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 md:col-span-2">
-              <div className="absolute inset-0 bg-linear-to-r from-[#3b82f6]/0 via-[#3b82f6]/5 to-[#3b82f6]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
-                <Globe className="w-48 h-48 text-[#3b82f6] -mr-16 -mt-16" />
-              </div>
-              <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="h-12 w-12 rounded-xl bg-[#ffffff]/5 flex items-center justify-center border border-[#ffffff]/10 group-hover:border-[#3b82f6]/30 transition-colors duration-500">
-                     <Globe className="h-6 w-6 text-[#ffffff] group-hover:text-[#3b82f6] transition-colors duration-500" />
-                  </div>
-                  <div className="text-3xl font-bold tracking-tighter text-[#ffffff]">Unified Liquidity</div>
-                </div>
-                <h4 className="text-xl font-bold text-[#ffffff] mb-2 tracking-tight">Native Circle CCTP Integration</h4>
-                <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-lg">No wrapped assets. Move canonical USDC seamlessly between Ethereum, Base, Polygon, and 15+ others via official burn-and-mint logic.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust & Compliance Section */}
-      <section id="compliance" className="relative w-full bg-[#000000] py-24 lg:py-32 px-6 sm:px-12 lg:px-20 z-20 overflow-hidden border-t border-[#ffffff]/10">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-20%,#3b82f608,transparent_70%)] pointer-events-none" />
-        
-        <div className="max-w-7xl mx-auto flex flex-col gap-16 relative z-10">
-          
-          <div className="flex flex-col items-center text-center gap-4 max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#ffffff]/5 border border-[#ffffff]/10 rounded-full w-fit mb-2">
-              <span className="text-[#3b82f6] text-xs font-semibold tracking-wide">Enterprise Gated Security</span>
-            </div>
-            <h2 className="text-4xl lg:text-6xl font-bold tracking-tighter text-[#ffffff] leading-tight">
-              Regulatory Compliance <br/>& <span className="text-zinc-500">Institutional Trust</span>
-            </h2>
-            <p className="text-zinc-400 font-medium leading-relaxed text-base sm:text-lg mt-2">
-              Mecha Pay is engineered to align with global regulatory frameworks, ensuring a fully compliant stablecoin payment stream.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
-            {/* BSA & AML Gating */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
-              <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
-                  <Coins className="h-5 w-5 text-primary" />
-                </div>
-                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">BSA / AML Gating</h4>
-                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
-                  Integrates seamlessly with RPC-level sanction filters and OFAC screening tools, protecting merchants from interacting with flagged wallets.
-                </p>
-              </div>
-              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">AML Protection</span>
-            </div>
-
-            {/* MiCA Ready */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
-              <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
-                  <Shield className="h-5 w-5 text-primary" />
-                </div>
-                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">MiCA Compliant</h4>
-                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
-                  Leverages native Circle USDC, fully backed and regulated under the EU's Markets in Crypto-Assets regulation, guaranteeing stable value redemption.
-                </p>
-              </div>
-              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">Stablecoin Regs</span>
-            </div>
-
-            {/* GDPR & Privacy First */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
-              <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
-                  <Globe className="h-5 w-5 text-primary" />
-                </div>
-                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">GDPR & Data Privacy</h4>
-                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
-                  No personally identifiable information (PII) is stored on the ledger. Cryptographic session keys authorize payouts without exposing customer identities.
-                </p>
-              </div>
-              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">GDPR Compliant</span>
-            </div>
-
-            {/* SOC 2 Type II */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
-              <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
-                  <Zap className="h-5 w-5 text-primary" />
-                </div>
-                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">SOC 2 Type II Insulated</h4>
-                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
-                  Operates using Circle's non-custodial wallet infrastructure, audited to SOC 2 Type II security standards for safe private key segment storage.
-                </p>
-              </div>
-              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">Audit Certified</span>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Footer */}
       <footer className="relative w-full bg-[#000000] pt-32 pb-12 px-6 sm:px-12 lg:px-20 z-20 overflow-hidden border-t border-[#ffffff]/10">
