@@ -44,7 +44,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="relative w-full bg-[#000000] font-mulish overflow-x-hidden">
+    <div className="dark relative w-full bg-[#000000] font-mulish overflow-x-hidden">
       
       {/* Hero Section */}
       <section className="relative min-h-screen w-full flex flex-col overflow-hidden bg-[#000000]">
