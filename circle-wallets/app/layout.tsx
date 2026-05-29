@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, JetBrains_Mono, Mulish } from "next/font/google";
+import { Geist, Geist_Mono, JetBrains_Mono, Mulish, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
 const mulish = Mulish({ 
   subsets: ["latin"],
   variable: "--font-mulish",
+  display: 'swap',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
   display: 'swap',
 });
 
@@ -37,7 +43,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn(jetbrainsMono.variable)} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable} ${spaceGrotesk.variable} antialiased`}
       >
          <ThemeProvider
             attribute="class"

@@ -150,6 +150,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
+  --font-space-grotesk: var(--font-space-grotesk);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -183,20 +184,24 @@
   }
 }
 
-/* ── Custom Neat Professional Scrollbar ── */
+/* ── Custom Premium Floating Scrollbar ── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background-color: var(--border);
+  border: 3px solid transparent;
+  background-clip: padding-box;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+  background-color: var(--muted-foreground);
+  border: 3px solid transparent;
+  background-clip: padding-box;
 }
 /* For Firefox and standard browser environments */
 * {
