@@ -152,23 +152,43 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
             {/* BSA & AML Gating */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
-              <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
-                  <Coins className="h-5 w-5 text-primary" />
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[300px] lg:col-span-2">
+              <div className="flex flex-col md:flex-row gap-6 justify-between items-start">
+                <div className="flex-1">
+                  <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                    <Coins className="h-5 w-5 text-primary" />
+                  </div>
+                  <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">BSA / AML Gating</h4>
+                  <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                    Integrates seamlessly with RPC-level sanction filters and OFAC screening tools, protecting merchants from interacting with flagged wallets.
+                  </p>
                 </div>
-                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">BSA / AML Gating</h4>
-                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
-                  Integrates seamlessly with RPC-level sanction filters and OFAC screening tools, protecting merchants from interacting with flagged wallets.
-                </p>
+                <div className="w-full md:w-72 mt-2 md:mt-0 p-4 rounded-2xl bg-[#08080c] border border-[#ffffff]/5 font-mono text-xs text-zinc-400 flex flex-col gap-2 relative overflow-hidden">
+                  <div className="flex items-center justify-between text-[10px] text-zinc-500 border-b border-[#ffffff]/5 pb-2">
+                    <span>RPC SANCTION FILTER v1.2</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      ACTIVE
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-600">&gt;</span>
+                    <span>Screening:</span>
+                    <span className="text-primary font-semibold">0x71C...8e9A</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-primary/5 border border-primary/10 px-3 py-1.5 rounded-lg text-[11px] text-primary">
+                    <span>OFAC SDN LIST MATCH:</span>
+                    <span className="font-bold">CLEAN (0.00s)</span>
+                  </div>
+                </div>
               </div>
               <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">AML Protection</span>
             </div>
 
             {/* MiCA Ready */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[300px] lg:col-span-1">
               <div>
                 <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
                   <Shield className="h-5 w-5 text-primary" />
@@ -177,12 +197,21 @@ export default function LandingPage() {
                 <p className="text-sm text-muted-foreground font-medium leading-relaxed">
                   Leverages native Circle USDC, fully backed and regulated under the EU's Markets in Crypto-Assets regulation, guaranteeing stable value redemption.
                 </p>
+                <div className="mt-6 flex flex-col items-center justify-center py-6 px-4 rounded-2xl bg-linear-to-b from-[#0a0a0f] to-[#050505] border border-[#ffffff]/5 relative overflow-hidden group-hover:border-[#3b82f6]/20 transition-all duration-500">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#3b82f605,transparent_60%)] pointer-events-none" />
+                  <div className="text-[10px] font-black text-[#ffffff]/10 group-hover:text-primary/15 tracking-widest uppercase mb-1">EU REGULATED</div>
+                  <div className="h-10 w-10 relative flex items-center justify-center">
+                    <div className="absolute inset-0 border border-primary/10 rounded-full animate-[spin_20s_linear_infinite]" />
+                    <Globe className="h-5 w-5 text-primary opacity-60 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <span className="text-[9px] font-bold text-primary tracking-wide mt-2">1:1 REDEMPTION</span>
+                </div>
               </div>
               <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">Stablecoin Regs</span>
             </div>
 
             {/* GDPR & Privacy First */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[300px] lg:col-span-1">
               <div>
                 <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
                   <Globe className="h-5 w-5 text-primary" />
@@ -191,20 +220,55 @@ export default function LandingPage() {
                 <p className="text-sm text-muted-foreground font-medium leading-relaxed">
                   No personally identifiable information (PII) is stored on the ledger. Cryptographic session keys authorize payouts without exposing customer identities.
                 </p>
+                <div className="mt-6 p-4 rounded-2xl bg-linear-to-b from-[#0a0a0f] to-[#050505] border border-[#ffffff]/5 relative overflow-hidden group-hover:border-[#3b82f6]/20 transition-all duration-500">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between text-[9px] font-bold text-zinc-500 tracking-wider">
+                      <span>ZERO PII LEDGER</span>
+                      <span className="text-emerald-500 font-semibold">ENCRYPTED</span>
+                    </div>
+                    <div className="flex gap-1.5 mt-2">
+                      <span className="h-6 flex-1 bg-[#ffffff]/5 rounded border border-[#ffffff]/5 flex items-center justify-center text-[10px] text-zinc-400 font-mono">session_key</span>
+                      <span className="h-6 w-6 bg-primary/10 rounded flex items-center justify-center text-primary font-mono text-[10px]">✔</span>
+                    </div>
+                    <span className="text-[9px] text-zinc-500 italic mt-1 text-center">Customer PII: REDACTED</span>
+                  </div>
+                </div>
               </div>
               <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">GDPR Compliant</span>
             </div>
 
             {/* SOC 2 Type II */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
-              <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
-                  <Zap className="h-5 w-5 text-primary" />
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[300px] lg:col-span-2">
+              <div className="flex flex-col md:flex-row gap-6 justify-between items-start">
+                <div className="flex-1">
+                  <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                    <Zap className="h-5 w-5 text-primary" />
+                  </div>
+                  <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">SOC 2 Type II Insulated</h4>
+                  <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                    Operates using Circle's non-custodial wallet infrastructure, audited to SOC 2 Type II security standards for safe private key segment storage.
+                  </p>
                 </div>
-                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">SOC 2 Type II Insulated</h4>
-                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
-                  Operates using Circle's non-custodial wallet infrastructure, audited to SOC 2 Type II security standards for safe private key segment storage.
-                </p>
+                <div className="w-full md:w-72 mt-2 md:mt-0 grid grid-cols-1 gap-3">
+                  <div className="p-3 rounded-2xl bg-[#08080c] border border-[#ffffff]/5 flex flex-col gap-1.5">
+                    <div className="text-[9px] font-bold text-zinc-500 tracking-wider">MPC KEY SHARDS</div>
+                    <div className="flex gap-2 items-center">
+                      <div className="h-2 w-2 rounded bg-primary/20 border border-primary/40 animate-pulse" />
+                      <span className="font-mono text-[10px] text-zinc-400">Shard 1: Circle HSM</span>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <div className="h-2 w-2 rounded bg-primary/20 border border-primary/40 animate-pulse" />
+                      <span className="font-mono text-[10px] text-zinc-400">Shard 2: User Enclave</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-[#08080c] border border-[#ffffff]/5 flex items-center justify-between">
+                    <span className="text-[9px] font-bold text-zinc-500 tracking-wider uppercase">SOC 2 TYPE II</span>
+                    <div className="text-xs font-bold text-[#ffffff] flex items-center gap-1">
+                      <Shield className="h-3.5 w-3.5 text-emerald-500" />
+                      <span className="text-emerald-500">AUDITED</span>
+                    </div>
+                  </div>
+                </div>
               </div>
               <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">Audit Certified</span>
             </div>
