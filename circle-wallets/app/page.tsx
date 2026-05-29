@@ -406,14 +406,28 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+            {/* BSA & AML Gating */}
+            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
+              <div>
+                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
+                  <Coins className="h-5 w-5 text-primary" />
+                </div>
+                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">BSA / AML Gating</h4>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
+                  Integrates seamlessly with RPC-level sanction filters and OFAC screening tools, protecting merchants from interacting with flagged wallets.
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">AML Protection</span>
+            </div>
+
             {/* MiCA Ready */}
             <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
               <div>
                 <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
-                  <Shield className="h-5 w-5 text-[#3b82f6]" />
+                  <Shield className="h-5 w-5 text-primary" />
                 </div>
-                <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">MiCA Compliant</h4>
-                <p className="text-sm text-zinc-400 font-medium leading-relaxed">
+                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">MiCA Compliant</h4>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
                   Leverages native Circle USDC, fully backed and regulated under the EU's Markets in Crypto-Assets regulation, guaranteeing stable value redemption.
                 </p>
               </div>
@@ -424,10 +438,10 @@ export default function LandingPage() {
             <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
               <div>
                 <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
-                  <Globe className="h-5 w-5 text-[#3b82f6]" />
+                  <Globe className="h-5 w-5 text-primary" />
                 </div>
-                <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">GDPR & Data Privacy</h4>
-                <p className="text-sm text-zinc-400 font-medium leading-relaxed">
+                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">GDPR & Data Privacy</h4>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
                   No personally identifiable information (PII) is stored on the ledger. Cryptographic session keys authorize payouts without exposing customer identities.
                 </p>
               </div>
@@ -438,28 +452,14 @@ export default function LandingPage() {
             <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
               <div>
                 <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
-                  <Zap className="h-5 w-5 text-[#3b82f6]" />
+                  <Zap className="h-5 w-5 text-primary" />
                 </div>
-                <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">SOC 2 Type II Insulated</h4>
-                <p className="text-sm text-zinc-400 font-medium leading-relaxed">
+                <h4 className="text-lg font-bold text-foreground mb-2 tracking-tight">SOC 2 Type II Insulated</h4>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
                   Operates using Circle's non-custodial wallet infrastructure, audited to SOC 2 Type II security standards for safe private key segment storage.
                 </p>
               </div>
               <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">Audit Certified</span>
-            </div>
-
-            {/* BSA & AML Gating */}
-            <div className="group relative p-8 rounded-3xl bg-[#050505] border border-[#ffffff]/10 hover:bg-[#0a0a0f] hover:border-[#3b82f6]/30 transition-all duration-500 flex flex-col justify-between min-h-[260px]">
-              <div>
-                <div className="h-10 w-10 rounded-xl bg-[#ffffff]/5 border border-[#ffffff]/10 flex items-center justify-center mb-6 group-hover:border-[#3b82f6]/30 transition-colors">
-                  <Coins className="h-5 w-5 text-[#3b82f6]" />
-                </div>
-                <h4 className="text-lg font-bold text-[#ffffff] mb-2 tracking-tight">BSA / AML Gating</h4>
-                <p className="text-sm text-zinc-400 font-medium leading-relaxed">
-                  Integrates seamlessly with RPC-level sanction filters and OFAC screening tools, protecting merchants from interacting with flagged wallets.
-                </p>
-              </div>
-              <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mt-6">AML Protection</span>
             </div>
           </div>
         </div>
